@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,6 +35,7 @@ import { slugify } from "@/utils/convert_to_slug";
 import { Switch } from "@/components/ui/switch";
 import MultiSelectBreeds from "./MultiSelectBreeds";
 import { set } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const VariantSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
@@ -59,6 +61,8 @@ const ProductFormSchema = z.object({
   salePrice: z.coerce.number().optional(),
   brandId: z.string().min(1, "Please select a brand"),
   breedIds: z.optional(z.array(z.string())),
+  isFeatured: z.boolean().default(false),
+  isEverydayEssential: z.boolean().default(false),
   images: z.any().refine((files) => {
     if (!files || files.length === 0) return true;
     return Array.isArray(files) && files.length > 0;
@@ -150,6 +154,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("subCategoryId", data.subCategoryId);
       payload.append("price", data.price);
       payload.append("brandId", data.brandId);
+      payload.append("isFeatured", data.isFeatured);
+      payload.append("isEverydayEssential", data.isEverydayEssential);
 
       // Breed IDs
       data.breedIds.forEach((id) => payload.append("breedId[]", id));
@@ -378,6 +384,50 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* isFeatured */}
+        <FormField
+          control={form.control}
+          name="isFeatured"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Featured</FormLabel>
+                <FormDescription>
+                  This product will appear on the home page.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {/* isEverydayEssential */}
+        <FormField
+          control={form.control}
+          name="isEverydayEssential"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Everyday Essential</FormLabel>
+                <FormDescription>
+                  This product will appear on the home page.
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />
