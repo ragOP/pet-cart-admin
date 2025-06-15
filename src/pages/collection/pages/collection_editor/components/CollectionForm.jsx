@@ -24,11 +24,14 @@ import { updateCollection } from "../helper/updateCollection";
 import { slugify } from "@/utils/convert_to_slug";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
+import MultiSelectProducts from "./MultiProductSelect";
+import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
 
 const CollectionFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(3, "Description is required"),
   subCategoryId: z.string().min(1, "Please select a subcategory"),
+  productsIds: z.optional(z.array(z.string())),
   image: z
     .any()
     .optional()
@@ -36,11 +39,17 @@ const CollectionFormSchema = z.object({
       (files) => {
         if (!files || files.length === 0) return true; // Skip if no file (optional)
         const file = files[0];
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "image/gif",
+          "image/webp",
+        ];
         return allowedTypes.includes(file.type);
       },
       {
-        message: "Only JPG, JPEG, PNG, or GIF images are allowed",
+        message: "Only JPG, JPEG, PNG, WEBP or GIF images are allowed",
       }
     ),
 });
@@ -57,17 +66,21 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       name: initialData?.name || "",
       description: initialData?.description || "",
       subCategoryId: initialData?.subCategoryId || "",
+      productsIds: initialData?.productsIds || [],
       image: null,
     },
   });
 
-  const {
-    data: subCategoryListRes,
-    isLoading: subCategoryLoading,
-  } = useQuery({
+  const { data: subCategoryListRes, isLoading: subCategoryLoading } = useQuery({
     queryKey: ["all_sub_categories"],
     queryFn: () => fetchSubCategories({ params: { per_page: 100 } }),
   });
+
+  const { data: productListRes } = useQuery({
+    queryKey: ["all_products"],
+    queryFn: () => fetchProducts({ params: { per_page: 100 } }),
+  });
+  const products = productListRes?.data || [];
 
   const subCategories = subCategoryListRes?.data || [];
 
@@ -91,6 +104,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       payload.append("slug", slugify(formData.name));
       payload.append("description", formData.description);
       payload.append("subCategoryId", formData.subCategoryId);
+      payload.append("productsIds", JSON.stringify(formData.productsIds));
 
       if (!imageRemoved && imageFile instanceof File) {
         payload.append("images", imageFile);
@@ -105,7 +119,9 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
-        toast.success(`Collection ${isEdit ? "updated" : "created"} successfully`);
+        toast.success(
+          `Collection ${isEdit ? "updated" : "created"} successfully`
+        );
         navigate("/dashboard/collection");
       } else {
         toast.error(res?.response?.message || "Failed to process collection");
@@ -173,6 +189,24 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
                     </option>
                   ))}
                 </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="productsIds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Products</FormLabel>
+              <FormControl>
+                <MultiSelectProducts
+                  products={products} // You need to fetch or pass this array
+                  value={field.value || []}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
