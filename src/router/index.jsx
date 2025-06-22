@@ -32,6 +32,7 @@ const ErrorPage = lazy(() => import("@/components/errors/404"));
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 const Sliders = lazy(() => import("@/pages/sliders"));
 const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
+const AdBanner = lazy(() => import("@/pages/adBanner"));
 
 const Router = () => {
   return (
@@ -82,6 +83,8 @@ const Router = () => {
           <Route path="sliders" element={<Sliders />} />
           <Route path="sliders/add" element={<SliderEditor />} />
           <Route path="sliders/edit/:id" element={<SliderEditor />} />
+
+          <Route path="ad_banner" element={<AdBanner />} />
 
         </Route>
 

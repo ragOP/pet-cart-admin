@@ -167,9 +167,9 @@ import {
         roles: ["admin"],
       },
       {
-        title: "Add Banner",
-        name: "Add Banner",
-        url: "/dashboard/add_banner",
+        title: "Ad Banner",
+        name: "Ad Banner",
+        url: "/dashboard/ad_banner",
         icon: Image,
         roles: ["admin"],
       },
