@@ -61,8 +61,10 @@ const ProductFormSchema = z.object({
   salePrice: z.coerce.number().optional(),
   brandId: z.string().min(1, "Please select a brand"),
   breedIds: z.optional(z.array(z.string())),
-  isFeatured: z.boolean().default(false),
+  isBestSeller: z.boolean().default(false),
   isEverydayEssential: z.boolean().default(false),
+  isNewleyLaunched: z.boolean().default(false),
+  isAddToCart: z.boolean().default(false),
   images: z.any().refine((files) => {
     if (!files || files.length === 0) return true;
     return Array.isArray(files) && files.length > 0;
@@ -88,6 +90,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       subCategoryId: initialData?.subCategoryId || "",
       brandId: initialData?.brandId || "",
       breedIds: initialData?.breedIds || [],
+      isBestSeller: initialData?.isBestSeller || false,
+      isEverydayEssential: initialData?.isEverydayEssential || false,
+      isNewleyLaunched: initialData?.isNewleyLaunched || false,
+      isAddToCart: initialData?.isAddToCart || false,
       price: initialData?.price || 0,
       images: [],
       variants: initialData?.variants || [
@@ -154,7 +160,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("subCategoryId", data.subCategoryId);
       payload.append("price", data.price);
       payload.append("brandId", data.brandId);
-      payload.append("isFeatured", data.isFeatured);
+      payload.append("isAddToCart", data.isAddToCart);
+      payload.append("isBestSeller", data.isBestSeller);
+      payload.append("isNewleyLaunched", data.isNewleyLaunched);
       payload.append("isEverydayEssential", data.isEverydayEssential);
 
       // Breed IDs
@@ -388,10 +396,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           )}
         />
 
-        {/* isFeatured */}
+        {/* isBestSeller */}
         <FormField
           control={form.control}
-          name="isFeatured"
+          name="isBestSeller"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
@@ -401,9 +409,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Featured</FormLabel>
+                <FormLabel>Best Seller</FormLabel>
                 <FormDescription>
-                  This product will appear on the home page.
+                  This product will appear on the best seller page.
                 </FormDescription>
               </div>
             </FormItem>
@@ -426,6 +434,50 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 <FormLabel>Everyday Essential</FormLabel>
                 <FormDescription>
                   This product will appear on the home page.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {/* isNewleyLaunched */}
+        <FormField
+          control={form.control}
+          name="isNewleyLaunched"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Newly Launched</FormLabel>
+                <FormDescription>
+                  This product will appear on the newly launched page.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {/* isAddToCart */}
+        <FormField
+          control={form.control}
+          name="isAddToCart"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Add To Cart</FormLabel>
+                <FormDescription>
+                  This product will appear on the add to cart page.
                 </FormDescription>
               </div>
             </FormItem>
