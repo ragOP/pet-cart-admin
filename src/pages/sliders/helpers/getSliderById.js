@@ -11,7 +11,7 @@ export const getSliderById = async ({ id }) => {
     if (apiResponse?.response?.success) {
       return {
         success: true,
-        data: apiResponse.response.data,
+        data: apiResponse.response.data.data,
         message: apiResponse.response.message,
       };
     } else {

@@ -174,6 +174,20 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Header & Footer",
+        name: "Header & Footer",
+        url: "/dashboard/header-footer",
+        icon: LayoutDashboard,
+        roles: ["admin"],
+      },
+      {
+        title: "Sliders",
+        name: "Sliders",
+        url: "/dashboard/sliders",
+        icon: Image,
+        roles: ["admin"],
+      },
+      {
         title: "Add Category",
         name: "Add Category",
         url: "/dashboard/add_category",
@@ -187,27 +201,6 @@ import {
         icon: Bell,
         roles: ["admin"],
       },
-      {
-        title: "Header & Footer",
-        name: "Header & Footer",
-        url: "/dashboard/header-footer",
-        icon: LayoutDashboard,
-        roles: ["admin"],
-      },
-      {
-        title: "Sliders",
-        name: "Sliders",
-        url: "/dashboard/sliders",
-        icon: Image,
-        roles: ["admin"],
-      }
-      // {
-      //   title: "Settings",
-      //   url: "/settings",
-      //   icon: Settings2,
-      //   items: [],
-      //   roles: ["super_admin", "admin"],
-      // },
     ],
   };
   
