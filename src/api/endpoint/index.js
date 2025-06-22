@@ -3,7 +3,7 @@ export const isDev = () => {
 };
 
 export const BACKEND_URL = isDev()
-  ? "http://localhost:4000"
+  ? "https://pet-caart-be.onrender.com"
   : "https://techmi-crm-be-kirp.onrender.com";
 
 export const endpoints = {
@@ -15,6 +15,7 @@ export const endpoints = {
   brand: "api/brand",
   breed: "api/breed",
   product: "api/product",
+  headerFooter: "api/settings/header-footer/get",
 };
 
 

@@ -29,6 +29,7 @@ const UserEditor = lazy(() => import("@/pages/users/pages/user_editor"));
 const Category = lazy(() => import("@/pages/category"));
 const CategoryEditor = lazy(() => import("@/pages/category/pages/category_editor"));
 const ErrorPage = lazy(() => import("@/components/errors/404"));
+const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 
 const Router = () => {
   return (
@@ -73,6 +74,8 @@ const Router = () => {
           <Route path="product" element={<Product />} />
           <Route path="product/add" element={<ProductEditor />} />
           <Route path="product/edit/:id" element={<ProductEditor/>} />
+
+          <Route path="header-footer" element={<HeaderFooter />} />
 
         </Route>
 

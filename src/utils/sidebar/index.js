@@ -186,7 +186,14 @@ import {
         url: "/dashboard/send_notification",
         icon: Bell,
         roles: ["admin"],
-      }
+      },
+      {
+        title: "Header & Footer",
+        name: "Header & Footer",
+        url: "/dashboard/header-footer",
+        icon: LayoutDashboard,
+        roles: ["admin"],
+      },
       // {
       //   title: "Settings",
       //   url: "/settings",
