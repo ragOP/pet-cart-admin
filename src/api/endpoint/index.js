@@ -3,8 +3,8 @@ export const isDev = () => {
 };
 
 export const BACKEND_URL = isDev()
-  ? "https://pet-caart-be.onrender.com"
-  : "https://techmi-crm-be-kirp.onrender.com";
+  ? "http://localhost:4000"
+  : "https://pet-caart-be.onrender.com";
 
 export const endpoints = {
   login: "api/auth/admin/login",
