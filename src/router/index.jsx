@@ -1,5 +1,5 @@
-import React, { useEffect, lazy, Suspense } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import React, { lazy, Suspense } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import SubCategory from "@/pages/sub_category";
 import SubCategoryEditor from "@/pages/sub_category/pages/sub_category_editor";
@@ -31,6 +31,7 @@ const CategoryEditor = lazy(() => import("@/pages/category/pages/category_editor
 const ErrorPage = lazy(() => import("@/components/errors/404"));
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 const Sliders = lazy(() => import("@/pages/sliders"));
+const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
 
 const Router = () => {
   return (
@@ -79,6 +80,8 @@ const Router = () => {
           <Route path="header-footer" element={<HeaderFooter />} />
 
           <Route path="sliders" element={<Sliders />} />
+          <Route path="sliders/add" element={<SliderEditor />} />
+          <Route path="sliders/edit/:id" element={<SliderEditor />} />
 
         </Route>
 
