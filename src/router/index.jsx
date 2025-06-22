@@ -11,6 +11,7 @@ import Collection from "@/pages/collection";
 import CollectionEditor from "@/pages/collection/pages/collection_editor";
 import Product from "@/pages/product";
 import ProductEditor from "@/pages/product/pages/product_editor";
+import BannerEditor from "@/pages/main_banner/pages/banner_editor";
 
 // import Users from "@/pages/users";
 // import Layout from "@/layout";
@@ -33,6 +34,7 @@ const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 const Sliders = lazy(() => import("@/pages/sliders"));
 const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
 const AdBanner = lazy(() => import("@/pages/adBanner"));
+const Banners = lazy(() => import("@/pages/main_banner"));
 
 const Router = () => {
   return (
@@ -85,6 +87,10 @@ const Router = () => {
           <Route path="sliders/edit/:id" element={<SliderEditor />} />
 
           <Route path="ad_banner" element={<AdBanner />} />
+
+          <Route path="banners" element={<Banners />} />
+          <Route path="banners/add" element={<BannerEditor />} />
+          <Route path="banners/edit/:selectedType" element={<BannerEditor />} />
 
         </Route>
 

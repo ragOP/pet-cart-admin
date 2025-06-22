@@ -17,6 +17,7 @@ export const endpoints = {
   product: "api/product",
   headerFooter: "api/settings/header-footer/get",
   sliders: "api/sliders/slider",
+  banner: "api/configuration/banner",
 };
 
 

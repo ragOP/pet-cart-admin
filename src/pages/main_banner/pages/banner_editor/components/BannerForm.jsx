@@ -10,19 +10,17 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
-import { updateSlider } from "../../../helpers/updateSlider";
-import { createSlider } from "../../../helpers/createSlider";
+import { updateBanner } from "../../../helpers/updateBanner";
+import { createBanner } from "../../../helpers/createBanner";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { validateImageDimensions } from '@/utils/validate_image_dimensions';
 
-const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
+const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    link: '',
     type: 'web',
-    isActive: true,
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -33,9 +31,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     if (initialData && isEdit) {
       console.log('Initial data for editing:', initialData);
       setFormData({
-        link: initialData.link || '',
         type: initialData.type || 'web',
-        isActive: initialData.isActive !== undefined ? initialData.isActive : true,
       });
       
       // Convert existing image URL to file object if image exists
@@ -43,7 +39,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         setPreviewUrl(initialData.image);
         const convertImage = async () => {
           try {
-            const file = await urlToFile(initialData.image, 'slider_image.jpg');
+            const file = await urlToFile(initialData.image, 'banner_image.jpg');
             if (file) {
               setSelectedFile(file);
             }
@@ -67,21 +63,21 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     const file = event.target.files[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select a valid image file");
         return;
       }
 
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error("Image size should be less than 5MB");
         return;
       }
 
       const { valid, error } = await validateImageDimensions(
         file,
         formData.type,
-        "horizontal"
+        'horizontal'
       );
       if (!valid) {
         toast.error(error);
@@ -89,7 +85,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
       }
 
       setSelectedFile(file);
-      
+
       // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -109,40 +105,40 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     }
   };
 
-  const updateSliderMutation = useMutation({
-    mutationFn: updateSlider,
+  const updateBannerMutation = useMutation({
+    mutationFn: updateBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success('Slider updated successfully');
-        queryClient.invalidateQueries(['sliders']);
-        navigate('/dashboard/sliders');
+        toast.success('Banner updated successfully');
+        queryClient.invalidateQueries(['banners']);
+        navigate('/dashboard/banners');
       } else {
-        toast.error(result.message || 'Failed to update slider');
+        toast.error(result.message || 'Failed to update banner');
       }
     },
     onError: (error) => {
       console.error('Update error:', error);
-      toast.error('An error occurred while updating the slider');
+      toast.error('An error occurred while updating the banner');
     },
     onSettled: () => {
       setIsSubmitting(false);
     }
   });
 
-  const createSliderMutation = useMutation({
-    mutationFn: createSlider,
+  const createBannerMutation = useMutation({
+    mutationFn: createBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success('Slider created successfully');
-        queryClient.invalidateQueries(['sliders']);
-        navigate('/dashboard/sliders');
+        toast.success('Banner created successfully');
+        queryClient.invalidateQueries(['banners']);
+        navigate('/dashboard/banners');
       } else {
-        toast.error(result.message || 'Failed to create slider');
+        toast.error(result.message || 'Failed to create banner');
       }
     },
     onError: (error) => {
       console.error('Create error:', error);
-      toast.error('An error occurred while creating the slider');
+      toast.error('An error occurred while creating the banner');
     },
     onSettled: () => {
       setIsSubmitting(false);
@@ -153,10 +149,10 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.link.trim()) {
-      toast.error('Please enter a link');
-      return;
-    }
+    // if (!formData.link.trim()) {
+    //   toast.error('Please enter a link');
+    //   return;
+    // }
 
     if (!isEdit && !selectedFile) {
       toast.error('Please select an image');
@@ -165,7 +161,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
 
     // Additional validation for edit mode
     if (isEdit && !initialData?._id) {
-      toast.error('Slider data not loaded. Please try again.');
+      toast.error('Banner data not loaded. Please try again.');
       return;
     }
 
@@ -175,9 +171,9 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
       const submitFormData = new FormData();
       
       // Add form fields
-      submitFormData.append('link', formData.link);
+      // submitFormData.append('link', formData.link);
       submitFormData.append('type', formData.type);
-      submitFormData.append('isActive', formData.isActive.toString());
+      // submitFormData.append('isActive', formData.isActive.toString());
       
       // Add image if selected
       if (selectedFile) {
@@ -185,12 +181,12 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
       }
 
       if (isEdit) {
-        updateSliderMutation.mutate({
+        updateBannerMutation.mutate({
           id: initialData._id,
           formData: submitFormData
         });
       } else {
-        createSliderMutation.mutate({
+        createBannerMutation.mutate({
           formData: submitFormData
         });
       }
@@ -222,15 +218,15 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl">
-              {isEdit ? 'Edit Slider' : 'Add New Slider'}
+              {isEdit ? 'Edit Banner' : 'Add New Banner'}
             </CardTitle>
             <Button
               variant="outline"
-              onClick={() => navigate('/dashboard/sliders')}
+              onClick={() => navigate('/dashboard/banners')}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Sliders
+              Back to Banners
             </Button>
           </div>
         </CardHeader>
@@ -240,7 +236,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
             {/* Image Upload Section */}
             <div className="space-y-4">
               <Label htmlFor="image-upload" className="text-base font-medium">
-                Slider Image
+                Banner Image
               </Label>
               
               <div className="space-y-4">
@@ -250,7 +246,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                     <div className="aspect-video overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
                       <img
                         src={previewUrl}
-                        alt="Slider preview"
+                        alt="Banner preview"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -303,21 +299,6 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
               </div>
             </div>
 
-            {/* Link Input */}
-            <div className="space-y-2">
-              <Label htmlFor="link" className="text-base font-medium">
-                Link URL
-              </Label>
-              <Input
-                id="link"
-                type="url"
-                placeholder="https://example.com"
-                value={formData.link}
-                onChange={(e) => handleInputChange('link', e.target.value)}
-                required
-              />
-            </div>
-
             {/* Type Selection */}
             <div className="space-y-2">
               <Label htmlFor="type" className="text-base font-medium">
@@ -329,7 +310,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="web">Web</SelectItem>
-                  <SelectItem value="mobile">Mobile</SelectItem>
+                  {/* <SelectItem value="mobile">Mobile</SelectItem> */}
                   <SelectItem value="app">App</SelectItem>
                   <SelectItem value="tablet">Tablet</SelectItem>
                 </SelectContent>
@@ -339,20 +320,6 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                   {formData.type}
                 </Badge>
               </div>
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base font-medium">Active Status</Label>
-                <p className="text-sm text-gray-500">
-                  {formData.isActive ? 'Slider will be visible' : 'Slider will be hidden'}
-                </p>
-              </div>
-              <Switch
-                checked={formData.isActive}
-                onCheckedChange={(checked) => handleInputChange('isActive', checked)}
-              />
             </div>
 
             {/* Submit Button */}
@@ -370,7 +337,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Save className="h-4 w-4" />
-                    {isEdit ? 'Update Slider' : 'Create Slider'}
+                    {isEdit ? 'Update Banner' : 'Create Banner'}
                   </div>
                 )}
               </Button>
@@ -378,7 +345,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/dashboard/sliders')}
+                onClick={() => navigate('/dashboard/banners')}
                 disabled={isSubmitting || isLoading}
               >
                 Cancel
@@ -391,4 +358,4 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
   );
 };
 
-export default SliderForm; 
+export default BannerForm; 

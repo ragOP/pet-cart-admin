@@ -160,9 +160,9 @@ import {
     // ],
     more: [
       {
-        title: "Add Thumbnail",
-        name: "Add Thumbnail",
-        url: "/dashboard/add_thumbnail",
+        title: "Add Banner",
+        name: "Add Banner",
+        url: "/dashboard/banners",
         icon: GalleryThumbnails,
         roles: ["admin"],
       },
