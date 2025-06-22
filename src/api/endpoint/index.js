@@ -16,6 +16,7 @@ export const endpoints = {
   breed: "api/breed",
   product: "api/product",
   headerFooter: "api/settings/header-footer/get",
+  sliders: "api/sliders/slider",
 };
 
 

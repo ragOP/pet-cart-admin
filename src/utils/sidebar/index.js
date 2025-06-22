@@ -194,6 +194,13 @@ import {
         icon: LayoutDashboard,
         roles: ["admin"],
       },
+      {
+        title: "Sliders",
+        name: "Sliders",
+        url: "/dashboard/sliders",
+        icon: Image,
+        roles: ["admin"],
+      }
       // {
       //   title: "Settings",
       //   url: "/settings",

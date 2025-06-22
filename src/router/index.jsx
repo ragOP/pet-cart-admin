@@ -30,6 +30,7 @@ const Category = lazy(() => import("@/pages/category"));
 const CategoryEditor = lazy(() => import("@/pages/category/pages/category_editor"));
 const ErrorPage = lazy(() => import("@/components/errors/404"));
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
+const Sliders = lazy(() => import("@/pages/sliders"));
 
 const Router = () => {
   return (
@@ -76,6 +77,8 @@ const Router = () => {
           <Route path="product/edit/:id" element={<ProductEditor/>} />
 
           <Route path="header-footer" element={<HeaderFooter />} />
+
+          <Route path="sliders" element={<Sliders />} />
 
         </Route>
 
