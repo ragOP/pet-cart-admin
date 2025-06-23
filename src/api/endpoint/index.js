@@ -18,6 +18,7 @@ export const endpoints = {
   headerFooter: "api/settings/header-footer/get",
   sliders: "api/sliders/slider",
   banner: "api/configuration/banner",
+  cat_life_banner: "api/cat-life-banner",
 };
 
 

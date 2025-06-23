@@ -16,21 +16,20 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
-import { updateSlider } from "../../../helpers/updateSlider";
-import { createSlider } from "../../../helpers/createSlider";
+import { updateCatLifeBanner } from "../../../helpers/updateCatLifeBanner";
+import { createCatLifeBanner } from "../../../helpers/createCatLifeBanner";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { validateImageDimensions } from "@/utils/validate_image_dimensions";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
 
-const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
+const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    type: "web",
+    title: "",
     link: "",
-    isActive: false,
   });
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState("");
@@ -60,9 +59,8 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     if (initialData && isEdit) {
       console.log("Initial data for editing:", initialData);
       setFormData({
-        type: initialData.type || "web",
+        title: initialData.title || "",
         link: initialData.link || "",
-        active: initialData.active || false,
       });
 
       // Convert existing image URL to file object if image exists
@@ -70,7 +68,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         setPreviewUrl(initialData.image);
         const convertImage = async () => {
           try {
-            const file = await urlToFile(initialData.image, "slider_image.jpg");
+            const file = await urlToFile(initialData.image, "cat_life_banner.jpg");
             if (file) {
               setSelectedFile(file);
             }
@@ -105,16 +103,6 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         return;
       }
 
-      const { valid, error } = await validateImageDimensions(
-        file,
-        formData.type,
-        "short-horizontal"
-      );
-      if (!valid) {
-        toast.error(error);
-        return;
-      }
-
       setSelectedFile(file);
 
       // Create preview URL
@@ -136,40 +124,40 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     }
   };
 
-  const updateSliderMutation = useMutation({
-    mutationFn: updateSlider,
+  const updateCatLifeBannerMutation = useMutation({
+    mutationFn: updateCatLifeBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Slider updated successfully");
-        queryClient.invalidateQueries(["sliders"]);
-        navigate("/dashboard/sliders");
+        toast.success("CatLifeBanner updated successfully");
+        queryClient.invalidateQueries(["catLifeBanners"]);
+        navigate("/dashboard/catLifeBanners");
       } else {
-        toast.error(result.message || "Failed to update slider");
+        toast.error(result.message || "Failed to update catLifeBanner");
       }
     },
     onError: (error) => {
       console.error("Update error:", error);
-      toast.error("An error occurred while updating the slider");
+      toast.error("An error occurred while updating the catLifeBanner");
     },
     onSettled: () => {
       setIsSubmitting(false);
     },
   });
 
-  const createSliderMutation = useMutation({
-    mutationFn: createSlider,
+  const createCatLifeBannerMutation = useMutation({
+    mutationFn: createCatLifeBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Slider created successfully");
-        queryClient.invalidateQueries(["sliders"]);
-        navigate("/dashboard/sliders");
+        toast.success("CatLifeBanner created successfully");
+        queryClient.invalidateQueries(["catLifeBanners"]);
+        navigate("/dashboard/catLifeBanners");
       } else {
-        toast.error(result.message || "Failed to create slider");
+        toast.error(result.message || "Failed to create catLifeBanner");
       }
     },
     onError: (error) => {
       console.error("Create error:", error);
-      toast.error("An error occurred while creating the slider");
+      toast.error("An error occurred while creating the catLifeBanner");
     },
     onSettled: () => {
       setIsSubmitting(false);
@@ -202,7 +190,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
 
     // Additional validation for edit mode
     if (isEdit && !initialData?._id) {
-      toast.error("Slider data not loaded. Please try again.");
+      toast.error("CatLifeBanner data not loaded. Please try again.");
       return;
     }
 
@@ -225,12 +213,12 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
       }
 
       if (isEdit) {
-        updateSliderMutation.mutate({
+        updateCatLifeBannerMutation.mutate({
           id: initialData._id,
           formData: submitFormData,
         });
       } else {
-        createSliderMutation.mutate({
+        createCatLifeBannerMutation.mutate({
           formData: submitFormData,
         });
       }
@@ -270,15 +258,15 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl">
-              {isEdit ? "Edit Slider" : "Add New Slider"}
+              {isEdit ? "Edit CatLifeBanner" : "Add New CatLifeBanner"}
             </CardTitle>
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard/sliders")}
+              onClick={() => navigate("/dashboard/catLifeBanners")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Sliders
+              Back to CatLifeBanners
             </Button>
           </div>
         </CardHeader>
@@ -288,7 +276,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
             {/* Image Upload Section */}
             <div className="space-y-4">
               <Label htmlFor="image-upload" className="text-base font-medium">
-                Slider Image
+                CatLifeBanner Image
               </Label>
 
               <div className="space-y-4">
@@ -298,7 +286,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                     <div className="aspect-video overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
                       <img
                         src={previewUrl}
-                        alt="Slider preview"
+                        alt="CatLifeBanner preview"
                         className="w-full h-full object-contain"
                       />
                     </div>
@@ -452,8 +440,8 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 <Label className="text-base font-medium">Active Status</Label>
                 <p className="text-sm text-gray-500">
                   {formData.isActive
-                    ? "Slider will be visible"
-                    : "Slider will be hidden"}
+                    ? "CatLifeBanner will be visible"
+                    : "CatLifeBanner will be hidden"}
                 </p>
               </div>
               <Switch
@@ -483,7 +471,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Save className="h-4 w-4" />
-                    {isEdit ? "Update Slider" : "Create Slider"}
+                    {isEdit ? "Update CatLifeBanner" : "Create CatLifeBanner"}
                   </div>
                 )}
               </Button>
@@ -491,7 +479,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/dashboard/sliders")}
+                onClick={() => navigate("/dashboard/catLifeBanners")}
                 disabled={isSubmitting || isLoading}
               >
                 Cancel
@@ -504,4 +492,4 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
   );
 };
 
-export default SliderForm;
+export default CatLifeBannerForm;

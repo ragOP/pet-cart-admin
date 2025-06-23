@@ -12,6 +12,8 @@ import CollectionEditor from "@/pages/collection/pages/collection_editor";
 import Product from "@/pages/product";
 import ProductEditor from "@/pages/product/pages/product_editor";
 import BannerEditor from "@/pages/main_banner/pages/banner_editor";
+import CatLifeBanners from "@/pages/cat_life";
+import CatLifeBannerEditor from "@/pages/cat_life/pages/slider_editor";
 
 // import Users from "@/pages/users";
 // import Layout from "@/layout";
@@ -91,6 +93,10 @@ const Router = () => {
           <Route path="banners" element={<Banners />} />
           <Route path="banners/add" element={<BannerEditor />} />
           <Route path="banners/edit/:selectedType" element={<BannerEditor />} />
+
+          <Route path="cat-life-banner" element={<CatLifeBanners />} />
+          <Route path="cat-life-banner/add" element={<CatLifeBannerEditor />} />
+          <Route path="cat-life-banner/edit/:selectedType" element={<CatLifeBannerEditor />} />
 
         </Route>
 

@@ -36,7 +36,7 @@ const CategoryFormSchema = z.object({
       (files) => {
         if (!files || files.length === 0) return true; // Skip if no file (optional)
         const file = files[0];
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
         return allowedTypes.includes(file.type);
       },
       {

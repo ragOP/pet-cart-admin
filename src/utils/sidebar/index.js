@@ -188,6 +188,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Cat Life Banners",
+        name: "Cat Life Banners",
+        url: "/dashboard/cat-life-banner",
+        icon: Image,
+        roles: ["admin"],
+      },
+      {
         title: "Add Category",
         name: "Add Category",
         url: "/dashboard/add_category",

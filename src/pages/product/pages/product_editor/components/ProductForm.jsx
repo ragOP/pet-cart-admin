@@ -37,6 +37,19 @@ import MultiSelectBreeds from "./MultiSelectBreeds";
 import { set } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+
+const imageArrayValidator = z
+  .any()
+  .optional()
+  .refine((files) => {
+    if (!files || files.length === 0) return true;
+    if (!Array.isArray(files)) return false;
+    return files.every((file) => file?.type && allowedTypes.includes(file.type));
+  }, {
+    message: "Only JPEG, PNG, JPG, GIF, or WEBP images are allowed",
+  });
+
 const VariantSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
   price: z.coerce.number().positive("Price must be positive"),
@@ -44,10 +57,7 @@ const VariantSchema = z.object({
   stock: z.coerce.number().nonnegative().optional(),
   weight: z.string().optional(),
   barcode: z.string().optional(),
-  images: z.any().optional().refine((files) => {
-    if (!files || files.length === 0) return true;
-    return Array.isArray(files) && files.length > 0;
-  }, { message: "At least one image is required" }),
+  images: imageArrayValidator,
   attributes: z.record(z.string()).optional(),
   isActive: z.boolean().optional()
 });
@@ -65,12 +75,10 @@ const ProductFormSchema = z.object({
   isEverydayEssential: z.boolean().default(false),
   isNewleyLaunched: z.boolean().default(false),
   isAddToCart: z.boolean().default(false),
-  images: z.any().refine((files) => {
-    if (!files || files.length === 0) return true;
-    return Array.isArray(files) && files.length > 0;
-  }, { message: "At least one image is required" }),
+  images: imageArrayValidator,
   variants: z.array(VariantSchema).min(1, "At least one variant is required")
 });
+
 
 const ProductForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();

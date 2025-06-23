@@ -177,7 +177,7 @@ const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
       
       // Add image if selected
       if (selectedFile) {
-        submitFormData.append('images', selectedFile);
+        submitFormData.append('image', selectedFile);
       }
 
       if (isEdit) {
@@ -247,7 +247,7 @@ const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
                       <img
                         src={previewUrl}
                         alt="Banner preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <Button
