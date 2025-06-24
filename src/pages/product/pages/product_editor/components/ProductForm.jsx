@@ -12,12 +12,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -34,7 +37,6 @@ import { urlToFile } from "@/utils/file/urlToFile";
 import { slugify } from "@/utils/convert_to_slug";
 import { Switch } from "@/components/ui/switch";
 import MultiSelectBreeds from "./MultiSelectBreeds";
-import { set } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
@@ -51,12 +53,10 @@ const imageArrayValidator = z
   });
 
 const VariantSchema = z.object({
-  sku: z.string().min(1, "SKU is required"),
   price: z.coerce.number().positive("Price must be positive"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative().optional(),
   weight: z.string().optional(),
-  barcode: z.string().optional(),
   images: imageArrayValidator,
   attributes: z.record(z.string()).optional(),
   isActive: z.boolean().optional()
@@ -87,6 +87,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const [variantImages, setVariantImages] = useState([]);
   const [newBreedName, setNewBreedName] = useState("");
   const [isAddingBreed, setIsAddingBreed] = useState(false);
+  const [isAttributeDialogOpen, setIsAttributeDialogOpen] = useState(false);
+  const [newAttributeName, setNewAttributeName] = useState('');
   const variantImageMap = useRef({})
 
   const form = useForm({
@@ -105,7 +107,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       price: initialData?.price || 0,
       images: [],
       variants: initialData?.variants || [
-        { sku: "", price: 0, salePrice: 0, stock: 0, weight: "", barcode: "" }
+        { price: 0, salePrice: 0, stock: 0, weight: "", isActive: false, attributes: {} }
       ],
     },
   });
@@ -116,25 +118,25 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   });
 
 
-  const { data: categoryListRes } = useQuery({ 
-    queryKey: ["all_categories"], 
-    queryFn: fetchCategories 
+  const { data: categoryListRes } = useQuery({
+    queryKey: ["all_categories"],
+    queryFn: fetchCategories
   });
-  
+
   const { data: subCategoryListRes } = useQuery({
     queryKey: ["subcategories", selectedCategoryId],
     queryFn: () => fetchSubCategoriesByCategoryId({ params: { categoryId: selectedCategoryId } }),
     enabled: !!selectedCategoryId,
   });
-  
-  const { data: breedListRes, refetch: refetchBreeds } = useQuery({ 
-    queryKey: ["breeds"], 
-    queryFn: fetchBreeds 
+
+  const { data: breedListRes, refetch: refetchBreeds } = useQuery({
+    queryKey: ["breeds"],
+    queryFn: fetchBreeds
   });
-  
-  const { data: brandListRes } = useQuery({ 
-    queryKey: ["brands"], 
-    queryFn: fetchBrands 
+
+  const { data: brandListRes } = useQuery({
+    queryKey: ["brands"],
+    queryFn: fetchBrands
   });
 
   const categories = categoryListRes?.categories || [];
@@ -146,7 +148,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     if (isEdit && initialData?.images?.length > 0) {
       const convertImages = async () => {
         const files = await Promise.all(
-          initialData.images.map((img, index) => 
+          initialData.images.map((img, index) =>
             urlToFile(img, `product_image_${index}.jpg`)
           )
         );
@@ -230,11 +232,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     setImageFiles(newFiles);
     form.setValue("images", newFiles);
   };
-
-  const generateFakeBarcode = () => {
-    return Math.floor(100000000000 + Math.random() * 900000000000).toString(); // 12-digit fake barcode
-  };
-
 
   return (
     <Form {...form}>
@@ -418,9 +415,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>Best Seller</FormLabel>
-                <FormDescription>
-                  This product will appear on the best seller page.
-                </FormDescription>
               </div>
             </FormItem>
           )}
@@ -440,9 +434,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>Everyday Essential</FormLabel>
-                <FormDescription>
-                  This product will appear on the home page.
-                </FormDescription>
               </div>
             </FormItem>
           )}
@@ -462,9 +453,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>Newly Launched</FormLabel>
-                <FormDescription>
-                  This product will appear on the newly launched page.
-                </FormDescription>
               </div>
             </FormItem>
           )}
@@ -484,9 +472,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>Add To Cart</FormLabel>
-                <FormDescription>
-                  This product will appear on the add to cart page.
-                </FormDescription>
               </div>
             </FormItem>
           )}
@@ -549,19 +534,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             >
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <FormField
-                  name={`variants.${index}.sku`}
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
                   name={`variants.${index}.price`}
                   control={form.control}
                   render={({ field }) => (
@@ -613,94 +585,99 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  name={`variants.${index}.barcode`}
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Barcode</FormLabel>
-                      <div className="grid lg:grid-cols-5 gap-4">
-                        <FormControl className="col-span-3">
-                          <Input {...field} />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          className={"col-span-2"}
-                          onClick={() =>
-                            form.setValue(
-                              `variants.${index}.barcode`,
-                              generateFakeBarcode()
-                            )
-                          }
-                        >
-                          Generate Barcode
-                        </Button>
-                      </div>
 
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+<FormField
+  name={`variants.${index}.attributes`}
+  control={form.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Attributes</FormLabel>
+      {Object.entries(field.value || {}).map(([key, value], idx) => (
+        <div className="flex gap-2 mb-2" key={idx}>
+          <Input placeholder="Key" value={key} disabled />
+          <Input
+            placeholder="Value"
+            defaultValue={value}
+            onChange={(e) => {
+              const newAttributes = {
+                ...(field.value || {}),
+              };
+              newAttributes[key] = e.target.value;
+              field.onChange(newAttributes);
+            }}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              const newAttributes = {
+                ...(field.value || {}),
+              };
+              delete newAttributes[key];
+              field.onChange(newAttributes);
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
 
-                <FormField
-                  name={`variants.${index}.attributes`}
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Attributes
-                      </FormLabel>
-                      {Object.entries(form.watch("attributes") || {}).map(
-                        ([key, value], idx) => (
-                          <div className="flex gap-2 mb-2" key={idx}>
-                            <Input placeholder="Key" value={key} disabled />
-                            <Input
-                              placeholder="Value"
-                              defaultValue={value}
-                              onChange={(e) => {
-                                const newAttributes = {
-                                  ...(form.getValues("attributes") || {}),
-                                };
-                                newAttributes[key] = e.target.value;
-                                form.setValue("attributes", newAttributes);
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              onClick={() => {
-                                const newAttributes = {
-                                  ...(form.getValues("attributes") || {}),
-                                };
-                                delete newAttributes[key];
-                                form.setValue("attributes", newAttributes);
-                              }}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        )
-                      )}
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const key = prompt("Enter attribute name:");
-                          if (key) {
-                            const newAttributes = {
-                              ...(form.getValues("attributes") || {}),
-                            };
-                            newAttributes[key] = "";
-                            form.setValue("attributes", newAttributes);
-                          }
-                        }}
-                      >
-                        Add Attribute
-                      </Button>
-                    </FormItem>
-                  )}
-                />
+      <Dialog 
+        open={isAttributeDialogOpen === index} 
+        onOpenChange={(open) => setIsAttributeDialogOpen(open ? index : false)}
+      >
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline">
+            Add Attribute
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Attribute</DialogTitle>
+            <DialogDescription>
+              Enter the name of the new attribute for variant {index + 1}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Attribute name"
+              value={newAttributeName}
+              onChange={(e) => setNewAttributeName(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setNewAttributeName('');
+                setIsAttributeDialogOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (newAttributeName.trim()) {
+                  const newAttributes = {
+                    ...(field.value || {}),
+                  };
+                  newAttributes[newAttributeName.trim()] = "";
+                  field.onChange(newAttributes);
+                  setNewAttributeName('');
+                  setIsAttributeDialogOpen(false);
+                }
+              }}
+            >
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </FormItem>
+  )}
+/>
 
                 <FormField
                   name={`variants.${index}.images`}
@@ -725,17 +702,17 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   )}
                 />
 
-                <FormField name="isActive" control={form.control} render={({ field }) => (
+                <FormField name={`variants.${index}.isActive`} control={form.control} render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
                         />
-                    </FormControl>
-                        {field.value ? "Active" : "Inactive"}
+                      </FormControl>
+                      {field.value ? "Active" : "Inactive"}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -755,12 +732,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             type="button"
             onClick={() =>
               append({
-                sku: "",
                 price: 0,
                 salePrice: 0,
                 stock: 0,
                 weight: "",
-                barcode: "",
+                isActive: false,
+                attributes: {}, 
               })
             }
           >
@@ -776,8 +753,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           {mutation.isPending
             ? "Processing..."
             : isEdit
-            ? "Update Product"
-            : "Create Product"}
+              ? "Update Product"
+              : "Create Product"}
         </Button>
       </form>
     </Form>
