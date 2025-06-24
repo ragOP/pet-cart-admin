@@ -89,6 +89,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const [isAddingBreed, setIsAddingBreed] = useState(false);
   const [isAttributeDialogOpen, setIsAttributeDialogOpen] = useState(false);
   const [newAttributeName, setNewAttributeName] = useState('');
+  const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const variantImageMap = useRef({})
 
   const form = useForm({
@@ -222,7 +223,32 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     },
   });
 
+  const validateSalePrice = (salePrice, price, context) => {
+    if (salePrice && price && Number(salePrice) > Number(price)) {
+      toast.warning('Sale price cannot be greater than the regular price');
+      return false;
+    }
+    return true;
+  };
+
   const onSubmit = (data) => {
+    // Validate main product price vs sale price
+    if (data.salePrice && !validateSalePrice(data.salePrice, data.price)) {
+      return;
+    }
+
+    // Validate variant prices
+    const hasInvalidVariant = data.variants.some(variant => {
+      if (variant.salePrice && !validateSalePrice(variant.salePrice, variant.price)) {
+        return true;
+      }
+      return false;
+    });
+
+    if (hasInvalidVariant) {
+      return;
+    }
+
     mutation.mutate(data);
   };
 
@@ -293,6 +319,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   type="number"
                   placeholder="Enter sale price"
                   {...field}
+                  onBlur={(e) => {
+                    const price = form.getValues('price');
+                    if (e.target.value && price && Number(e.target.value) > Number(price)) {
+                      toast.warning('Sale price cannot be greater than the regular price');
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -553,7 +585,16 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     <FormItem>
                       <FormLabel>Sale Price</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onBlur={(e) => {
+                            const price = form.getValues(`variants.${index}.price`);
+                            if (e.target.value && price && Number(e.target.value) > Number(price)) {
+                              toast.warning('Variant sale price cannot be greater than the variant price');
+                            }
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -586,98 +627,98 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   )}
                 />
 
-<FormField
-  name={`variants.${index}.attributes`}
-  control={form.control}
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Attributes</FormLabel>
-      {Object.entries(field.value || {}).map(([key, value], idx) => (
-        <div className="flex gap-2 mb-2" key={idx}>
-          <Input placeholder="Key" value={key} disabled />
-          <Input
-            placeholder="Value"
-            defaultValue={value}
-            onChange={(e) => {
-              const newAttributes = {
-                ...(field.value || {}),
-              };
-              newAttributes[key] = e.target.value;
-              field.onChange(newAttributes);
-            }}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              const newAttributes = {
-                ...(field.value || {}),
-              };
-              delete newAttributes[key];
-              field.onChange(newAttributes);
-            }}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
+                <FormField
+                  name={`variants.${index}.attributes`}
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Attributes</FormLabel>
+                      {Object.entries(field.value || {}).map(([key, value], idx) => (
+                        <div className="flex gap-2 mb-2" key={idx}>
+                          <Input placeholder="Key" value={key} disabled />
+                          <Input
+                            placeholder="Value"
+                            defaultValue={value}
+                            onChange={(e) => {
+                              const newAttributes = {
+                                ...(field.value || {}),
+                              };
+                              newAttributes[key] = e.target.value;
+                              field.onChange(newAttributes);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                              const newAttributes = {
+                                ...(field.value || {}),
+                              };
+                              delete newAttributes[key];
+                              field.onChange(newAttributes);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
 
-      <Dialog 
-        open={isAttributeDialogOpen === index} 
-        onOpenChange={(open) => setIsAttributeDialogOpen(open ? index : false)}
-      >
-        <DialogTrigger asChild>
-          <Button type="button" variant="outline">
-            Add Attribute
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Attribute</DialogTitle>
-            <DialogDescription>
-              Enter the name of the new attribute for variant {index + 1}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="Attribute name"
-              value={newAttributeName}
-              onChange={(e) => setNewAttributeName(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setNewAttributeName('');
-                setIsAttributeDialogOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                if (newAttributeName.trim()) {
-                  const newAttributes = {
-                    ...(field.value || {}),
-                  };
-                  newAttributes[newAttributeName.trim()] = "";
-                  field.onChange(newAttributes);
-                  setNewAttributeName('');
-                  setIsAttributeDialogOpen(false);
-                }
-              }}
-            >
-              Add
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </FormItem>
-  )}
-/>
+                      <Dialog
+                        open={isAttributeDialogOpen === index}
+                        onOpenChange={(open) => setIsAttributeDialogOpen(open ? index : false)}
+                      >
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline">
+                            Add Attribute
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add New Attribute</DialogTitle>
+                            <DialogDescription>
+                              Enter the name of the new attribute for variant {index + 1}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <Input
+                              placeholder="Attribute name"
+                              value={newAttributeName}
+                              onChange={(e) => setNewAttributeName(e.target.value)}
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setNewAttributeName('');
+                                setIsAttributeDialogOpen(false);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                if (newAttributeName.trim()) {
+                                  const newAttributes = {
+                                    ...(field.value || {}),
+                                  };
+                                  newAttributes[newAttributeName.trim()] = "";
+                                  field.onChange(newAttributes);
+                                  setNewAttributeName('');
+                                  setIsAttributeDialogOpen(false);
+                                }
+                              }}
+                            >
+                              Add
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   name={`variants.${index}.images`}
@@ -737,7 +778,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 stock: 0,
                 weight: "",
                 isActive: false,
-                attributes: {}, 
+                attributes: {},
               })
             }
           >
