@@ -53,6 +53,7 @@ const imageArrayValidator = z
   });
 
 const VariantSchema = z.object({
+  sku: z.string().min(1, "SKU is required"),
   price: z.coerce.number().positive("Price must be positive"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative().optional(),
@@ -106,9 +107,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       isNewleyLaunched: initialData?.isNewleyLaunched || false,
       isAddToCart: initialData?.isAddToCart || false,
       price: initialData?.price || 0,
+      salePrice: initialData?.salePrice || 0,
       images: [],
       variants: initialData?.variants || [
-        { price: 0, salePrice: 0, stock: 0, weight: "", isActive: false, attributes: {} }
+        { sku: "", price: 0, salePrice: 0, stock: 0, weight: "", isActive: false, attributes: {} }
       ],
     },
   });
@@ -170,6 +172,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("categoryId", data.categoryId);
       payload.append("subCategoryId", data.subCategoryId);
       payload.append("price", data.price);
+      payload.append("salePrice", data.salePrice);
       payload.append("brandId", data.brandId);
       payload.append("isAddToCart", data.isAddToCart);
       payload.append("isBestSeller", data.isBestSeller);
@@ -566,6 +569,19 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             >
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <FormField
+                  name={`variants.${index}.sku`}
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SKU</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
                   name={`variants.${index}.price`}
                   control={form.control}
                   render={({ field }) => (
@@ -773,6 +789,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             type="button"
             onClick={() =>
               append({
+                sku: "",
                 price: 0,
                 salePrice: 0,
                 stock: 0,
