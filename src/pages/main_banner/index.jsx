@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Image as ImageIcon, Edit, Trash2, Eye } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fetchBanners } from "./helpers/fetchBanners";
+import { toast } from 'sonner';
 
 const Banners = () => {
   const navigate = useNavigate();
@@ -21,6 +22,10 @@ const Banners = () => {
   const [error, setError] = useState(null);
 
   const onAdd = () => {
+    if(banners.length === 1){
+      toast.error("Single banner is allowed");
+      return;
+    }
     navigate("/dashboard/banners/add");
   };
 
@@ -133,7 +138,7 @@ const Banners = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="web">Web</SelectItem>
-                {/* <SelectItem value="mobile">Mobile</SelectItem> */}
+                <SelectItem value="mobile">Mobile</SelectItem> 
                 <SelectItem value="app">App</SelectItem>
                 <SelectItem value="tablet">Tablet</SelectItem>
               </SelectContent>
