@@ -12,11 +12,23 @@ import { Plus, ExternalLink, Image as ImageIcon, Edit, Trash2, Eye } from "lucid
 import { format, formatDistanceToNow } from "date-fns";
 import { fetchSliders } from "./helpers/fetchSliders";
 import { deleteSlider } from "./helpers/deleteSlider";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const Sliders = () => {
   const navigate = useNavigate();
-  
+
   const [sliders, setSliders] = useState(null);
+  const [sliderToDelete, setSliderToDelete] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedType, setSelectedType] = useState("web");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,10 +48,10 @@ const Sliders = () => {
   const loadSliders = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await fetchSliders(selectedType);
-      
+
       if (result.success) {
         console.log("Full API result:", result);
         console.log("Sliders data:", result.data.data);
@@ -156,7 +168,7 @@ const Sliders = () => {
               </SelectContent>
             </Select>
           </div>
-          
+
           <Button onClick={onAdd} className="ml-auto">
             <Plus className="h-4 w-4" />
             Add New Slider
@@ -189,7 +201,7 @@ const Sliders = () => {
                   </Badge>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="pt-0">
                 {/* Image */}
                 <div className="relative aspect-video mb-3 overflow-hidden rounded-lg bg-gray-100">
@@ -226,11 +238,14 @@ const Sliders = () => {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handleDeleteSlider(slider)}
+                        onClick={() => {
+                          setSliderToDelete(slider);
+                          setOpenDeleteDialog(true);
+                        }}
                         className="bg-white/90 hover:bg-white cursor-pointer"
                       >
                         <Trash2 className="h-3 w-3 text-red-500" />
-                      </Button> 
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -271,7 +286,7 @@ const Sliders = () => {
                 No sliders found
               </Typography>
               <Typography variant="small" className="text-gray-500 mb-4">
-                {selectedType !== "web" 
+                {selectedType !== "web"
                   ? `No sliders found for type "${selectedType}"`
                   : "Get started by adding your first slider"
                 }
@@ -284,6 +299,41 @@ const Sliders = () => {
           </Card>
         )}
       </div>
+      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Slider</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this slider image? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpenDeleteDialog(false);
+                setSliderToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (sliderToDelete) {
+                  await deleteSlider({ id: sliderToDelete._id });
+                  setOpenDeleteDialog(false);
+                  setSliderToDelete(null);
+                  loadSliders(); // refresh after delete
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
