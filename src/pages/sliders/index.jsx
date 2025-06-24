@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Image as ImageIcon, Edit, Trash2, Eye } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fetchSliders } from "./helpers/fetchSliders";
+import { deleteSlider } from "./helpers/deleteSlider";
 
 const Sliders = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const Sliders = () => {
       if (result.success) {
         console.log("Full API result:", result);
         console.log("Sliders data:", result.data.data);
-        console.log("Images array:", result.data.data?.images);
+        // console.log("Images array:", result.data.data?.images);
         setSliders(result.data.data);
       } else {
         setError(result.message);
@@ -56,11 +57,12 @@ const Sliders = () => {
   };
 
   useEffect(() => {
+    setSliders(null);
     loadSliders();
   }, [selectedType]);
 
   // Since the API handles type filtering, we just use the images directly
-  const filteredSliders = sliders?.images || [];
+  // const filteredSliders = sliders?.images || [];
 
   const getTypeBadgeColor = (type) => {
     switch (type) {
@@ -79,6 +81,11 @@ const Sliders = () => {
 
   const handleEditSlider = (slider) => {
     navigate(`/dashboard/sliders/edit/${slider._id}`);
+  };
+
+  const handleDeleteSlider = (slider) => {
+    deleteSlider({ id: slider._id });
+    loadSliders();
   };
 
   const handleViewSlider = (slider) => {
@@ -170,7 +177,7 @@ const Sliders = () => {
 
         {/* Sliders Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredSliders.map((slider) => (
+          {Array.isArray(sliders) && sliders.map((slider) => (
             <Card key={slider._id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
@@ -204,7 +211,7 @@ const Sliders = () => {
                         size="sm"
                         variant="secondary"
                         onClick={() => handleViewSlider(slider)}
-                        className="bg-white/90 hover:bg-white"
+                        className="bg-white/90 hover:bg-white cursor-pointer"
                       >
                         <Eye className="h-3 w-3" />
                       </Button>
@@ -212,10 +219,18 @@ const Sliders = () => {
                         size="sm"
                         variant="secondary"
                         onClick={() => handleEditSlider(slider)}
-                        className="bg-white/90 hover:bg-white"
+                        className="bg-white/90 hover:bg-white cursor-pointer"
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleDeleteSlider(slider)}
+                        className="bg-white/90 hover:bg-white cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3 text-red-500" />
+                      </Button> 
                     </div>
                   </div>
                 </div>
@@ -232,14 +247,14 @@ const Sliders = () => {
                 <div className="flex items-center gap-2">
                   <ImageIcon className="h-3 w-3 text-gray-500" />
                   <Typography variant="small" className="text-gray-500">
-                    Created {format(new Date(sliders?.createdAt), "dd/MM/yyyy")}
+                    {slider.createdAt ? "Created " + format(new Date(sliders?.createdAt), "dd/MM/yyyy") : "N/A"}
                   </Typography>
                 </div>
 
                 {/* Updated Date (if different from created) */}
-                {sliders?.updatedAt !== sliders?.createdAt && (
+                {slider?.updatedAt !== slider?.createdAt && (
                   <Typography variant="small" className="text-gray-400 mt-1">
-                    Updated {formatDistanceToNow(new Date(sliders?.updatedAt), { addSuffix: true })}
+                    Updated {formatDistanceToNow(new Date(slider?.updatedAt), { addSuffix: true })}
                   </Typography>
                 )}
               </CardContent>
@@ -248,7 +263,7 @@ const Sliders = () => {
         </div>
 
         {/* Empty State */}
-        {filteredSliders.length === 0 && !isLoading && (
+        {Array.isArray(sliders) && sliders.length === 0 && !isLoading && (
           <Card className="text-center py-12">
             <CardContent>
               <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />

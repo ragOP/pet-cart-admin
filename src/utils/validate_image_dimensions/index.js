@@ -14,6 +14,11 @@ const dimensionMap = {
     'short-horizontal': { width: 144, height: 80 },
     'short-vertical': { width: 120, height: 98 },
   },
+  mobile: {
+    horizontal: { width: 343, height: 120 },
+    'short-horizontal': { width: 144, height: 80 },
+    'short-vertical': { width: 120, height: 98 },
+  },
 };
 
 export const validateImageDimensions = (file, deviceType, bannerType) => {

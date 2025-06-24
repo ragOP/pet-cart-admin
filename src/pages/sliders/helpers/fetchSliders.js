@@ -11,7 +11,7 @@ export const fetchSliders = async (type = null) => {
     }
 
     const apiResponse = await apiService({
-      endpoint: endpoints.sliders,
+      endpoint: "api/sliders/admin/slider",
       method: "GET",
       params,
     });
@@ -23,10 +23,11 @@ export const fetchSliders = async (type = null) => {
         message: apiResponse.response.message,
       };
     } else {
+      console.log(apiResponse);
       return {
         success: false,
         data: null,
-        message: apiResponse?.response?.message || "Failed to fetch sliders",
+        message: apiResponse?.response?.data?.message || "Failed to fetch sliders",
       };
     }
   } catch (error) {
