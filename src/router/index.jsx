@@ -96,7 +96,7 @@ const Router = () => {
 
           <Route path="cat-life-banner" element={<CatLifeBanners />} />
           <Route path="cat-life-banner/add" element={<CatLifeBannerEditor />} />
-          <Route path="cat-life-banner/edit/:selectedType" element={<CatLifeBannerEditor />} />
+          <Route path="cat-life-banner/edit/:id" element={<CatLifeBannerEditor />} />
 
         </Route>
 

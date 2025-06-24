@@ -22,15 +22,15 @@ export const updateCatLifeBanner = async ({ id, formData }) => {
       return {
         success: false,
         data: null,
-        message: apiResponse?.response?.message || "Failed to update slider",
+        message: apiResponse?.response?.message || "Failed to update Cat Life Banner",
       };
     }
   } catch (error) {
-    console.error("Error updating slider:", error);
+    console.error("Error updating Cat Life Banner:", error);
     return {
       success: false,
       data: null,
-      message: "Failed to update slider",
+      message: "Failed to update Cat Life Banner",
       error: error,
     };
   }

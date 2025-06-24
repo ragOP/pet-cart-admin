@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
 import { updateCatLifeBanner } from "../../../helpers/updateCatLifeBanner";
@@ -130,7 +129,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
       if (result.success) {
         toast.success("CatLifeBanner updated successfully");
         queryClient.invalidateQueries(["catLifeBanners"]);
-        navigate("/dashboard/catLifeBanners");
+        navigate("/dashboard/cat-life-banner");
       } else {
         toast.error(result.message || "Failed to update catLifeBanner");
       }
@@ -150,7 +149,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
       if (result.success) {
         toast.success("CatLifeBanner created successfully");
         queryClient.invalidateQueries(["catLifeBanners"]);
-        navigate("/dashboard/catLifeBanners");
+        navigate("/dashboard/cat-life-banner");
       } else {
         toast.error(result.message || "Failed to create catLifeBanner");
       }
@@ -201,15 +200,15 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
       const submitFormData = new FormData();
 
       // Add form fields
-      submitFormData.append("type", formData.type);
       submitFormData.append("isActive", formData.isActive.toString());
 
       // console.log(formData.link);
       submitFormData.append("link", link);
+      submitFormData.append("title", formData.title);
 
       // Add image if selected
       if (selectedFile) {
-        submitFormData.append("images", selectedFile);
+        submitFormData.append("image", selectedFile);
       }
 
       if (isEdit) {
@@ -237,20 +236,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     return link;
   };
 
-  const getTypeBadgeColor = (type) => {
-    switch (type) {
-      case "web":
-        return "bg-blue-100 text-blue-700";
-      case "mobile":
-        return "bg-green-100 text-green-700";
-      case "app":
-        return "bg-purple-100 text-purple-700";
-      case "tablet":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -262,11 +248,11 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
             </CardTitle>
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard/catLifeBanners")}
+              onClick={() => navigate("/dashboard/cat-life-banner")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to CatLifeBanners
+              Back to Cat Life Banners
             </Button>
           </div>
         </CardHeader>
@@ -276,7 +262,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
             {/* Image Upload Section */}
             <div className="space-y-4">
               <Label htmlFor="image-upload" className="text-base font-medium">
-                CatLifeBanner Image
+                Cat Life Banner Image
               </Label>
 
               <div className="space-y-4">
@@ -341,30 +327,17 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
               </div>
             </div>
 
-            {/* Type Selection */}
+            {/* Title Input */}
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-base font-medium">
-                Type
+              <Label htmlFor="title" className="text-base font-medium">
+                Title
               </Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => handleInputChange("type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="web">Web</SelectItem>
-                  <SelectItem value="mobile">Mobile</SelectItem>
-                  <SelectItem value="app">App</SelectItem>
-                  <SelectItem value="tablet">Tablet</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2">
-                <Badge className={getTypeBadgeColor(formData.type)}>
-                  {formData.type}
-                </Badge>
-              </div>
+              <Input
+                id="title"
+                placeholder="Enter banner title"
+                value={formData.title}
+                onChange={(e) => handleInputChange("title", e.target.value)}
+              />
             </div>
 
             {/* Category Selection */}
@@ -418,21 +391,6 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Link Input */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="link" className="text-base font-medium">
-                Link URL
-              </Label>
-              <Input
-                id="link"
-                type="url"
-                placeholder="https://example.com"
-                value={formData.link}
-                onChange={(e) => handleInputChange("link", e.target.value)}
-                disabled
-              />
-            </div> */}
 
             {/* Active Status */}
             <div className="flex items-center justify-between">

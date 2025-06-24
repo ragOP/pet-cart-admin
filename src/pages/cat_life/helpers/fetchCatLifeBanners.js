@@ -26,15 +26,15 @@ export const fetchCatLifeBanners = async (type = null) => {
       return {
         success: false,
         data: null,
-        message: apiResponse?.response?.message || "Failed to fetch sliders",
+        message: apiResponse?.response?.message || "Failed to fetch Cat Life Banner",
       };
     }
   } catch (error) {
-    console.error("Error fetching sliders:", error);
+    console.error("Error fetching Cat Life Banner:", error);
     return {
       success: false,
       data: null,
-      message: "Failed to fetch sliders",
+      message: "Failed to fetch Cat Life Banner",
       error: error,
     };
   }

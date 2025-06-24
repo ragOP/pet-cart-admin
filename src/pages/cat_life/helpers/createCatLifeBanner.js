@@ -4,7 +4,7 @@ import { endpoints } from "@/api/endpoint";
 export const createCatLifeBanner = async ({ formData }) => {
   try {
     const apiResponse = await apiService({
-      endpoint: `${endpoints.createCatLifeBanner}/create`,
+      endpoint: `${endpoints.cat_life_banner}/create`,
       method: "POST",
       data: formData,
       headers: {
@@ -22,15 +22,15 @@ export const createCatLifeBanner = async ({ formData }) => {
       return {
         success: false,
         data: null,
-        message: apiResponse?.response?.message || "Failed to create slider",
+        message: apiResponse?.response?.message || "Failed to create Cat Life Banner",
       };
     }
   } catch (error) {
-    console.error("Error creating slider:", error);
+    console.error("Error creating Cat Life Banner:", error);
     return {
       success: false,
       data: null,
-      message: "Failed to create slider",
+      message: "Failed to create Cat Life Banner",
       error: error,
     };
   }

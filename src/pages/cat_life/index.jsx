@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Image as ImageIcon, Edit, Trash2, Eye } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fetchCatLifeBanners } from "./helpers/fetchCatLifeBanners";
+import { toast } from 'sonner';
 
 const CatLifeBanners = () => {
   const navigate = useNavigate();
@@ -21,7 +22,11 @@ const CatLifeBanners = () => {
   const [error, setError] = useState(null);
 
   const onAdd = () => {
-    navigate("/dashboard/catLifeBanners/add");
+    if(catLifeBanners?.length === 3){
+      toast.error("Only 3 banners are allowed");
+      return;
+    }
+    navigate("/dashboard/cat-life-banner/add");
   };
 
   const breadcrumbs = [{ title: "CatLifeBanners", isNavigation: false }];
@@ -63,7 +68,7 @@ const CatLifeBanners = () => {
   // const filteredCatLifeBanners = catLifeBanners?.images || [];
 
   const handleEditCatLifeBanner = (catLifeBanner) => {
-    navigate(`/dashboard/catLifeBanners/edit/${catLifeBanner._id}`);
+    navigate(`/dashboard/cat-life-banner/edit/${catLifeBanner._id}`);
   };
 
   const handleViewCatLifeBanner = (catLifeBanner) => {

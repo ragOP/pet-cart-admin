@@ -18,15 +18,15 @@ export const getCatLifeBannerById = async ({ id }) => {
       return {
         success: false,
         data: null,
-        message: apiResponse?.response?.message || "Failed to fetch slider",
+        message: apiResponse?.response?.message || "Failed to fetch Cat Life Banner",
       };
     }
   } catch (error) {
-    console.error("Error fetching slider:", error);
+    console.error("Error fetching Cat Life Banner:", error);
     return {
       success: false,
       data: null,
-      message: "Failed to fetch slider",
+      message: "Failed to fetch Cat Life Banner",
       error: error,
     };
   }

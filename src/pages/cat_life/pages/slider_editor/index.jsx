@@ -6,7 +6,7 @@ import { CustomSpinner } from "@/components/loaders/CustomSpinner";
 import { getCatLifeBannerById } from "../../helpers/getCatLifeBannerById";
 
 const CatLifeBannerEditor = () => {
-  const { id } = useParams();
+  const { id } = useParams(); 
 
   const { data: initialDataRes, isLoading } = useQuery({
     queryKey: ["catLifeBanner", id],
@@ -19,7 +19,7 @@ const CatLifeBannerEditor = () => {
     {
       title: "CatLifeBanners",
       isNavigation: true,
-      path: "/dashboard/catLifeBanners",
+      path: "/dashboard/cat-life-banner",
     },
     { title: id ? "Edit CatLifeBanner" : "Add CatLifeBanner", isNavigation: false },
   ];
