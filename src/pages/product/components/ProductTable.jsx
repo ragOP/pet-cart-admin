@@ -57,7 +57,7 @@ const ProductsTable = ({ setProductLength, params, setParams }) => {
   };
 
   const onEditProduct = (row) => {
-    navigate(`/dashboard/products/edit/${row._id}`);
+    navigate(`/dashboard/product/edit/${row._id}`);
   };
 
   useEffect(() => {

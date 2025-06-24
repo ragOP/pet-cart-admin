@@ -93,27 +93,63 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const variantImageMap = useRef({})
 
+  // Process initial data for the form
+  const getDefaultValues = () => {
+    if (!initialData) {
+      return {
+        title: "",
+        description: "",
+        categoryId: "",
+        subCategoryId: "",
+        brandId: "",
+        breedIds: [],
+        isBestSeller: false,
+        isEverydayEssential: false,
+        isNewleyLaunched: false,
+        isAddToCart: false,
+        price: 0,
+        salePrice: 0,
+        images: [],
+        variants: [
+          { price: 0, salePrice: 0, stock: 0, weight: "", isActive: true, attributes: {} }
+        ]
+      };
+    }
+
+    return {
+      title: initialData.title || "",
+      description: initialData.description || "",
+      categoryId: initialData.categoryId?._id || "",
+      subCategoryId: initialData.subCategoryId?._id || "",
+      brandId: initialData.brandId?._id || "",
+      breedIds: initialData.breedId?.map(breed => breed._id) || [],
+      isBestSeller: initialData.isBestSeller || false,
+      isEverydayEssential: initialData.isEverydayEssential || false,
+      isNewleyLaunched: initialData.newleyLaunched || false,
+      isAddToCart: initialData.isAddToCart || false,
+      price: initialData.price || 0,
+      salePrice: initialData.salePrice || 0,
+      images: [],
+      variants: initialData.variants?.length > 0 
+        ? initialData.variants.map(variant => ({
+            ...variant,
+            images: []
+          }))
+        : [{ price: 0, salePrice: 0, stock: 0, weight: "", isActive: true, attributes: {} }]
+    };
+  };
+
   const form = useForm({
     resolver: zodResolver(ProductFormSchema),
-    defaultValues: {
-      title: initialData?.title || "",
-      description: initialData?.description || "",
-      categoryId: initialData?.categoryId || "",
-      subCategoryId: initialData?.subCategoryId || "",
-      brandId: initialData?.brandId || "",
-      breedIds: initialData?.breedIds || [],
-      isBestSeller: initialData?.isBestSeller || false,
-      isEverydayEssential: initialData?.isEverydayEssential || false,
-      isNewleyLaunched: initialData?.isNewleyLaunched || false,
-      isAddToCart: initialData?.isAddToCart || false,
-      price: initialData?.price || 0,
-      salePrice: initialData?.salePrice || 0,
-      images: [],
-      variants: initialData?.variants || [
-        { sku: "", price: 0, salePrice: 0, stock: 0, weight: "", isActive: false, attributes: {} }
-      ],
-    },
+    defaultValues: getDefaultValues()
   });
+
+  // Set category ID when initial data changes
+  useEffect(() => {
+    if (initialData?.categoryId?._id) {
+      setSelectedCategoryId(initialData.categoryId._id);
+    }
+  }, [initialData]);
 
   const { fields: variantFields, append, remove } = useFieldArray({
     control: form.control,
@@ -147,19 +183,56 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const breeds = breedListRes?.data || [];
   const brands = brandListRes?.data || [];
 
+  // Handle image and variant image loading
   useEffect(() => {
-    if (isEdit && initialData?.images?.length > 0) {
-      const convertImages = async () => {
-        const files = await Promise.all(
-          initialData.images.map((img, index) =>
-            urlToFile(img, `product_image_${index}.jpg`)
-          )
-        );
-        setImageFiles(files);
-        form.setValue("images", files);
-      };
-      convertImages();
-    }
+    const loadImages = async () => {
+      if (!isEdit || !initialData) return;
+
+      try {
+        // Load main product images
+        if (initialData.images?.length > 0) {
+          const files = await Promise.all(
+            initialData.images.map((img, index) =>
+              urlToFile(img, `product_image_${index}.jpg`)
+            )
+          );
+          setImageFiles(files);
+          form.setValue("images", files);
+        }
+
+        // Load variant images
+        if (initialData.variants?.length > 0) {
+          const variantImagesMap = {};
+          
+          for (let i = 0; i < initialData.variants.length; i++) {
+            const variant = initialData.variants[i];
+            if (variant.images?.length > 0) {
+              try {
+                const files = await Promise.all(
+                  variant.images.map((img, imgIndex) =>
+                    urlToFile(img, `variant_${i}_image_${imgIndex}.jpg`)
+                  )
+                );
+                variantImagesMap[i] = files;
+                
+                // Update variant images in form
+                form.setValue(`variants.${i}.images`, files);
+              } catch (error) {
+                console.error(`Error loading variant ${i} images:`, error);
+              }
+            }
+          }
+          
+          if (Object.keys(variantImagesMap).length > 0) {
+            variantImageMap.current = variantImagesMap;
+          }
+        }
+      } catch (error) {
+        console.error("Error loading images:", error);
+      }
+    };
+
+    loadImages();
   }, [isEdit, initialData, form]);
 
   const mutation = useMutation({
@@ -262,6 +335,37 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     form.setValue("images", newFiles);
   };
 
+  const handleVariantImageUpload = (e, variantIndex) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const validFiles = files.filter((file) =>
+      allowedTypes.includes(file.type)
+    );
+
+    if (validFiles.length === 0) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    // Update variant images in the form
+    const currentVariantImages = form.getValues(`variants.${variantIndex}.images`) || [];
+    const newVariantImages = [...currentVariantImages, ...validFiles];
+    
+    // Update form with new images
+    form.setValue(`variants.${variantIndex}.images`, newVariantImages);
+
+    // Update variant image map for preview
+    const currentVariantImagesMap = variantImageMap.current[variantIndex] || [];
+    variantImageMap.current = {
+      ...variantImageMap.current,
+      [variantIndex]: [...currentVariantImagesMap, ...validFiles]
+    };
+
+    // Trigger form validation
+    form.trigger(`variants.${variantIndex}.images`);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -346,10 +450,15 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 <select
                   {...field}
                   onChange={(e) => {
-                    const selected = e.target.value;
-                    setSelectedCategoryId(selected);
-                    form.setValue("categoryId", selected);
-                    form.setValue("subCategoryId", "");
+                    const handleCategoryChange = (value) => {
+                      setSelectedCategoryId(value);
+                      form.setValue("categoryId", value);
+                      form.setValue("subCategoryId", ""); // Reset subcategory when category changes
+                      
+                      // Clear variant images when category changes
+                      variantImageMap.current = {};
+                    };
+                    handleCategoryChange(e.target.value);
                   }}
                   className="w-full border rounded px-3 py-2 text-sm text-gray-700"
                 >
@@ -564,7 +673,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           </FormLabel>
           {variantFields.map((variant, index) => (
             <div
-              key={variant.id}
+              key={variant._id}
               className="border p-4 rounded space-y-2 relative"
             >
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
