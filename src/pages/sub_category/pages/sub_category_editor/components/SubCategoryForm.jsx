@@ -70,7 +70,7 @@ const CategoryForm = ({ isEdit = false, initialData }) => {
     queryFn: fetchCategories,
   });
 
-  const categories = categoryListRes?.categories || [];
+  const categories = categoryListRes?.data?.categories || [];
   console.log(categories);
 
   useEffect(() => {
@@ -95,7 +95,11 @@ const CategoryForm = ({ isEdit = false, initialData }) => {
       payload.append("categoryId", formData.categoryId);
 
       if (!imageRemoved && imageFile instanceof File) {
-        payload.append("images", imageFile);
+        if (isEdit) {
+          payload.append("image", imageFile);
+        } else {
+          payload.append("images", imageFile);
+        }
       }
 
       if (isEdit) {

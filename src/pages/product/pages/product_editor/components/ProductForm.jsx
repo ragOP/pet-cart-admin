@@ -38,6 +38,7 @@ import { slugify } from "@/utils/convert_to_slug";
 import { Switch } from "@/components/ui/switch";
 import MultiSelectBreeds from "./MultiSelectBreeds";
 import { Checkbox } from "@/components/ui/checkbox";
+import ProductImage from "./ProductImage";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
 
@@ -178,7 +179,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     queryFn: fetchBrands
   });
 
-  const categories = categoryListRes?.categories || [];
+  const categories = categoryListRes?.data?.categories || [];
   const subCategories = subCategoryListRes?.data || [];
   const breeds = breedListRes?.data || [];
   const brands = brandListRes?.data || [];
@@ -650,8 +651,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           <div className="flex flex-wrap gap-4 mt-4">
             {imageFiles.map((file, index) => (
               <div key={index} className="relative">
-                <img
-                  src={file instanceof File ? URL.createObjectURL(file) : file}
+                <ProductImage
+                  image={file instanceof File ? URL.createObjectURL(file) : file}
                   alt={`preview-${index}`}
                   className="w-32 h-32 object-cover rounded"
                 />

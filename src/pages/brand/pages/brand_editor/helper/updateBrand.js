@@ -5,7 +5,7 @@ export const updateBrand = async ({ id, payload }) => {
   try {
     const response = await apiService({
       endpoint: `${endpoints.brand}/${id}`,
-      method: "PATCH",
+      method: "PUT",
       data: payload,
     });
 

@@ -5,7 +5,7 @@ export const updateSubCategory = async ({ id, payload }) => {
   try {
     const response = await apiService({
       endpoint: `${endpoints.sub_category}/${id}`,
-      method: "PATCH",
+      method: "PUT",
       data: payload,
     });
 

@@ -4,8 +4,8 @@ import { endpoints } from "@/api/endpoint";
 export const updateBreed = async ({ id, payload }) => {
   try {
     const response = await apiService({
-      endpoint: `${endpoints.sub_category}/${id}`,
-      method: "PATCH",
+      endpoint: `${endpoints.breed}/${id}`,
+      method: "PUT",
       data: payload,
     });
 

@@ -34,11 +34,11 @@ const BrandFormSchema = z.object({
       (files) => {
         if (!files || files.length === 0) return true; // Skip if no file (optional)
         const file = files[0];
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
         return allowedTypes.includes(file.type);
       },
       {
-        message: "Only JPG, JPEG, PNG, or GIF images are allowed",
+        message: "Only JPG, JPEG, PNG, GIF, or WEBP images are allowed",
       }
     ),
   active: z.boolean().default(true),
@@ -83,7 +83,11 @@ const BrandForm = ({ isEdit = false, initialData }) => {
       payload.append("active", formData.active);
 
       if (!logoRemoved && logoFile instanceof File) {
-        payload.append("images", logoFile);
+        if (isEdit) {
+          payload.append("image", logoFile);
+        } else {
+          payload.append("images", logoFile);
+        }
       }
 
       if (isEdit) {
