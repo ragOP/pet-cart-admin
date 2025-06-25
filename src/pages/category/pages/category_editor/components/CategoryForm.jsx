@@ -87,11 +87,7 @@ const CategoryForm = ({ isEdit = false, initialData }) => {
       payload.append("description", formData.description);
 
       if (!imageRemoved && imageFile instanceof File) {
-        if (isEdit) {
-          payload.append("image", imageFile);
-        } else {
-          payload.append("images", imageFile);
-        }
+        payload.append("images", imageFile);
       }
 
       if (isEdit) {

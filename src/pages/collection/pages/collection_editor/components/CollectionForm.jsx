@@ -104,7 +104,15 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       payload.append("slug", slugify(formData.name));
       payload.append("description", formData.description);
       payload.append("subCategoryId", formData.subCategoryId);
-      payload.append("productsIds", JSON.stringify(formData.productsIds));
+      // console.log(formData.productsIds);
+      // payload.append("productIds", Array.from(formData.productsIds));
+      if (formData.productsIds.length > 0) {
+        formData.productsIds.forEach((id) => {
+          payload.append("productIds", id);
+        });
+      } else {
+        payload.append("productIds", []);
+      }
 
       if (!imageRemoved && imageFile instanceof File) {
         payload.append("images", imageFile);

@@ -67,30 +67,30 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
     setCollectionLength(total);
   }, [collections]);
 
-  useEffect(() => {
-    const fetchSubCategories = async () => {
-      const enriched = await Promise.all(
-        collections.map(async (col) => {
-          try {
-            const res = await getSubCategoryById({ id: col.subCategoryId });
-            console.log(res?.response?.data)
-            return {
-              ...col,
-              subCategoryName: res?.response?.data?.name || "Unknown",
-            };
-          } catch (e) {
-            return {
-              ...col,
-              subCategoryName: "Unknown",
-            };
-          }
-        })
-      );
-      setCollectionsWithSubCategory(enriched);
-    };
+  // useEffect(() => {
+  //   const fetchSubCategories = async () => {
+  //     const enriched = await Promise.all(
+  //       collections.map(async (col) => {
+  //         try {
+  //           const res = await getSubCategoryById({ id: col.subCategoryId });
+  //           console.log(res?.response?.data)
+  //           return {
+  //             ...col,
+  //             subCategoryName: res?.response?.data?.name || "Unknown",
+  //           };
+  //         } catch (e) {
+  //           return {
+  //             ...col,
+  //             subCategoryName: "Unknown",
+  //           };
+  //         }
+  //       })
+  //     );
+  //     setCollectionsWithSubCategory(enriched);
+  //   };
 
-    if (collections.length > 0) fetchSubCategories();
-  }, [collections]);
+  //   if (collections.length > 0) fetchSubCategories();
+  // }, [collections]);
 
   const columns = [
     {
@@ -120,15 +120,15 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
         </div>
       ),
     },
-    {
-      key: "subCategoryId",
-      label: "Sub Category",
-      render: (value, row) => (
-        <Typography className="text-sm text-gray-700">
-          {row?.subCategoryName || "Unknown"}
-        </Typography>
-      ),
-    },
+    // {
+    //   key: "subCategoryId",
+    //   label: "Sub Category",
+    //   render: (value, row) => (
+    //     <Typography className="text-sm text-gray-700">
+    //       {row?.subCategoryName || "Unknown"}
+    //     </Typography>
+    //   ),
+    // },
     {
       key: "description",
       label: "Description",
@@ -205,7 +205,7 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
     <>
       <CustomTable
         columns={columns}
-        data={collectionsWithSubCategory}
+        data={collections}
         isLoading={isLoading}
         error={error}
         emptyStateMessage="No collections found"

@@ -68,30 +68,30 @@ const SubCategoriesTable = ({ setSubCategoryLength, params, setParams }) => {
   }, [subCategories]);
 
   // 🔄 Fetch category names by ID after subCategories change
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const enriched = await Promise.all(
-        subCategories.map(async (sub) => {
-          try {
-            const res = await fetchCategoryById({ id: sub.categoryId });
-            console.log(res);
-            return {
-              ...sub,
-              categoryName: res?.name || "Unknown",
-            };
-          } catch (e) {
-            return {
-              ...sub,
-              categoryName: "Unknown",
-            };
-          }
-        })
-      );
-      setSubCategoriesWithCategory(enriched);
-    };
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     const enriched = await Promise.all(
+  //       subCategories.map(async (sub) => {
+  //         try {
+  //           const res = await fetchCategoryById({ id: sub.categoryId });
+  //           console.log(res);
+  //           return {
+  //             ...sub,
+  //             categoryName: res?.name || "Unknown",
+  //           };
+  //         } catch (e) {
+  //           return {
+  //             ...sub,
+  //             categoryName: "Unknown",
+  //           };
+  //         }
+  //       })
+  //     );
+  //     setSubCategoriesWithCategory(enriched);
+  //   };
 
-    if (subCategories.length > 0) fetchCategories();
-  }, [subCategories]);
+  //   if (subCategories.length > 0) fetchCategories();
+  // }, [subCategories]);
 
   const columns = [
     {
@@ -121,15 +121,15 @@ const SubCategoriesTable = ({ setSubCategoryLength, params, setParams }) => {
         </div>
       ),
     },
-    {
-      key: "categoryId",
-      label: "Parent Category",
-      render: (value, row) => (
-        <Typography className="text-sm text-gray-700">
-          {row?.categoryName || "Unknown"}
-        </Typography>
-      ),
-    },
+    // {
+    //   key: "categoryId",
+    //   label: "Parent Category",
+    //   render: (value, row) => (
+    //     <Typography className="text-sm text-gray-700">
+    //       {row?.categoryName || "Unknown"}
+    //     </Typography>
+    //   ),
+    // },
     {
       key: "dynamicFields",
       label: "Dynamic Fields",
@@ -213,7 +213,7 @@ const SubCategoriesTable = ({ setSubCategoryLength, params, setParams }) => {
     <>
       <CustomTable
         columns={columns}
-        data={subCategoriesWithCategory}
+        data={subCategories}
         isLoading={isLoading}
         error={error}
         emptyStateMessage="No sub categories found"

@@ -83,11 +83,7 @@ const BrandForm = ({ isEdit = false, initialData }) => {
       payload.append("active", formData.active);
 
       if (!logoRemoved && logoFile instanceof File) {
-        if (isEdit) {
-          payload.append("image", logoFile);
-        } else {
-          payload.append("images", logoFile);
-        }
+        payload.append("images", logoFile);
       }
 
       if (isEdit) {

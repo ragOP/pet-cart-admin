@@ -5,6 +5,7 @@ export const getCollectionById = async ({ id }) => {
   try {
     const apiResponse = await apiService({
       endpoint: `${endpoints.collection}/${id}`,
+      method: "GET",
     });
 
     if (apiResponse?.response?.success) {

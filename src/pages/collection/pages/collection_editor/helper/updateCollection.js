@@ -5,7 +5,7 @@ export const updateCollection = async ({ id, payload }) => {
   try {
     const response = await apiService({
       endpoint: `${endpoints.collection}/${id}`,
-      method: "PATCH",
+      method: "PUT",
       data: payload,
     });
 

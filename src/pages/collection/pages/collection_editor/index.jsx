@@ -3,7 +3,7 @@ import CollectionForm from "./components/CollectionForm";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CustomSpinner } from "@/components/loaders/CustomSpinner";
-import { getCollectionById } from "./helper/getSubCollectionById";
+import { getCollectionById } from "./helper/getCollectionById";
 
 const CollectionEditor = () => {
   const { id } = useParams();
@@ -13,7 +13,7 @@ const CollectionEditor = () => {
     queryFn: () => getCollectionById({ id }),
     enabled: !!id,
   });
-  const initialData = initialDataRes?.response?.data;
+  const initialData = initialDataRes?.data;
 
   const breadcrumbs = [
     {
