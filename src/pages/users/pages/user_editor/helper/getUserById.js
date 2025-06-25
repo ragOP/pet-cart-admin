@@ -4,10 +4,15 @@ import { endpoints } from "@/api/endpoint";
 export const getUserById = async ({ id }) => {
   try {
     const apiResponse = await apiService({
-      endpoint: `${endpoints.users}/${id}`,
+      endpoint: `${endpoints.users}/user/${id}`,
+      method: "GET",
     });
 
-    return apiResponse;
+    if (apiResponse?.response?.success) {
+      return apiResponse?.response?.data;
+    }
+
+    return null;
   } catch (error) {
     console.error(error);
   }

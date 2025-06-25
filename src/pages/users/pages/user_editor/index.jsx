@@ -13,7 +13,8 @@ const UserEditor = () => {
     queryFn: () => getUserById({ id }),
     enabled: !!id,
   });
-  const initialData = initialDataRes?.response?.data;
+
+  const initialData = initialDataRes?.data;
 
   const breadcrumbs = [
     {

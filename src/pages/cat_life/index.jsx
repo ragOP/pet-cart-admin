@@ -22,8 +22,8 @@ const CatLifeBanners = () => {
   const [error, setError] = useState(null);
 
   const onAdd = () => {
-    if(catLifeBanners?.length === 3){
-      toast.error("Only 3 banners are allowed");
+    if(catLifeBanners?.length === 4){
+      toast.error("Only 4 banners are allowed");
       return;
     }
     navigate("/dashboard/cat-life-banner/add");

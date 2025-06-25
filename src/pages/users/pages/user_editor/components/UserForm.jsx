@@ -51,6 +51,9 @@ const UserForm = ({ isEdit = false, initialData }) => {
       if (isEdit) {
         const payload = {
           role: data.role,
+          name: data.name,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
         };
         return await updateUser({ id: initialData._id, payload });
       } else {
@@ -88,7 +91,7 @@ const UserForm = ({ isEdit = false, initialData }) => {
                 <Input
                   placeholder="Enter user's full name"
                   {...field}
-                  disabled={isEdit}
+                  // disabled={isEdit}
                 />
               </FormControl>
               <FormMessage />
@@ -107,7 +110,7 @@ const UserForm = ({ isEdit = false, initialData }) => {
                   type="email"
                   placeholder="Enter user email"
                   {...field}
-                  disabled={isEdit}
+                  // disabled={isEdit}
                 />
               </FormControl>
               <FormMessage />
@@ -126,7 +129,7 @@ const UserForm = ({ isEdit = false, initialData }) => {
                   type="tel"
                   placeholder="Enter user's Phone Number"
                   {...field}
-                  disabled={isEdit}
+                  // disabled={isEdit}
                 />
               </FormControl>
               <FormMessage />

@@ -4,7 +4,7 @@ import { endpoints } from "@/api/endpoint";
 export const fetchUsers = async ({ params }) => {
   try {
     const apiResponse = await apiService({
-      endpoint: endpoints.users,
+      endpoint: `${endpoints.users}/all`,
       method: "GET",
       params,
     });

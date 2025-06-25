@@ -9,7 +9,6 @@ import ExportUserDialog from "./components/ExportUserDialog";
 
 const Users = () => {
   const navigate = useNavigate();
-  console.log("Users");
 
   const paramInitialState = {
     page: 1,
