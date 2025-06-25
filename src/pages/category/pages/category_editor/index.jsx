@@ -13,7 +13,7 @@ const CategoryEditor = () => {
     queryFn: () => getCategoryById({ id }),
     enabled: !!id,
   });
-  const initialData = initialDataRes?.response?.data;
+  const initialData = initialDataRes?.response?.data?.category;
 
   const breadcrumbs = [
     {

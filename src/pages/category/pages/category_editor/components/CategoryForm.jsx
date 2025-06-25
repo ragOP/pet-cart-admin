@@ -34,11 +34,17 @@ const CategoryFormSchema = z.object({
       (files) => {
         if (!files || files.length === 0) return true; // Skip if no file (optional)
         const file = files[0];
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "image/gif",
+          "image/webp",
+        ];
         return allowedTypes.includes(file.type);
       },
       {
-        message: "Only JPG, JPEG, PNG, or GIF images are allowed",
+        message: "Only JPG, JPEG, PNG, WEBP, or GIF images are allowed",
       }
     ),
 });
@@ -81,7 +87,11 @@ const CategoryForm = ({ isEdit = false, initialData }) => {
       payload.append("description", formData.description);
 
       if (!imageRemoved && imageFile instanceof File) {
-        payload.append("images", imageFile);
+        if (isEdit) {
+          payload.append("image", imageFile);
+        } else {
+          payload.append("images", imageFile);
+        }
       }
 
       if (isEdit) {

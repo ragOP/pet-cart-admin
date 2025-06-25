@@ -24,9 +24,8 @@ const CategoriesTable = ({ setCategoryLength, params, setParams }) => {
     queryFn: () => fetchCategories({ params }),
   });
 
-  const total = categoriesRes?.categories?.length || 0;
-  const categories = categoriesRes?.categories || [];
-
+  const total = categoriesRes?.data?.total || 0;
+  const categories = categoriesRes?.data?.categories || [];
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
@@ -58,7 +57,7 @@ const CategoriesTable = ({ setCategoryLength, params, setParams }) => {
   };
 
   const onEditCategory = (row) => {
-    navigate(`/dashboard/categories/edit/${row._id}`);
+    navigate(`/dashboard/category/edit/${row._id}`);
   };
 
   useEffect(() => {
