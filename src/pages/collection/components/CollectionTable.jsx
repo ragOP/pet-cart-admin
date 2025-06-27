@@ -134,7 +134,7 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
       label: "Description",
       render: (value) => (
         <Typography className="text-sm text-gray-600">
-          {value || "No Description"}
+          {(value || "").slice(0, 20) + (value?.length > 20 ? "..." : "")}
         </Typography>
       ),
     },

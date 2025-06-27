@@ -97,7 +97,7 @@ const BrandTable = ({ setBrandLength, params, setParams }) => {
       label: "Description",
       render: (value) => (
         <Typography className="text-sm text-gray-700">
-          {value || "No description"}
+          {(value || "").slice(0, 20) + (value?.length > 20 ? "..." : "")}
         </Typography>
       ),
     },

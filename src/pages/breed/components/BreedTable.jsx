@@ -102,7 +102,7 @@ const columns = [
     label: "Description",
     render: (value) => (
       <Typography className="text-sm text-gray-600 line-clamp-2">
-        {value || "No description"}
+        {(value || "").slice(0, 20) + (value?.length > 20 ? "..." : "")}
       </Typography>
     ),
   },

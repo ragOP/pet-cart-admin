@@ -144,27 +144,27 @@ const columns = [
       </Typography>
     ),
   },
-  {
-    key: "variants",
-    label: "Variants",
-    render: (value) =>
-      value && value.length > 0 ? (
-        <div className="text-xs bg-gray-50 p-2 rounded max-w-[250px] overflow-x-auto space-y-1">
-          {value.slice(0, 2).map((variant, idx) => (
-            <div key={idx} className="flex flex-col border-b pb-1">
-              <div>SKU: <span className="font-medium">{variant.sku}</span></div>
-              <div>Price: ₹{variant.price}</div>
-              <div>Stock: {variant.stock}</div>
-            </div>
-          ))}
-          {value.length > 2 && (
-            <div className="text-gray-400 italic text-xs">+{value.length - 2} more</div>
-          )}
-        </div>
-      ) : (
-        <Typography className="text-sm text-gray-500">N/A</Typography>
-      ),
-  },
+  // {
+  //   key: "variants",
+  //   label: "Variants",
+  //   render: (value) =>
+  //     value && value.length > 0 ? (
+  //       <div className="text-xs bg-gray-50 p-2 rounded max-w-[250px] overflow-x-auto space-y-1">
+  //         {value.slice(0, 2).map((variant, idx) => (
+  //           <div key={idx} className="flex flex-col border-b pb-1">
+  //             <div>SKU: <span className="font-medium">{variant.sku}</span></div>
+  //             <div>Price: ₹{variant.price}</div>
+  //             <div>Stock: {variant.stock}</div>
+  //           </div>
+  //         ))}
+  //         {value.length > 2 && (
+  //           <div className="text-gray-400 italic text-xs">+{value.length - 2} more</div>
+  //         )}
+  //       </div>
+  //     ) : (
+  //       <Typography className="text-sm text-gray-500">N/A</Typography>
+  //     ),
+  // },
   {
     key: "isActive",
     label: "Status",
