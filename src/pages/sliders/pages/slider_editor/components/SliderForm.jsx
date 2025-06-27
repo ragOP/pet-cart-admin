@@ -52,7 +52,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     enabled: !!selectedCategoryId,
   });
 
-  const categories = categoryListRes?.categories || [];
+  const categories = categoryListRes?.data?.categories || [];
   const subCategories = subCategoryListRes?.data || [];
 
   // Initialize form with existing data if editing
@@ -242,10 +242,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
   };
 
   const createLinkUsingSelectedCategoryAndSubCategoryValues = () => {
-    const feUrl = import.meta.env.VITE_FRONTEND_URI;
-    let link = `${feUrl}?IsSelectedCategory=${selectedCategoryId}&IsSelectedSubCategory=${selectedSubCategoryId}`;
-    // setFormData((prev) => ({ ...prev, link: link }));
-    // console.log(link);
+    let link = `IsSelectedCategory=${selectedCategoryId}&IsSelectedSubCategory=${selectedSubCategoryId}`;
     return link;
   };
 
