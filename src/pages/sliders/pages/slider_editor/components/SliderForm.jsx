@@ -62,7 +62,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
       setFormData({
         type: initialData.type || "web",
         link: initialData.link || "",
-        active: initialData.active || false,
+        isActive: initialData.isActive || false,
       });
 
       // Convert existing image URL to file object if image exists
@@ -214,7 +214,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
 
       // Add form fields
       submitFormData.append("type", formData.type);
-      submitFormData.append("isActive", formData.isActive.toString());
+      submitFormData.append("isActive", formData.isActive);
 
       // console.log(formData.link);
       submitFormData.append("link", link);
