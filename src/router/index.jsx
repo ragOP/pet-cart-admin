@@ -51,6 +51,9 @@ const BannerEditor = lazy(() => import("@/pages/main_banner/pages/banner_editor"
 const CatLifeBanners = lazy(() => import("@/pages/cat_life"));
 const CatLifeBannerEditor = lazy(() => import("@/pages/cat_life/pages/slider_editor"));
 
+const ProductBanner = lazy(() => import("@/pages/product_banner"));
+// const ProductBannerEditor = lazy(() => import("@/pages/product_banner/pages/product_banner_editor"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -144,6 +147,10 @@ const Router = () => {
             <Route path="cat-life-banner" element={<CatLifeBanners />} />
             <Route path="cat-life-banner/add" element={<CatLifeBannerEditor />} />
             <Route path="cat-life-banner/edit/:id" element={<CatLifeBannerEditor />} />
+
+            <Route path="product-banner" element={<ProductBanner />} />
+            {/* <Route path="product-banner/add" element={<ProductBannerEditor />} />
+            <Route path="product-banner/edit/:id" element={<ProductBannerEditor />} /> */}
           </Route>
         </Route>
 

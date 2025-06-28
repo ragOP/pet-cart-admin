@@ -195,6 +195,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Product Banner",
+        name: "Product Banner",
+        url: "/dashboard/product-banner",
+        icon: Image,
+        roles: ["admin"],
+      },
+      {
         title: "Add Category",
         name: "Add Category",
         url: "/dashboard/add_category",

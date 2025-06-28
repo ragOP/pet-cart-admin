@@ -19,6 +19,7 @@ export const endpoints = {
   sliders: "api/sliders/slider",
   banner: "api/configuration/banner",
   cat_life_banner: "api/cat-life-banner",
+  productBanner: "api/product-banner",
 };
 
 
