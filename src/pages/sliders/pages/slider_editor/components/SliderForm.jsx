@@ -32,8 +32,9 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     link: "",
     isActive: false,
   });
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState("");
+  const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,7 +243,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
   };
 
   const createLinkUsingSelectedCategoryAndSubCategoryValues = () => {
-    let link = `IsSelectedCategory=${selectedCategoryId}&IsSelectedSubCategory=${selectedSubCategoryId}`;
+    let link = `category?IsSelectedCategory=${selectedCategorySlug}&IsSelectedSubCategory=${selectedSubCategorySlug}`;
     return link;
   };
 
@@ -261,6 +262,8 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
     }
   };
 
+
+  console.log(selectedCategoryId);
   return (
     <div className="max-w-2xl mx-auto">
       <Card>
@@ -384,8 +387,14 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
               <Select
                 value={formData.categoryId}
                 onValueChange={(value) => {
-                  setSelectedCategoryId(value);
+                  console.log(value);
+                  setSelectedCategorySlug(value);
                   handleInputChange("categoryId", value);
+
+                  const selectedCategory = categories.find(
+                    (category) => category.slug === value
+                  );
+                  setSelectedCategoryId(selectedCategory._id);
                 }}
               >
                 <SelectTrigger>
@@ -394,7 +403,10 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 <SelectContent>
                   {Array.isArray(categories) &&
                     categories.map((category) => (
-                      <SelectItem key={category._id} value={category._id}>
+                      <SelectItem
+                        key={category._id}
+                        value={category.slug}
+                      >
                         {category.name}
                       </SelectItem>
                     ))}
@@ -410,7 +422,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
               <Select
                 value={formData.subCategoryId}
                 onValueChange={(value) => {
-                  setSelectedSubCategoryId(value);
+                  setSelectedSubCategorySlug(value);
                   handleInputChange("subCategoryId", value);
                 }}
               >
@@ -420,7 +432,10 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
                 <SelectContent>
                   {Array.isArray(subCategories) &&
                     subCategories.map((subCategory) => (
-                      <SelectItem key={subCategory._id} value={subCategory._id}>
+                      <SelectItem
+                        key={subCategory._id}
+                        value={subCategory.slug}
+                      >
                         {subCategory.name}
                       </SelectItem>
                     ))}
