@@ -57,6 +57,9 @@ const ProductBanner = lazy(() => import("@/pages/product_banner"));
 const HSNCode = lazy(() => import("@/pages/hsn_codes"));
 const HSNCodeEditor = lazy(() => import("@/pages/hsn_codes/pages/hsn_codes_editor"));
 
+const Coupons = lazy(() => import("@/pages/coupons"));
+const CouponEditor = lazy(() => import("@/pages/coupons/pages/coupon_editor"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -155,10 +158,13 @@ const Router = () => {
             {/* <Route path="product-banner/add" element={<ProductBannerEditor />} />
             <Route path="product-banner/edit/:id" element={<ProductBannerEditor />} /> */}
 
-
             <Route path="hsn_codes" element={<HSNCode />} />
             <Route path="hsn_codes/add" element={<HSNCodeEditor />} />
             <Route path="hsn_codes/edit/:id" element={<HSNCodeEditor />} />
+
+            <Route path="coupons" element={<Coupons />} />
+            <Route path="coupons/add" element={<CouponEditor />} />
+            <Route path="coupons/edit/:id" element={<CouponEditor />} />
           </Route>
         </Route>
 

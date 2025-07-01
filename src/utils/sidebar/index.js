@@ -209,6 +209,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Coupons",
+        name: "Coupons",
+        url: "/dashboard/coupons",
+        icon: Image,
+        roles: ["admin"],
+      },
+      {
         title: "Add Category",
         name: "Add Category",
         url: "/dashboard/add_category",
