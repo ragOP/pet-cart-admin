@@ -54,6 +54,9 @@ const CatLifeBannerEditor = lazy(() => import("@/pages/cat_life/pages/slider_edi
 const ProductBanner = lazy(() => import("@/pages/product_banner"));
 // const ProductBannerEditor = lazy(() => import("@/pages/product_banner/pages/product_banner_editor"));
 
+const HSNCode = lazy(() => import("@/pages/hsn_codes"));
+const HSNCodeEditor = lazy(() => import("@/pages/hsn_codes/pages/hsn_codes_editor"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -151,6 +154,11 @@ const Router = () => {
             <Route path="product-banner" element={<ProductBanner />} />
             {/* <Route path="product-banner/add" element={<ProductBannerEditor />} />
             <Route path="product-banner/edit/:id" element={<ProductBannerEditor />} /> */}
+
+
+            <Route path="hsn_codes" element={<HSNCode />} />
+            <Route path="hsn_codes/add" element={<HSNCodeEditor />} />
+            <Route path="hsn_codes/edit/:id" element={<HSNCodeEditor />} />
           </Route>
         </Route>
 

@@ -202,6 +202,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "HSN Codes",
+        name: "HSN Codes",
+        url: "/dashboard/hsn_codes",
+        icon: Image,
+        roles: ["admin"],
+      },
+      {
         title: "Add Category",
         name: "Add Category",
         url: "/dashboard/add_category",

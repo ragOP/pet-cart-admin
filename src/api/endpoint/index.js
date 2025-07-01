@@ -20,6 +20,7 @@ export const endpoints = {
   banner: "api/configuration/banner",
   cat_life_banner: "api/cat-life-banner",
   productBanner: "api/product-banner",
+  hsn_codes: "api/hsn-code",
 };
 
 

@@ -31,7 +31,9 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     link: "",
   });
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState("");
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState("");
+  const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +52,11 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     enabled: !!selectedCategoryId,
   });
 
-  const categories = categoryListRes?.categories || [];
+
+  console.log(categoryListRes?.data?.categories);
+  console.log(subCategoryListRes?.data);
+  
+  const categories = categoryListRes?.data?.categories || [];
   const subCategories = subCategoryListRes?.data || [];
 
   // Initialize form with existing data if editing
@@ -229,8 +235,8 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
   };
 
   const createLinkUsingSelectedCategoryAndSubCategoryValues = () => {
-    const feUrl = import.meta.env.VITE_FRONTEND_URI;
-    let link = `${feUrl}?IsSelectedCategory=${selectedCategoryId}&IsSelectedSubCategory=${selectedSubCategoryId}`;
+    // const feUrl = import.meta.env.VITE_FRONTEND_URI;
+    let link = `category?categorySlug=${selectedCategorySlug}&subCategorySlug=${selectedSubCategorySlug}`;
     // setFormData((prev) => ({ ...prev, link: link }));
     // console.log(link);
     return link;
@@ -348,8 +354,15 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
               <Select
                 value={formData.categoryId}
                 onValueChange={(value) => {
-                  setSelectedCategoryId(value);
                   handleInputChange("categoryId", value);
+                  setSelectedCategorySlug(value);
+
+                  const selectedCategory = categories.find(
+                    (category) => category.slug === value
+                  );
+                  if (selectedCategory) {
+                    setSelectedCategoryId(selectedCategory._id);
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -358,7 +371,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 <SelectContent>
                   {Array.isArray(categories) &&
                     categories.map((category) => (
-                      <SelectItem key={category._id} value={category._id}>
+                      <SelectItem key={category._id} value={category.slug}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -384,7 +397,7 @@ const CatLifeBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 <SelectContent>
                   {Array.isArray(subCategories) &&
                     subCategories.map((subCategory) => (
-                      <SelectItem key={subCategory._id} value={subCategory._id}>
+                      <SelectItem key={subCategory._id} value={subCategory.slug}>
                         {subCategory.name}
                       </SelectItem>
                     ))}

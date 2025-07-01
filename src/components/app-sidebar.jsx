@@ -29,9 +29,14 @@ export function AppSidebar({ ...props }) {
   const role = useSelector(selectAdminRole);
   const name = useSelector(selectAdminName);
   const email = useSelector(selectAdminEmail);
+  console.log("role", role);
+  console.log("name", name);
+  console.log("email", email);
 
   const filteredNavMain = filterItemsByRole(data.navMain, role);
+  console.log("filteredNavMain", filteredNavMain);
   const filteredMore = filterItemsByRole(data.more, role);
+  console.log("filteredMore", filteredMore);
   const userInfo = {
     name,
     email,
