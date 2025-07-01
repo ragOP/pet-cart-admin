@@ -31,6 +31,7 @@ import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
 import { fetchBreeds } from "@/pages/breed/helpers/fetchBreeds";
 import { fetchBrands } from "@/pages/brand/helpers/fetchBrand";
+import { fetchHsnCodes } from "@/pages/hsn_codes/helpers/fetchHsnCodes";
 import { createProduct } from "../helper/createProduct";
 import { updateProduct } from "../helper/updateProduct";
 import { urlToFile } from "@/utils/file/urlToFile";
@@ -73,6 +74,7 @@ const ProductFormSchema = z.object({
   salePrice: z.coerce.number().optional(),
   brandId: z.string().min(1, "Please select a brand"),
   breedIds: z.optional(z.array(z.string())),
+  hsnCodeId: z.string().min(1, "Please select a HSN code"),
   isBestSeller: z.boolean().default(false),
   isEverydayEssential: z.boolean().default(false),
   isNewleyLaunched: z.boolean().default(false),
@@ -104,6 +106,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         subCategoryId: "",
         brandId: "",
         breedIds: [],
+        hsnCodeId: "",
         isBestSeller: false,
         isEverydayEssential: false,
         isNewleyLaunched: false,
@@ -124,6 +127,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       subCategoryId: initialData.subCategoryId?._id || "",
       brandId: initialData.brandId?._id || "",
       breedIds: initialData.breedId?.map(breed => breed._id) || [],
+      hsnCodeId: initialData.hsnCodeId?._id || "",
       isBestSeller: initialData.isBestSeller || false,
       isEverydayEssential: initialData.isEverydayEssential || false,
       isNewleyLaunched: initialData.newleyLaunched || false,
@@ -179,10 +183,16 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     queryFn: fetchBrands
   });
 
+  const { data: hsnCodeListRes } = useQuery({
+    queryKey: ["hsn_codes"],
+    queryFn: fetchHsnCodes
+  });
+
   const categories = categoryListRes?.data?.categories || [];
   const subCategories = subCategoryListRes?.data || [];
   const breeds = breedListRes?.data || [];
   const brands = brandListRes?.data || [];
+  const hsnCodes = hsnCodeListRes?.response?.data?.data || [];
 
   // Handle image and variant image loading
   useEffect(() => {
@@ -248,6 +258,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("price", data.price);
       payload.append("salePrice", data.salePrice);
       payload.append("brandId", data.brandId);
+      payload.append("hsnCode", data.hsnCodeId);
       payload.append("isAddToCart", data.isAddToCart);
       payload.append("isBestSeller", data.isBestSeller);
       payload.append("isNewleyLaunched", data.isNewleyLaunched);
@@ -518,6 +529,31 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   {brands.map((b) => (
                     <option key={b._id} value={b._id}>
                       {b.name}
+                    </option>
+                  ))}
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* HSN Code */}
+        <FormField
+          name="hsnCodeId"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>HSN Code</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                >
+                  <option value="">Select HSN Code</option>
+                  {hsnCodes.map((h) => (
+                    <option key={h._id} value={h._id}>
+                      {h.hsn_code}
                     </option>
                   ))}
                 </select>
