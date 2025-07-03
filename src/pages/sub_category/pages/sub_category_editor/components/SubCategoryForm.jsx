@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
@@ -47,6 +47,7 @@ const CategoryFormSchema = z.object({
 
 const CategoryForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const adminId = useSelector(selectAdminId);
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
@@ -111,6 +112,7 @@ const CategoryForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
+        queryClient.invalidateQueries(["sub_category", initialData?._id]);
         toast.success(`SubCategory ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/sub_category");
       } else {

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { updateHsnCode } from "../helper/updateHsnCode";
@@ -52,6 +52,7 @@ const HsnCodeFormSchema = z.object({
 
 const HsnCodeForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const reduxAdminId = useSelector(selectAdminId);
 
@@ -98,6 +99,7 @@ const HsnCodeForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.response?.success) {
+        queryClient.invalidateQueries(["hsn_codes", initialData?._id]);
         toast.success(
           `HSN Code ${isEdit ? "updated" : "created"} successfully`
         );

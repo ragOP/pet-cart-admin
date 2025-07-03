@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
@@ -47,6 +47,7 @@ const BrandFormSchema = z.object({
 
 const BrandForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const adminId = useSelector(selectAdminId);
   const [logoFile, setLogoFile] = useState(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
@@ -95,6 +96,7 @@ const BrandForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
+        queryClient.invalidateQueries(["brand", initialData?._id]);
         toast.success(`Brand ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/brand");
       } else {

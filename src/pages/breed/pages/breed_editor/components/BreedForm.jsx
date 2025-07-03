@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
@@ -50,6 +50,7 @@ const BreedFormSchema = z.object({
 
 const BreedForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const adminId = useSelector(selectAdminId);
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
@@ -98,6 +99,7 @@ const BreedForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
+        queryClient.invalidateQueries(["breed", initialData?._id]);
         toast.success(`Breed ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/breed");
       } else {

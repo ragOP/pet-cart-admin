@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
@@ -56,6 +56,7 @@ const CollectionFormSchema = z.object({
 
 const CollectionForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const adminId = useSelector(selectAdminId);
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
@@ -127,6 +128,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
+        queryClient.invalidateQueries(["collection", initialData?._id]);
         toast.success(
           `Collection ${isEdit ? "updated" : "created"} successfully`
         );

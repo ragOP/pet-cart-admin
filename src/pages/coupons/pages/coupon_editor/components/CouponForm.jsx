@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Select,
@@ -67,6 +67,7 @@ const CouponFormSchema = (isEdit = false) =>
 
 const CouponForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const form = useForm({
     resolver: zodResolver(CouponFormSchema(isEdit)),
@@ -105,6 +106,7 @@ const CouponForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.response?.success) {
+        queryClient.invalidateQueries(["coupons", initialData?._id]);
         toast.success(`Coupon ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/coupons");
       } else {

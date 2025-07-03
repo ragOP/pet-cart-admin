@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Select,
@@ -34,6 +34,7 @@ const UserFormSchema = z.object({
 
 const UserForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const form = useForm({
     resolver: zodResolver(UserFormSchema),
@@ -62,6 +63,7 @@ const UserForm = ({ isEdit = false, initialData }) => {
     },
     onSuccess: (res) => {
       if (res?.response?.success) {
+        queryClient.invalidateQueries({ queryKey: ['user', initialData._id] });
         toast.success(`User ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/users");
       } else {

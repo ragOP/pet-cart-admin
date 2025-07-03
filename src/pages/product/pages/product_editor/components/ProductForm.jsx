@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { X, Plus } from "lucide-react";
@@ -86,6 +86,7 @@ const ProductFormSchema = z.object({
 
 const ProductForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialData?.categoryId || "");
   const [imageFiles, setImageFiles] = useState([]);
   const [variantImages, setVariantImages] = useState([]);
@@ -127,7 +128,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       subCategoryId: initialData.subCategoryId?._id || "",
       brandId: initialData.brandId?._id || "",
       breedIds: initialData.breedId?.map(breed => breed._id) || [],
-      hsnCodeId: initialData.hsnCodeId?._id || "",
+      hsnCodeId: initialData.hsnCode?._id || "",
       isBestSeller: initialData.isBestSeller || false,
       isEverydayEssential: initialData.isEverydayEssential || false,
       isNewleyLaunched: initialData.newleyLaunched || false,
@@ -299,6 +300,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
     onSuccess: (res) => {
       if (res?.success || res?.response?.success) {
+        queryClient.invalidateQueries(["product", initialData?._id]);
         toast.success(`Product ${isEdit ? "updated" : "created"} successfully`);
         navigate("/dashboard/product");
       } else {
