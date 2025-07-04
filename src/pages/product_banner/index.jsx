@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Image as ImageIcon, Edit, Trash2, Eye } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fetchProductBanner } from "./helpers/fetchProductBanner";
-import { deleteSlider } from "./helpers/deleteSlider";
+import { deleteSlider } from "./helpers/deleteProductBanner";
 import {
   Dialog,
   DialogClose,
@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { toast } from "sonner";
 
 const ProductBanner = () => {
   const navigate = useNavigate();
@@ -34,6 +35,10 @@ const ProductBanner = () => {
   const [error, setError] = useState(null);
 
   const onAdd = () => {
+    if(productBanner && Object.keys(productBanner).length > 0){
+      toast.error("Product Banner already exists");
+      return;
+    }
     navigate("/dashboard/product-banner/add");
   };
 
@@ -45,13 +50,14 @@ const ProductBanner = () => {
   };
 
   // Fetch sliders data
-  const loadSliders = async () => {
+  const loadProductBanner = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await fetchProductBanner(selectedType);
 
+      console.log("Full API result:", result);
       if (result.success) {
         console.log("Full API result:", result);
         console.log("Product Banner data:", result.data.data);
@@ -70,7 +76,7 @@ const ProductBanner = () => {
 
   useEffect(() => {
     setProductBanner(null);
-    loadSliders();
+    loadProductBanner();
   }, [selectedType]);
 
   // Since the API handles type filtering, we just use the images directly
@@ -131,6 +137,7 @@ const ProductBanner = () => {
     );
   }
 
+  console.log(productBanner);
   return (
     <div className="flex flex-col">
       <NavbarItem
@@ -183,17 +190,17 @@ const ProductBanner = () => {
         )}
 
 
-        {/* Sliders Grid */}
+        {/* Product Banner Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {/* {Array.isArray(productBanner) && productBanner.map((productBanner) => ( */}
-            <Card key={productBanner._id} className="overflow-hidden hover:shadow-md transition-shadow">
+          {productBanner && Object.keys(productBanner).length > 0 && (
+            <Card key={productBanner?._id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <Badge className={getTypeBadgeColor(productBanner.type)}>
-                    {productBanner.type}
+                  <Badge className={getTypeBadgeColor(productBanner?.type || "web")}>
+                    {productBanner?.type}
                   </Badge>
-                  <Badge variant={productBanner.isActive ? "default" : "secondary"}>
-                    {productBanner.isActive ? "Active" : "Inactive"}
+                  <Badge variant={productBanner?.isActive ? "default" : "secondary"}>
+                    {productBanner?.isActive ? "Active" : "Inactive"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -202,7 +209,7 @@ const ProductBanner = () => {
                 {/* Image */}
                 <div className="relative aspect-video mb-3 overflow-hidden rounded-lg bg-gray-100">
                   <img
-                    src={productBanner.image}
+                    src={productBanner?.image}
                     alt={`Product Banner ${productBanner._id}`}
                     className="object-cover w-full h-full"
                   />
@@ -223,7 +230,7 @@ const ProductBanner = () => {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => {
@@ -233,7 +240,7 @@ const ProductBanner = () => {
                         className="bg-white/90 hover:bg-white cursor-pointer"
                       >
                         <Trash2 className="h-3 w-3 text-red-500" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -242,7 +249,7 @@ const ProductBanner = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <ExternalLink className="h-3 w-3 text-gray-500" />
                   <Typography variant="small" className="text-gray-600 truncate">
-                    {productBanner.link}
+                    {productBanner?.link}
                   </Typography>
                 </div>
 
@@ -262,7 +269,7 @@ const ProductBanner = () => {
                 )}
               </CardContent>
             </Card>
-          {/* ))} */}
+          )}
         </div>
 
         {/* Empty State */}

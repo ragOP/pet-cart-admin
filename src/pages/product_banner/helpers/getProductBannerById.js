@@ -1,7 +1,7 @@
 import { apiService } from "@/api/api_services";
 import { endpoints } from "@/api/endpoint";
 
-export const getSliderById = async ({ id }) => {
+export const getProductBannerById = async ({ id }) => {
   try {
     const apiResponse = await apiService({
       endpoint: `${endpoints.sliders}/${id}`,

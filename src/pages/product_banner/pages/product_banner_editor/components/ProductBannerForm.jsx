@@ -16,56 +16,41 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
-import { updateSlider } from "../../../helpers/updateProductBanner";
-import { createSlider } from "../../../helpers/createProductBanner";
+import { updateProductBanner } from "../../../helpers/updateProductBanner";
+import { createProductBanner } from "../../../helpers/createProductBanner";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { validateImageDimensions } from "@/utils/validate_image_dimensions";
-import { getProducts } from "@/pages/product/helpers/getProducts";
-import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
-import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
+import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
 
 const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    type: "web",
-    isActive: false,
-    productId: "",
-    image: "",
+    type: initialData?.type || "web",
+    isActive: initialData?.isActive || false,
+    productId: initialData?.productId?._id || "",
+    image: initialData?.image || "",
   });
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedSubCategorySlug, setSelectedSubCategorySlug] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const { data: categoryListRes } = useQuery({
-    queryKey: ["all_categories"],
-    queryFn: fetchCategories,
+  const { data: productsRes } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
   });
 
-  const { data: subCategoryListRes } = useQuery({
-    queryKey: ["subcategories", selectedCategoryId],
-    queryFn: () =>
-      fetchSubCategoriesByCategoryId({
-        params: { categoryId: selectedCategoryId },
-      }),
-    enabled: !!selectedCategoryId,
-  });
-
-  const categories = categoryListRes?.data?.categories || [];
-  const subCategories = subCategoryListRes?.data || [];
-
+  const products = productsRes?.data || [];
   // Initialize form with existing data if editing
   useEffect(() => {
     if (initialData && isEdit) {
-      console.log("Initial data for editing:", initialData);
       setFormData({
         type: initialData.type || "web",
-        link: initialData.link || "",
+        productId: initialData.productId?._id || "",
         isActive: initialData.isActive || false,
+        image: initialData.image || "",
       });
 
       // Convert existing image URL to file object if image exists
@@ -73,7 +58,7 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
         setPreviewUrl(initialData.image);
         const convertImage = async () => {
           try {
-            const file = await urlToFile(initialData.image, "slider_image.jpg");
+            const file = await urlToFile(initialData.image, "product_banner_image.jpg");
             if (file) {
               setSelectedFile(file);
             }
@@ -108,15 +93,15 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
         return;
       }
 
-      const { valid, error } = await validateImageDimensions(
-        file,
-        formData.type,
-        "short-horizontal"
-      );
-      if (!valid) {
-        toast.error(error);
-        return;
-      }
+      // const { valid, error } = await validateImageDimensions(
+      //   file,
+      //   formData.type,
+      //   "short-horizontal"
+      // );
+      // if (!valid) {
+      //   toast.error(error);
+      //   return;
+      // }
 
       setSelectedFile(file);
 
@@ -139,13 +124,13 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     }
   };
 
-  const updateSliderMutation = useMutation({
-    mutationFn: updateSlider,
+  const updateProductBannerMutation = useMutation({
+    mutationFn: updateProductBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Slider updated successfully");
-        queryClient.invalidateQueries(["sliders"]);
-        navigate("/dashboard/sliders");
+        toast.success("Product Banner updated successfully");
+        queryClient.invalidateQueries(["product-banner"]);
+        navigate("/dashboard/product-banner");
       } else {
         toast.error(result.message || "Failed to update slider");
       }
@@ -159,81 +144,80 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     },
   });
 
-  const createSliderMutation = useMutation({
-    mutationFn: createSlider,
+  const createProductBannerMutation = useMutation({
+    mutationFn: createProductBanner,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("Slider created successfully");
-        queryClient.invalidateQueries(["sliders"]);
-        navigate("/dashboard/sliders");
+        toast.success("Product Banner created successfully");
+        queryClient.invalidateQueries(["product-banner"]);
+        navigate("/dashboard/product-banner");
       } else {
-        toast.error(result.message || "Failed to create slider");
+        toast.error(result.message || "Failed to create product banner");
       }
     },
     onError: (error) => {
       console.error("Create error:", error);
-      toast.error("An error occurred while creating the slider");
+      toast.error("An error occurred while creating the product banner");
     },
     onSettled: () => {
       setIsSubmitting(false);
     },
   });
 
+  const handleFormError = (field, message) => {
+    setError(message);
+    setFormData((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
-    // if (!formData.link.trim()) {
-    //   toast.error("Please enter a link");
-    //   return;
-    // }
-
-    if (!formData.categoryId.trim()) {
-      toast.error("Please select a category");
+    if (!formData.productId) {
+      handleFormError("productId", "Please select a product");
       return;
     }
 
-    if (!formData.subCategoryId.trim()) {
-      toast.error("Please select a subcategory");
+    if (!selectedFile) {
+      handleFormError("image", "Please select an image");
       return;
     }
 
-    if (!isEdit && !selectedFile) {
-      toast.error("Please select an image");
+    if (!formData.type) {
+      handleFormError("type", "Please select a type");
       return;
     }
-
-    // Additional validation for edit mode
-    if (isEdit && !initialData?._id) {
-      toast.error("Slider data not loaded. Please try again.");
+    
+    // Returning toast error for error fields
+    if(error){
+      toast.error(error);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const link = createLinkUsingSelectedCategoryAndSubCategoryValues();
       const submitFormData = new FormData();
 
       // Add form fields
       submitFormData.append("type", formData.type);
       submitFormData.append("isActive", formData.isActive);
-
-      // console.log(formData.link);
-      submitFormData.append("link", link);
+      submitFormData.append("productId", formData.productId);
 
       // Add image if selected
       if (selectedFile) {
-        submitFormData.append("images", selectedFile);
+        submitFormData.append("image", selectedFile);
       }
 
       if (isEdit) {
-        updateSliderMutation.mutate({
+        updateProductBannerMutation.mutate({
           id: initialData._id,
           formData: submitFormData,
         });
       } else {
-        createSliderMutation.mutate({
+        createProductBannerMutation.mutate({
           formData: submitFormData,
         });
       }
@@ -242,11 +226,6 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
       toast.error("An error occurred while submitting the form");
       setIsSubmitting(false);
     }
-  };
-
-  const createLinkUsingSelectedCategoryAndSubCategoryValues = () => {
-    let link = `category?IsSelectedCategory=${selectedCategorySlug}&IsSelectedSubCategory=${selectedSubCategorySlug}`;
-    return link;
   };
 
   const getTypeBadgeColor = (type) => {
@@ -264,23 +243,21 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
     }
   };
 
-
-  console.log(selectedCategoryId);
   return (
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl">
-              {isEdit ? "Edit Slider" : "Add New Slider"}
+              {isEdit ? "Edit Product Banner" : "Add New Product Banner"}
             </CardTitle>
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard/sliders")}
+              onClick={() => navigate("/dashboard/product-banner")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Sliders
+              Back to Product Banner
             </Button>
           </div>
         </CardHeader>
@@ -290,7 +267,7 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
             {/* Image Upload Section */}
             <div className="space-y-4">
               <Label htmlFor="image-upload" className="text-base font-medium">
-                Slider Image
+                Product Banner Image
               </Label>
 
               <div className="space-y-4">
@@ -300,7 +277,7 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                     <div className="aspect-video overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
                       <img
                         src={previewUrl}
-                        alt="Slider preview"
+                        alt="Product Banner preview"
                         className="w-full h-full object-contain"
                       />
                     </div>
@@ -381,84 +358,33 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
               </div>
             </div>
 
-            {/* Category Selection */}
+            {/* Product Selection */}
             <div className="space-y-2">
-              <Label htmlFor="category" className="text-base font-medium">
-                Category
+              <Label htmlFor="product" className="text-base font-medium">
+                Product
               </Label>
               <Select
-                value={formData.categoryId}
+                value={formData.productId}
                 onValueChange={(value) => {
-                  console.log(value);
-                  setSelectedCategorySlug(value);
-                  handleInputChange("categoryId", value);
-
-                  const selectedCategory = categories.find(
-                    (category) => category.slug === value
-                  );
-                  setSelectedCategoryId(selectedCategory._id);
+                  handleInputChange("productId", value);
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
+                  <SelectValue placeholder="Select Product" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(categories) &&
-                    categories.map((category) => (
+                  {Array.isArray(products) &&
+                    products.map((product) => (
                       <SelectItem
-                        key={category._id}
-                        value={category.slug}
+                        key={product._id}
+                        value={product._id}
                       >
-                        {category.name}
+                        {product.title}
                       </SelectItem>
                     ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Sub Category Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="Sub Category" className="text-base font-medium">
-                Sub Category
-              </Label>
-              <Select
-                value={formData.subCategoryId}
-                onValueChange={(value) => {
-                  setSelectedSubCategorySlug(value);
-                  handleInputChange("subCategoryId", value);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Sub Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(subCategories) &&
-                    subCategories.map((subCategory) => (
-                      <SelectItem
-                        key={subCategory._id}
-                        value={subCategory.slug}
-                      >
-                        {subCategory.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Link Input */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="link" className="text-base font-medium">
-                Link URL
-              </Label>
-              <Input
-                id="link"
-                type="url"
-                placeholder="https://example.com"
-                value={formData.link}
-                onChange={(e) => handleInputChange("link", e.target.value)}
-                disabled
-              />
-            </div> */}
 
             {/* Active Status */}
             <div className="flex items-center justify-between">
@@ -466,8 +392,8 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 <Label className="text-base font-medium">Active Status</Label>
                 <p className="text-sm text-gray-500">
                   {formData.isActive
-                    ? "Slider will be visible"
-                    : "Slider will be hidden"}
+                    ? "Product Banner will be visible"
+                    : "Product Banner will be hidden"}
                 </p>
               </div>
               <Switch
@@ -497,7 +423,7 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Save className="h-4 w-4" />
-                    {isEdit ? "Update Slider" : "Create Slider"}
+                    {isEdit ? "Update Product Banner" : "Create Product Banner"}
                   </div>
                 )}
               </Button>
@@ -505,7 +431,7 @@ const ProductBannerForm = ({ initialData, isEdit, isLoading = false }) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/dashboard/sliders")}
+                onClick={() => navigate("/dashboard/product-banner")}
                 disabled={isSubmitting || isLoading}
               >
                 Cancel
