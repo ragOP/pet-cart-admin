@@ -60,6 +60,9 @@ const HSNCodeEditor = lazy(() => import("@/pages/hsn_codes/pages/hsn_codes_edito
 const Coupons = lazy(() => import("@/pages/coupons"));
 const CouponEditor = lazy(() => import("@/pages/coupons/pages/coupon_editor"));
 
+const Orders = lazy(() => import("@/pages/orders"));
+const OrderEditor = lazy(() => import("@/pages/orders/pages/order_editor"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -165,6 +168,9 @@ const Router = () => {
             <Route path="coupons" element={<Coupons />} />
             <Route path="coupons/add" element={<CouponEditor />} />
             <Route path="coupons/edit/:id" element={<CouponEditor />} />
+
+            <Route path="orders" element={<Orders />} />
+            <Route path="orders/edit/:id" element={<OrderEditor />} />
           </Route>
         </Route>
 

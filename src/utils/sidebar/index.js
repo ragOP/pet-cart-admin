@@ -98,7 +98,15 @@ import {
         isActive: true,
         items: [],
         roles: ["admin"],
-      }
+      },
+      {
+        title: "Orders",
+        url: "/dashboard/orders",
+        icon: Package,
+        isActive: true,
+        items: [],
+        roles: ["admin"],
+      },
     ],
     // projects: [
     //   {
