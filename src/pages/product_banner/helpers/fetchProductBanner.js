@@ -3,7 +3,9 @@ import { endpoints } from "@/api/endpoint";
 
 export const fetchProductBanner = async (type = null) => {
   try {
-    const params = {};
+    const params = {
+      "isAdmin": true,
+    };
     
     // Only add type parameter if it's specified
     if (type) {
