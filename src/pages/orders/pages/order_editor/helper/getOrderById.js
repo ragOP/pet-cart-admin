@@ -9,7 +9,7 @@ export const getOrderById = async ({ id }) => {
     });
 
     if (apiResponse?.response?.success) {
-      return apiResponse?.response?.message;
+      return apiResponse?.response?.data;
     }
 
     return null;

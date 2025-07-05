@@ -34,7 +34,7 @@ const OrderEditor = () => {
             <CustomSpinner />
           </div>
         ) : (
-          <OrderForm initialData={initialData} isEdit={!!id} />
+          <OrderForm initialData={initialData} />
         )}
       </div>
     </div>
