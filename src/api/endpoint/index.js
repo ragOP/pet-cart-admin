@@ -23,6 +23,7 @@ export const endpoints = {
   hsn_codes: "api/hsn-code",
   coupons: "api/coupon",
   orders: "api/orders",
+  blog: "api/blog",
 };
 
 

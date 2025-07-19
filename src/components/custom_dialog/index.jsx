@@ -9,35 +9,38 @@ import {
 } from "@/components/ui/dialog";
 
 export function CustomDialog({
-  onOpen,
+  isOpen,
   onClose,
   title,
-  buttonText,
+  description,
   modalType,
-  onDelete,
-  id,
+  onConfirm,
   isLoading,
 }) {
   return (
-    <Dialog open={onOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{modalType}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete {title}? <br /> This action cannot
-            be undone.
+            {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="flex gap-2">
           <Button
-          
+            variant="outline"
+            onClick={onClose}
             disabled={isLoading}
-            onClick={() => onDelete(id)}
-            variant={modalType === "Delete" ? "destructive" : "primary"}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={isLoading}
+            onClick={onConfirm}
+            variant={modalType === "confirmation" ? "destructive" : "default"}
             type="submit"
           >
-            {/* {isLoading && } */}
-            {modalType ? modalType : buttonText}
+            {isLoading ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

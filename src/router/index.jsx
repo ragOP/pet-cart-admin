@@ -63,6 +63,9 @@ const CouponEditor = lazy(() => import("@/pages/coupons/pages/coupon_editor"));
 const Orders = lazy(() => import("@/pages/orders"));
 const OrderEditor = lazy(() => import("@/pages/orders/pages/order_editor"));
 
+const Blog = lazy(() => import("@/pages/blog"));
+const BlogEditor = lazy(() => import("@/pages/blog/pages/blog_editor"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -171,6 +174,10 @@ const Router = () => {
 
             <Route path="orders" element={<Orders />} />
             <Route path="orders/edit/:id" element={<OrderEditor />} />
+
+            <Route path="blog" element={<Blog />} />
+            <Route path="blog/add" element={<BlogEditor />} />
+            <Route path="blog/edit/:id" element={<BlogEditor />} />
           </Route>
         </Route>
 
