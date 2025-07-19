@@ -243,7 +243,7 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
   };
 
   const createLinkUsingSelectedCategoryAndSubCategoryValues = () => {
-    let link = `category?IsSelectedCategory=${selectedCategorySlug}&IsSelectedSubCategory=${selectedSubCategorySlug}`;
+    let link = `category?categorySlug=${selectedCategorySlug}&subCategorySlug=${selectedSubCategorySlug}`;
     return link;
   };
 
