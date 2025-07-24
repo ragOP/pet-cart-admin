@@ -143,13 +143,13 @@ const BlogTable = ({ setBlogLength, params, setParams }) => {
       },
     },
     {
-      key: "viewCount",
+      key: "totalViews",
       label: "Views",
       render: (value, row) => (
         <div className="flex items-center gap-1">
           <Eye size={16} className="text-gray-500" />
           <Typography className="font-medium">
-            {row?.viewCount || 0}
+            {row?.totalViews || 0}
           </Typography>
         </div>
       ),

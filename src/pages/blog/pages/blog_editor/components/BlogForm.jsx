@@ -34,6 +34,8 @@ import { updateBlog } from "../helper/updateBlog";
 import { slugify } from "@/utils/convert_to_slug";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
+import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
+import MultiSelectProducts from "./MultiSelectProducts";
 
 const BlogFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -45,6 +47,7 @@ const BlogFormSchema = z.object({
   isFeatured: z.boolean().default(false),
   isBanner: z.boolean().default(false),
   tags: z.array(z.string()).default([]),
+  relatedProducts: z.array(z.string()).default([]),
   image: z
     .any()
     .optional()
@@ -80,7 +83,14 @@ const BlogForm = ({ isEdit = false, initialData }) => {
     queryFn: () => fetchCategories({ params: { per_page: 100 } }),
   });
 
+  // Fetch products
+  const { data: productsRes, isLoading: productsLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => fetchProducts({ params: { per_page: 100 } }),
+  });
+
   const categories = categoriesRes?.data?.categories || [];
+  const products = productsRes?.data || [];
 
   const form = useForm({
     resolver: zodResolver(BlogFormSchema),
@@ -107,6 +117,13 @@ const BlogForm = ({ isEdit = false, initialData }) => {
               .filter((tag) => tag && tag.trim())
           : []
         : [],
+             relatedProducts: initialData?.relatedProducts
+         ? Array.isArray(initialData.relatedProducts)
+           ? initialData.relatedProducts.map(product => 
+               typeof product === 'string' ? product : product._id || product.id
+             )
+           : []
+         : [],
       image: null,
     },
   });
@@ -154,6 +171,21 @@ const BlogForm = ({ isEdit = false, initialData }) => {
     }
   }, [isEdit, initialData, categories, form]);
 
+  // Set related products when products are loaded and initialData is available
+  useEffect(() => {
+    if (isEdit && initialData?.relatedProducts && products.length > 0) {
+      const relatedProductIds = Array.isArray(initialData.relatedProducts)
+        ? initialData.relatedProducts.map(product => 
+            typeof product === 'string' ? product : product._id || product.id
+          ).filter(id => id && products.some(p => p._id === id)) // Only include valid product IDs
+        : [];
+      
+      if (relatedProductIds.length > 0) {
+        form.setValue("relatedProducts", relatedProductIds);
+      }
+    }
+  }, [isEdit, initialData, products, form]);
+
   const mutation = useMutation({
     mutationFn: async (formData) => {
       const payload = new FormData();
@@ -175,6 +207,11 @@ const BlogForm = ({ isEdit = false, initialData }) => {
       // Send tags as array of strings
       formData.tags.forEach((tag, index) => {
         payload.append(`tags[${index}]`, tag);
+      });
+
+      // Send relatedProducts as array of strings
+      formData.relatedProducts.forEach((productId, index) => {
+        payload.append(`relatedProducts[${index}]`, productId);
       });
 
       if (!imageRemoved && imageFile instanceof File) {
@@ -417,6 +454,31 @@ const BlogForm = ({ isEdit = false, initialData }) => {
                   </div>
                 )}
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Related Products */}
+        <FormField
+          control={form.control}
+          name="relatedProducts"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Related Products</FormLabel>
+              <FormControl>
+                {productsLoading ? (
+                  <div className="w-full p-2 text-sm text-gray-500 border rounded">
+                    Loading products...
+                  </div>
+                ) : (
+                  <MultiSelectProducts
+                    products={products}
+                    value={field.value || []}
+                    onChange={field.onChange}
+                  />
+                )}
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
