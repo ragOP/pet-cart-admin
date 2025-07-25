@@ -17,11 +17,18 @@ import { useState } from "react";
 
 const MultiSelectProducts = ({ products, value, onChange }) => {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
 
   const toggleProduct = (productId) => {
     if (value.includes(productId)) {
+      setError("");
       onChange(value.filter((id) => id !== productId));
     } else {
+      if (value.length >= 2) {
+        setError("You can select up to 2 products only.");
+        return;
+      }
+      setError("");
       onChange([...value, productId]);
     }
   };
@@ -44,35 +51,43 @@ const MultiSelectProducts = ({ products, value, onChange }) => {
         <Command>
           <CommandInput placeholder="Search products..." />
           <CommandEmpty>No product found.</CommandEmpty>
+          {error && (
+            <div className="text-red-500 text-xs px-4 py-1">{error}</div>
+          )}
           <CommandGroup className="max-h-[200px] overflow-auto">
-            {products.map((product) => (
-              <CommandItem
-                key={product._id}
-                onSelect={() => toggleProduct(product._id)}
-              >
-                <div className="flex items-center gap-2">
-                  <Check
-                    className={cn(
-                      "h-4 w-4",
-                      value.includes(product._id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+            {products.map((product) => {
+              const isSelected = value.includes(product._id);
+              const isDisabled = !isSelected && value.length >= 2;
+              return (
+                <CommandItem
+                  key={product._id}
+                  onSelect={() => !isDisabled && toggleProduct(product._id)}
+                  className={isDisabled ? "opacity-50 pointer-events-none" : ""}
+                >
                   <div className="flex items-center gap-2">
-                    {product.images?.[0] && (
-                      <img
-                        src={product.images[0]}
-                        alt={product.title}
-                        className="w-8 h-8 object-cover rounded"
-                      />
-                    )}
-                    <div>
-                      <div className="font-medium">{product.title}</div>
-                      <div className="text-sm text-gray-500">₹{product.price}</div>
+                    <Check
+                      className={cn(
+                        "h-4 w-4",
+                        isSelected ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex items-center gap-2">
+                      {product.images?.[0] && (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-8 h-8 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <div className="font-medium">{product.title}</div>
+                        <div className="text-sm text-gray-500">₹{product.price}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CommandItem>
-            ))}
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
         </Command>
       </PopoverContent>

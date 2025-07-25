@@ -50,7 +50,7 @@ const NewsLetter = () => {
   });
 
   return (
-    <div className="p-4">
+    <div className="p-4 mt-6">
       <h1 className="text-2xl font-bold">News Letter Subscribers</h1>
       <div className="text-sm text-gray-500 mb-4">
         Details of people who have subscribed to the News Letter

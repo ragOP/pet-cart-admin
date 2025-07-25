@@ -215,6 +215,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Blog Products",
+        name: "Blog Products",
+        url: "/dashboard/blog-featured-products",
+        icon: Sparkle,
+        roles: ["admin"],
+      },
+      {
         title: "Product Banner",
         name: "Product Banner",
         url: "/dashboard/product-banner",
