@@ -66,6 +66,8 @@ const OrderEditor = lazy(() => import("@/pages/orders/pages/order_editor"));
 const Blog = lazy(() => import("@/pages/blog"));
 const BlogEditor = lazy(() => import("@/pages/blog/pages/blog_editor"));
 
+const NewsLetter = lazy(() => import("@/pages/newsLetter"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -178,6 +180,8 @@ const Router = () => {
             <Route path="blog" element={<Blog />} />
             <Route path="blog/add" element={<BlogEditor />} />
             <Route path="blog/edit/:id" element={<BlogEditor />} />
+
+            <Route path="news-letter" element={<NewsLetter />} />
           </Route>
         </Route>
 

@@ -27,7 +27,8 @@ import {
     BadgeCheck,
     PackagePlus,
     Receipt,
-    Activity
+    Activity,
+    Mail
   } from "lucide-react";
   
   export const data = {
@@ -239,6 +240,13 @@ import {
         name: "Blogs",
         url: "/dashboard/blog",
         icon: FileText,
+        roles: ["admin"],
+      },
+      {
+        title: "News Letter",
+        name: "News Letter",
+        url: "/dashboard/news-letter",
+        icon: Mail,
         roles: ["admin"],
       },
     ],
