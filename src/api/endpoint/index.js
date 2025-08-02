@@ -24,6 +24,7 @@ export const endpoints = {
   coupons: "api/coupon",
   orders: "api/orders",
   blog: "api/blog",
+  shiprocket: "api/shiprocket",
 };
 
 

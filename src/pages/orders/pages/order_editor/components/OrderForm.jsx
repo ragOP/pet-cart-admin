@@ -31,8 +31,10 @@ import {
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { updateOrderStatus } from "../helper/updateOrder";
 import { generateAndSendBill } from "../helper/generateBill";
+import { createShiprocketOrder } from "../helper/createShiprocketOrder";
 import {
   Package2,
   User,
@@ -62,14 +64,30 @@ const OrderFormSchema = z.object({
   ]),
 });
 
+const ShiprocketSchema = z.object({
+  length: z.number().min(1, "Length must be at least 1"),
+  width: z.number().min(1, "Width must be at least 1"),
+  height: z.number().min(1, "Height must be at least 1"),
+});
+
 const OrderForm = ({ initialData }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showShiprocketForm, setShowShiprocketForm] = useState(!initialData?.shipRocketOrderId);
 
   const form = useForm({
     resolver: zodResolver(OrderFormSchema),
     defaultValues: {
       status: initialData?.status || "pending",
+    },
+  });
+
+  const shiprocketForm = useForm({
+    resolver: zodResolver(ShiprocketSchema),
+    defaultValues: {
+      length: 0,
+      width: 0,
+      height: 0,
     },
   });
 
@@ -117,36 +135,33 @@ const OrderForm = ({ initialData }) => {
     },
   });
 
+  const shiprocketMutation = useMutation({
+    mutationFn: async (data) => {
+      return await createShiprocketOrder({
+        orderId: initialData?._id,
+        dimensions: data,
+      });
+    },
+    onSuccess: (res) => {
+      if (res?.response?.success) {
+        toast.success("Shiprocket order created successfully!");
+        setShowShiprocketForm(false);
+      } else {
+        toast.error(res?.response?.message || "Failed to create shiprocket order");
+      }
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to create shiprocket order");
+    },
+  });
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       minimumFractionDigits: 2,
     }).format(price);
-  };
-
-  const calculateGST = (taxAmount, customerState, companyState = "Delhi") => {
-    const isIntraState = customerState === companyState;
-
-    if (isIntraState) {
-      // For intrastate transactions: CGST + SGST
-      const cgst = taxAmount / 2;
-      const sgst = taxAmount / 2;
-      return {
-        cgst,
-        sgst,
-        igst: 0,
-        isIntraState: true,
-      };
-    } else {
-      // For interstate transactions: IGST only
-      return {
-        cgst: 0,
-        sgst: 0,
-        igst: taxAmount,
-        isIntraState: false,
-      };
-    }
   };
 
   const getStatusColor = (status) => {
@@ -345,35 +360,26 @@ const OrderForm = ({ initialData }) => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {(() => {
-                            const gstBreakdown = calculateGST(
-                              item?.taxAmount || 0,
-                              initialData?.address?.state
-                            );
-                            return (
-                              <>
-                                {gstBreakdown.isIntraState ? (
-                                  <>
-                                    <div className="text-xs">
-                                      CGST: {formatPrice(gstBreakdown.cgst)}
-                                    </div>
-                                    <div className="text-xs">
-                                      SGST: {formatPrice(gstBreakdown.sgst)}
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="text-xs">
-                                    IGST: {formatPrice(gstBreakdown.igst)}
-                                  </div>
-                                )}
-                                {(item?.cessAmount || 0) > 0 && (
-                                  <div className="text-xs">
-                                    Cess: {formatPrice(item?.cessAmount || 0)}
-                                  </div>
-                                )}
-                              </>
-                            );
-                          })()}
+                          {(item?.cgstAmount || 0) > 0 && (
+                            <div className="text-xs">
+                              CGST: {formatPrice(item?.cgstAmount || 0)}
+                            </div>
+                          )}
+                          {(item?.sgstAmount || 0) > 0 && (
+                            <div className="text-xs">
+                              SGST: {formatPrice(item?.sgstAmount || 0)}
+                            </div>
+                          )}
+                          {(item?.igstAmount || 0) > 0 && (
+                            <div className="text-xs">
+                              IGST: {formatPrice(item?.igstAmount || 0)}
+                            </div>
+                          )}
+                          {(item?.cessAmount || 0) > 0 && (
+                            <div className="text-xs">
+                              Cess: {formatPrice(item?.cessAmount || 0)}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
@@ -442,18 +448,6 @@ const OrderForm = ({ initialData }) => {
                       <br />
                       {initialData?.address?.country || "N/A"}
                     </p>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      GST Type:{" "}
-                      {(() => {
-                        const gstBreakdown = calculateGST(
-                          100,
-                          initialData?.address?.state
-                        );
-                        return gstBreakdown.isIntraState
-                          ? "Intrastate (CGST + SGST)"
-                          : "Interstate (IGST)";
-                      })()}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -524,6 +518,91 @@ const OrderForm = ({ initialData }) => {
             </CardContent>
           </Card>
 
+          {/* Shiprocket Order Creation */}
+          {showShiprocketForm && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Create Shiprocket Order
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...shiprocketForm}>
+                  <form
+                    onSubmit={shiprocketForm.handleSubmit((data) => shiprocketMutation.mutate(data))}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={shiprocketForm.control}
+                      name="length"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Length (cm)</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="Enter length"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={shiprocketForm.control}
+                      name="width"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Width (cm)</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="Enter width"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={shiprocketForm.control}
+                      name="height"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Height (cm)</FormLabel>
+                          <FormControl>
+                            <input
+                              type="number"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              placeholder="Enter height"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={shiprocketMutation.isPending}
+                      className="w-full"
+                    >
+                      {shiprocketMutation.isPending ? "Creating..." : "Create Shiprocket Order"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Order Summary */}
           <Card>
             <CardHeader>
@@ -552,37 +631,41 @@ const OrderForm = ({ initialData }) => {
                 </div>
                 <Separator />
                 {(() => {
-                  const totalTax = (initialData?.items || []).reduce(
-                    (sum, item) => sum + (item?.taxAmount || 0),
-                    0
-                  );
                   const totalCess = (initialData?.items || []).reduce(
                     (sum, item) => sum + (item?.cessAmount || 0),
                     0
                   );
-                  const gstBreakdown = calculateGST(
-                    totalTax,
-                    initialData?.address?.state
+                  const totalCgst = (initialData?.items || []).reduce(
+                    (sum, item) => sum + (item?.cgstAmount || 0),
+                    0
                   );
-
+                  const totalSgst = (initialData?.items || []).reduce(
+                    (sum, item) => sum + (item?.sgstAmount || 0),
+                    0
+                  );
+                  const totalIgst = (initialData?.items || []).reduce(
+                    (sum, item) => sum + (item?.igstAmount || 0),
+                    0
+                  );
                   return (
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-muted-foreground">
                         GST Breakdown
                       </div>
-                      {gstBreakdown.isIntraState ? (
+                      {initialData?.address?.state === "gujarat" ||
+                      initialData?.address?.state === "Gujarat" ? (
                         <>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">
                               CGST (Central GST)
                             </span>
-                            <span>{formatPrice(gstBreakdown.cgst)}</span>
+                            <span>{formatPrice(totalCgst)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">
                               SGST (State GST)
                             </span>
-                            <span>{formatPrice(gstBreakdown.sgst)}</span>
+                            <span>{formatPrice(totalSgst)}</span>
                           </div>
                         </>
                       ) : (
@@ -590,7 +673,7 @@ const OrderForm = ({ initialData }) => {
                           <span className="text-muted-foreground">
                             IGST (Integrated GST)
                           </span>
-                          <span>{formatPrice(gstBreakdown.igst)}</span>
+                          <span>{formatPrice(totalIgst)}</span>
                         </div>
                       )}
                       {totalCess > 0 && (
