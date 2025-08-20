@@ -682,6 +682,12 @@ const OrderForm = ({ initialData }) => {
                           <span>{formatPrice(totalCess)}</span>
                         </div>
                       )}
+                      {totalCess > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping Cost</span>
+                          <span>{formatPrice(initialData.totalAmount - initialData.amountAfterTax)}</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -704,6 +710,15 @@ const OrderForm = ({ initialData }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                <div className="text-sm font-medium text-muted-foreground">Weight Breakdown</div>
+                <div className="space-y-2 border-b divide-dotted">
+                  {initialData.items && initialData.items.map((item) => (
+                    <div key={item._id} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{item.productId.title.slice(0, 30) + "..."}</span>
+                      <span>{item.productId.weight} kg</span>
+                    </div>
+                  ))}
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
                     Last Updated

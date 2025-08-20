@@ -59,7 +59,7 @@ const VariantSchema = z.object({
   price: z.coerce.number().positive("Price must be positive"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative().optional(),
-  weight: z.string().optional(),
+  weight: z.coerce.number().optional(),
   images: imageArrayValidator,
   attributes: z.record(z.string()).optional(),
   isActive: z.boolean().optional()
@@ -73,6 +73,7 @@ const ProductFormSchema = z.object({
   price: z.coerce.number().positive("Price must be a positive number"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative(),
+  weight: z.coerce.number().optional(),
   brandId: z.string().min(1, "Please select a brand"),
   breedIds: z.optional(z.array(z.string())),
   hsnCodeId: z.string().min(1, "Please select a HSN code"),
@@ -116,9 +117,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         price: 0,
         salePrice: 0,
         stock: 0,
+        weight: 0,  
         images: [],
         variants: [
-          { price: 0, salePrice: 0, stock: 0, weight: "", isActive: true, attributes: {} }
+          { price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }
         ]
       };
     }
@@ -138,13 +140,14 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       price: initialData.price || 0,
       salePrice: initialData.salePrice || 0,
       stock: initialData.stock || 0,
+      weight: initialData.weight || 0,
       images: [],
       variants: initialData.variants?.length > 0 
         ? initialData.variants.map(variant => ({
             ...variant,
             images: []
           }))
-        : [{ price: 0, salePrice: 0, stock: 0, weight: "", isActive: true, attributes: {} }]
+        : [{ price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }]
     };
   };
 
@@ -262,6 +265,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("price", data.price);
       payload.append("salePrice", data.salePrice);
       payload.append("stock", data.stock);
+      payload.append("weight", data.weight);
       payload.append("brandId", data.brandId);
       payload.append("hsnCode", data.hsnCodeId);
       payload.append("isAddToCart", data.isAddToCart);
@@ -466,6 +470,21 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               <FormLabel>Stock</FormLabel>
               <FormControl>
                 <Input type="number" placeholder="Enter stock" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Weight */}
+        <FormField
+          name="weight"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Weight</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="Enter weight in grams" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -803,7 +822,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     <FormItem>
                       <FormLabel>Weight</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input type="number" placeholder="Enter weight in grams" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -960,7 +979,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 price: 0,
                 salePrice: 0,
                 stock: 0,
-                weight: "",
+                weight: 0,
                 isActive: false,
                 attributes: {},
               })

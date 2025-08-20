@@ -9,7 +9,7 @@ import { DateRangePicker } from "@/components/date_filter";
 const Orders = () => {
   const paramInitialState = {
     page: 1,
-    per_page: 50,
+    per_page: 25,
     search: "",
   };
   const [ordersLength, setOrdersLength] = useState(0);
