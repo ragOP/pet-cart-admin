@@ -6,6 +6,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -40,28 +41,36 @@ const MultiSelectProducts = ({ products, value, onChange }) => {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent className="w-[300px] p-0" side="bottom">
         <Command>
           <CommandInput placeholder="Search products..." />
-          <CommandEmpty>No product found.</CommandEmpty>
-          <CommandGroup>
-            {products.map((product) => (
-              <CommandItem
-                key={product._id}
-                onSelect={() => toggleProduct(product._id)}
-              >
-                <div className="flex items-center gap-2">
-                  <Check
-                    className={cn(
-                      "h-4 w-4",
-                      value.includes(product._id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {product.title}
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <CommandList>
+            <CommandEmpty>No product found.</CommandEmpty>
+            <CommandGroup>
+              {Array.isArray(products) && products.length > 0 ? (
+                products.map((product) => (
+                  <CommandItem
+                    key={product._id}
+                    onSelect={() => toggleProduct(product._id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4",
+                          value.includes(product._id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {product.title}
+                    </div>
+                  </CommandItem>
+                ))
+              ) : (
+                <CommandItem disabled>
+                  No products available
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
