@@ -3,7 +3,8 @@ export const isDev = () => {
 };
 
 export const BACKEND_URL = isDev()
-  ? "http://localhost:4000"
+  // ? "http://localhost:4000"
+  ? "https://pet-caart-be.onrender.com"
   : "https://pet-caart-be.onrender.com";
 
 export const endpoints = {

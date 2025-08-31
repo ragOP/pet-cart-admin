@@ -201,6 +201,13 @@ import {
         roles: ["admin"],
       },
       {
+        title: "Home Configuration",
+        name: "Home Configuration",
+        url: "/dashboard/home-configuration",
+        icon: Settings2,
+        roles: ["admin"],
+      },
+      {
         title: "Sliders",
         name: "Sliders",
         url: "/dashboard/sliders",

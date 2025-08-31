@@ -8,10 +8,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Link, useLocation } from "react-router-dom"
 
 export function NavMain({
   items
 }) {
+  const location = useLocation();
+  
   return (
     (<SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -33,16 +36,24 @@ export function NavMain({
           </SidebarMenuItem>
         </SidebarMenu> */}
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <a href={item.url}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-              </a>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const isActive = location.pathname === item.url || 
+                           (item.url === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.url));
+            
+            return (
+              <SidebarMenuItem key={item.title}>
+                <Link to={item.url}>
+                  <SidebarMenuButton 
+                    tooltip={item.title}
+                    className={isActive ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>)

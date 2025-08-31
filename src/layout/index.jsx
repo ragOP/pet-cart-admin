@@ -3,7 +3,6 @@ import { SidebarInset, SidebarProvider } from "../components/ui/sidebar";
 import { Outlet } from "react-router";
 
 const Layout = () => {
-  console.log("Layout");
   return (
     <SidebarProvider>
       <AppSidebar />

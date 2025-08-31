@@ -11,12 +11,13 @@ import { toast } from "sonner";
 import ProtectedRoute from "@/auth/ProtectedRoute";
 import PublicRoute from "@/auth/PublicRoute";
 
-// Lazy loaded pages
-const Login = lazy(() => import("@/pages/login"));
-const Layout = lazy(() => import("@/layout"));
-const Dashboard = lazy(() => import("@/pages/dashboard"));
-const ErrorPage = lazy(() => import("@/components/errors/404"));
+// Import frequently used components directly to avoid loading delays
+import Login from "@/pages/login";
+import Layout from "@/layout";
+import Dashboard from "@/pages/dashboard";
+import ErrorPage from "@/components/errors/404";
 
+// Lazy load less frequently used components
 const Users = lazy(() => import("@/pages/users"));
 const UserEditor = lazy(() => import("@/pages/users/pages/user_editor"));
 
@@ -39,6 +40,7 @@ const Product = lazy(() => import("@/pages/product"));
 const ProductEditor = lazy(() => import("@/pages/product/pages/product_editor"));
 
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
+const HomeConfiguration = lazy(() => import("@/pages/home_configuration"));
 
 const Sliders = lazy(() => import("@/pages/sliders"));
 const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
@@ -97,100 +99,486 @@ const Router = () => {
   }, []);
 
   return (
-    <Suspense
-      fallback={
-        <div className="w-full h-screen flex items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </div>
-      }
-    >
-      <Routes>
-        {/* Redirect base to dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Routes>
+      {/* Redirect base to dashboard */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Public Routes */}
-        <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
+      {/* Public Routes */}
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+      </Route>
+
+      {/* Protected Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<Layout />}>
+          {/* Index dashboard (optional) */}
+          <Route index element={<Dashboard />} />
+
+          <Route path="users" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Users />
+            </Suspense>
+          } />
+          <Route path="users/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <UserEditor />
+            </Suspense>
+          } />
+          <Route path="users/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <UserEditor />
+            </Suspense>
+          } />
+
+          <Route path="category" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Category />
+            </Suspense>
+          } />
+          <Route path="category/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CategoryEditor />
+            </Suspense>
+          } />
+          <Route path="category/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CategoryEditor />
+            </Suspense>
+          } />
+
+          <Route path="sub_category" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <SubCategory />
+            </Suspense>
+          } />
+          <Route path="sub_category/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <SubCategoryEditor />
+            </Suspense>
+          } />
+          <Route path="sub_category/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <SubCategoryEditor />
+            </Suspense>
+          } />
+
+          <Route path="brand" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Brand />
+            </Suspense>
+          } />
+          <Route path="brand/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BrandEditor />
+            </Suspense>
+          } />
+          <Route path="brand/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BrandEditor />
+            </Suspense>
+          } />
+
+          <Route path="breed" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Breed />
+            </Suspense>
+          } />
+          <Route path="breed/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BreedEditor />
+            </Suspense>
+          } />
+          <Route path="breed/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BreedEditor />
+            </Suspense>
+          } />
+
+          <Route path="collection" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Collection />
+            </Suspense>
+          } />
+          <Route path="collection/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CollectionEditor />
+            </Suspense>
+          } />
+          <Route path="collection/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CollectionEditor />
+            </Suspense>
+          } />
+
+          <Route path="product" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Product />
+            </Suspense>
+          } />
+          <Route path="product/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <ProductEditor />
+            </Suspense>
+          } />
+          <Route path="product/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <ProductEditor />
+            </Suspense>
+          } />
+
+          <Route path="header-footer" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <HeaderFooter />
+            </Suspense>
+          } />
+
+          <Route path="home-configuration" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <HomeConfiguration />
+            </Suspense>
+          } />
+
+          <Route path="sliders" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Sliders />
+            </Suspense>
+          } />
+          <Route path="sliders/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <SliderEditor />
+            </Suspense>
+          } />
+          <Route path="sliders/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <SliderEditor />
+            </Suspense>
+          } />
+
+          <Route path="ad_banner" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <AdBanner />
+            </Suspense>
+          } />
+
+          <Route path="banners" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Banners />
+            </Suspense>
+          } />
+          <Route path="banners/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BannerEditor />
+            </Suspense>
+          } />
+          <Route path="banners/edit/:selectedType" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BannerEditor />
+            </Suspense>
+          } />
+
+          <Route path="cat-life-banner" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CatLifeBanners />
+            </Suspense>
+          } />
+          <Route path="cat-life-banner/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CatLifeBannerEditor />
+            </Suspense>
+          } />
+          <Route path="cat-life-banner/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CatLifeBannerEditor />
+            </Suspense>
+          } />
+
+          <Route path="product-banner" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <ProductBanner />
+            </Suspense>
+          } />
+          <Route path="product-banner/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <ProductBannerEditor />
+            </Suspense>
+          } />
+          <Route path="product-banner/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <ProductBannerEditor />
+            </Suspense>
+          } />
+
+          <Route path="hsn_codes" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <HSNCode />
+            </Suspense>
+          } />
+          <Route path="hsn_codes/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <HSNCodeEditor />
+            </Suspense>
+          } />
+          <Route path="hsn_codes/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <HSNCodeEditor />
+            </Suspense>
+          } />
+
+          <Route path="coupons" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Coupons />
+            </Suspense>
+          } />
+          <Route path="coupons/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CouponEditor />
+            </Suspense>
+          } />
+          <Route path="coupons/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <CouponEditor />
+            </Suspense>
+          } />
+
+          <Route path="orders" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Orders />
+            </Suspense>
+          } />
+          <Route path="orders/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <OrderEditor />
+            </Suspense>
+          } />
+
+          <Route path="blog" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <Blog />
+            </Suspense>
+          } />
+          <Route path="blog/add" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BlogEditor />
+            </Suspense>
+          } />
+          <Route path="blog/edit/:id" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BlogEditor />
+            </Suspense>
+          } />
+
+          <Route path="news-letter" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <NewsLetter />
+            </Suspense>
+          } />
+          <Route path="blog-featured-products" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <BlogFeaturedProducts />
+            </Suspense>
+          } />
         </Route>
+      </Route>
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Layout />}>
-            {/* Index dashboard (optional) */}
-            <Route index element={<Dashboard />} />
-
-            <Route path="users" element={<Users />} />
-            <Route path="users/add" element={<UserEditor />} />
-            <Route path="users/edit/:id" element={<UserEditor />} />
-
-            <Route path="category" element={<Category />} />
-            <Route path="category/add" element={<CategoryEditor />} />
-            <Route path="category/edit/:id" element={<CategoryEditor />} />
-
-            <Route path="sub_category" element={<SubCategory />} />
-            <Route path="sub_category/add" element={<SubCategoryEditor />} />
-            <Route path="sub_category/edit/:id" element={<SubCategoryEditor />} />
-
-            <Route path="brand" element={<Brand />} />
-            <Route path="brand/add" element={<BrandEditor />} />
-            <Route path="brand/edit/:id" element={<BrandEditor />} />
-
-            <Route path="breed" element={<Breed />} />
-            <Route path="breed/add" element={<BreedEditor />} />
-            <Route path="breed/edit/:id" element={<BreedEditor />} />
-
-            <Route path="collection" element={<Collection />} />
-            <Route path="collection/add" element={<CollectionEditor />} />
-            <Route path="collection/edit/:id" element={<CollectionEditor />} />
-
-            <Route path="product" element={<Product />} />
-            <Route path="product/add" element={<ProductEditor />} />
-            <Route path="product/edit/:id" element={<ProductEditor />} />
-
-            <Route path="header-footer" element={<HeaderFooter />} />
-
-            <Route path="sliders" element={<Sliders />} />
-            <Route path="sliders/add" element={<SliderEditor />} />
-            <Route path="sliders/edit/:id" element={<SliderEditor />} />
-
-            <Route path="ad_banner" element={<AdBanner />} />
-
-            <Route path="banners" element={<Banners />} />
-            <Route path="banners/add" element={<BannerEditor />} />
-            <Route path="banners/edit/:selectedType" element={<BannerEditor />} />
-
-            <Route path="cat-life-banner" element={<CatLifeBanners />} />
-            <Route path="cat-life-banner/add" element={<CatLifeBannerEditor />} />
-            <Route path="cat-life-banner/edit/:id" element={<CatLifeBannerEditor />} />
-
-            <Route path="product-banner" element={<ProductBanner />} />
-            <Route path="product-banner/add" element={<ProductBannerEditor />} />
-            <Route path="product-banner/edit/:id" element={<ProductBannerEditor />} />
-
-            <Route path="hsn_codes" element={<HSNCode />} />
-            <Route path="hsn_codes/add" element={<HSNCodeEditor />} />
-            <Route path="hsn_codes/edit/:id" element={<HSNCodeEditor />} />
-
-            <Route path="coupons" element={<Coupons />} />
-            <Route path="coupons/add" element={<CouponEditor />} />
-            <Route path="coupons/edit/:id" element={<CouponEditor />} />
-
-            <Route path="orders" element={<Orders />} />
-            <Route path="orders/edit/:id" element={<OrderEditor />} />
-
-            <Route path="blog" element={<Blog />} />
-            <Route path="blog/add" element={<BlogEditor />} />
-            <Route path="blog/edit/:id" element={<BlogEditor />} />
-
-            <Route path="news-letter" element={<NewsLetter />} />
-            <Route path="blog-featured-products" element={<BlogFeaturedProducts />} />
-          </Route>
-        </Route>
-
-        {/* 404 Fallback */}
-        <Route path="*" element={<ErrorPage />} />
-      </Routes>
-    </Suspense>
+      {/* 404 Fallback */}
+      <Route path="*" element={<ErrorPage />} />
+    </Routes>
   );
 };
 
