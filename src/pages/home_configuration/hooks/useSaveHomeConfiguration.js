@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveHomeConfiguration } from '../helpers/saveHomeConfiguration';
 import { toast } from 'sonner';
 
-export const useSaveHomeConfiguration = () => {
+export const useSaveHomeConfiguration = (onSuccess) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -18,11 +18,18 @@ export const useSaveHomeConfiguration = () => {
       
       return response;
     },
-    onSuccess: () => {
-      toast.success('Grid configuration saved successfully!');
+    onSuccess: (data) => {
+      const isUpdate = data?.data?._id;
+      toast.success(`Grid configuration ${isUpdate ? 'updated' : 'created'} successfully!`);
       
-      // Invalidate and refetch related queries if needed
+      // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: ['homeConfiguration'] });
+      queryClient.invalidateQueries({ queryKey: ['gridConfigs'] });
+      
+      // Call custom onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess(data);
+      }
     },
     onError: (error) => {
       console.error('Save error:', error);

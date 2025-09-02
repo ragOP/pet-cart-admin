@@ -38,16 +38,13 @@ export const useGridBuilder = (gridItems, onGridItemsUpdate) => {
   }, [gridItems, onGridItemsUpdate]);
 
   const handleImageUpload = useCallback((itemId, file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const updatedItems = gridItems.map((item) =>
-        item.id === itemId
-          ? { ...item, image: e.target.result }
-          : item
-      );
-      onGridItemsUpdate(updatedItems);
-    };
-    reader.readAsDataURL(file);
+    // Store the file directly - will be processed during save
+    const updatedItems = gridItems.map((item) =>
+      item.id === itemId
+        ? { ...item, image: file }
+        : item
+    );
+    onGridItemsUpdate(updatedItems);
   }, [gridItems, onGridItemsUpdate]);
 
   const handleRemoveImage = useCallback((itemId) => {

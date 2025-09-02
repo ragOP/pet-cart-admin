@@ -1,11 +1,35 @@
 import { apiService } from "@/api/api_services";
+import { endpoints } from "@/api/endpoint";
 
 export const saveHomeConfiguration = async (configData) => {
   try {
+    // Determine if this is create or update based on presence of _id
+    const isUpdate = configData._id;
+    const endpoint = isUpdate 
+      ? `${endpoints.homeConfigUpdate}/${configData._id}`
+      : endpoints.homeConfigCreate;
+    const method = isUpdate ? "PUT" : "POST";
+
+    // Prepare data according to API format
+    const apiData = {
+      title: configData.title,
+      contentType: configData.contentType,
+      contentItems: configData.contentItems.map(item => ({
+        itemId: item.itemId,
+        link: item.link,
+        imageUrl: item.image
+      })),
+      grid: configData.grid,
+      isActive: configData.isActive,
+      position: configData.position,
+      backgroundImage: configData.backgroundImage,
+      bannerImage: configData.bannerImage
+    };
+
     const apiResponse = await apiService({
-      endpoint: "api/home-configuration",
-      method: "POST",
-      data: configData,
+      endpoint,
+      method,
+      data: apiData,
     });
 
     // Return the entire API response for frontend handling

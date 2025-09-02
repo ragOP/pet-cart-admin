@@ -51,6 +51,14 @@ const GridItem = ({
     event.preventDefault();
   };
 
+  // Helper function to get display URL
+  const getDisplayUrl = (imageValue) => {
+    if (!imageValue) return null;
+    if (typeof imageValue === 'string') return imageValue; // Already a URL
+    if (imageValue instanceof File) return URL.createObjectURL(imageValue); // Create object URL for File
+    return null;
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -88,7 +96,7 @@ const GridItem = ({
             {item.image ? (
               <div className="relative w-full h-full">
                 <img
-                  src={item.image}
+                  src={getDisplayUrl(item.image)}
                   alt="Product"
                   className="w-full h-full object-cover rounded min-h-[15rem] max-h-[15rem]"
                 />

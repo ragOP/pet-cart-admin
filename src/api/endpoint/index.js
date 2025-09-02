@@ -26,6 +26,12 @@ export const endpoints = {
   orders: "api/orders",
   blog: "api/blog",
   shiprocket: "api/shiprocket",
+  homeConfigGetAll: "api/home-config/get-all-grid",
+  homeConfigGetById: "api/home-config/get-grid",
+  homeConfigCreate: "api/home-config/create",
+  homeConfigUpdate: "api/home-config/update-grid",
+  homeConfigDelete: "api/home-config/delete-grid",
+  imageUpload: "api/image/upload-image",
 };
 
 

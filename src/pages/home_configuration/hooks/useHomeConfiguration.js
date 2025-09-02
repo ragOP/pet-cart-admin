@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useSaveHomeConfiguration } from "./useSaveHomeConfiguration";
+import { processImage } from "../helpers/imageUploadApi";
 
-export const useHomeConfiguration = () => {
+export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null) => {
   // Basic configuration state
   const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState("product");
@@ -25,6 +26,10 @@ export const useHomeConfiguration = () => {
     }));
   });
 
+  // Banner and background image state (can be File or URL)
+  const [bannerImage, setBannerImage] = useState(null);
+  const [backgroundImage, setBackgroundImage] = useState(null);
+
   // UI state
   const [activeTab, setActiveTab] = useState("builder");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -33,8 +38,52 @@ export const useHomeConfiguration = () => {
   const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
 
   // TanStack Query mutation for saving
-  const saveMutation = useSaveHomeConfiguration();
+  const saveMutation = useSaveHomeConfiguration(onSaveSuccess);
   const isSaving = saveMutation.isPending;
+
+  // Load editing config data when provided
+  useEffect(() => {
+    if (editingConfig) {
+      setTitle(editingConfig.title || "");
+      setContentType(editingConfig.contentType || "product");
+      setGridConfig(editingConfig.grid || { rows: 2, columns: 4 });
+      setPendingGridConfig(editingConfig.grid || { rows: 2, columns: 4 });
+      
+      // For editing, banner and background are already URLs
+      setBannerImage(editingConfig.bannerImage || null);
+      setBackgroundImage(editingConfig.backgroundImage || null);
+      
+      // Transform contentItems back to gridItems format
+      if (editingConfig.contentItems && editingConfig.grid) {
+        const totalItems = editingConfig.grid.rows * editingConfig.grid.columns;
+        const newGridItems = Array.from({ length: totalItems }, (_, index) => ({
+          id: `item-${index}`,
+          image: null,
+          link: "",
+          itemId: null,
+          name: "",
+          type: null,
+          position: index,
+        }));
+
+        // Map contentItems to grid positions
+        editingConfig.contentItems.forEach((contentItem, index) => {
+          if (index < newGridItems.length) {
+            newGridItems[index] = {
+              ...newGridItems[index],
+              image: contentItem.imageUrl,
+              link: contentItem.link,
+              itemId: contentItem.itemId?._id || contentItem.itemId,
+              name: contentItem.itemId?.name || "",
+              type: editingConfig.contentType,
+            };
+          }
+        });
+
+        setGridItems(newGridItems);
+      }
+    }
+  }, [editingConfig]);
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useCallback(() => {
@@ -48,8 +97,11 @@ export const useHomeConfiguration = () => {
     // Check if any grid items have content
     if (gridItems.some(item => item.image || item.link)) return true;
     
+    // Check if banner or background images are set (File or URL)
+    if (bannerImage || backgroundImage) return true;
+    
     return false;
-  }, [title, pendingGridConfig, gridConfig, gridItems]);
+  }, [title, pendingGridConfig, gridConfig, gridItems, bannerImage, backgroundImage]);
 
   // Grid configuration handlers
   const handleGridConfigChange = useCallback((newConfig) => {
@@ -157,34 +209,138 @@ export const useHomeConfiguration = () => {
     ));
   }, []);
 
+  // Banner and background image handlers
+  const handleBannerImageUpload = useCallback((file) => {
+    if (file) {
+      // Store the file directly - will be processed during save
+      setBannerImage(file);
+    }
+  }, []);
+
+  const handleBannerImageRemove = useCallback(() => {
+    setBannerImage(null);
+  }, []);
+
+  const handleBackgroundImageUpload = useCallback((file) => {
+    if (file) {
+      // Store the file directly - will be processed during save
+      setBackgroundImage(file);
+    }
+  }, []);
+
+  const handleBackgroundImageRemove = useCallback(() => {
+    setBackgroundImage(null);
+  }, []);
+
   // Save handler
   const handleSave = useCallback(async () => {
-    if (!title.trim()) {
-      toast.error("Please enter a title");
-      return;
+    // Show initial loading toast
+    const loadingToast = toast.loading("Processing images and saving configuration...");
+    
+    try {
+
+      // Collect all images that need processing
+      const imagesToProcess = [];
+      
+      // Add banner image if exists
+      if (bannerImage) {
+        imagesToProcess.push({ type: 'banner', value: bannerImage });
+      }
+      
+      // Add background image if exists
+      if (backgroundImage) {
+        imagesToProcess.push({ type: 'background', value: backgroundImage });
+      }
+      
+      // Add grid item images
+      gridItems.filter(item => item.image || item.link).forEach((item, index) => {
+        if (item.image) {
+          imagesToProcess.push({ type: 'gridItem', value: item.image, itemIndex: index, item });
+        }
+      });
+
+      // Update loading message if there are images to upload
+      if (imagesToProcess.length > 0) {
+        toast.loading(`Uploading ${imagesToProcess.length} image(s)...`, { id: loadingToast });
+      }
+
+      // Process all images concurrently using Promise.all
+      const imageResults = await Promise.all(
+        imagesToProcess.map(async (imageData) => {
+          const result = await processImage(imageData.value);
+          return { ...imageData, result };
+        })
+      );
+
+      // Check for any upload failures
+      const failedUploads = imageResults.filter(img => !img.result.success);
+      if (failedUploads.length > 0) {
+        toast.dismiss(loadingToast);
+        toast.error(`Failed to upload ${failedUploads.length} image(s)`);
+        return;
+      }
+
+      // Update loading message for saving
+      toast.loading("Saving configuration...", { id: loadingToast });
+
+      // Extract processed URLs
+      let processedBannerImage = null;
+      let processedBackgroundImage = null;
+      const processedContentItems = [];
+
+             // Process results
+       imageResults.forEach(({ type, result }) => {
+         if (type === 'banner') {
+           processedBannerImage = result.url;
+         } else if (type === 'background') {
+           processedBackgroundImage = result.url;
+         }
+       });
+
+      // Build content items with processed URLs
+      gridItems.filter(item => item.image || item.link).forEach((item) => {
+        const imageResult = imageResults.find(
+          img => img.type === 'gridItem' && img.item.id === item.id
+        );
+        
+        processedContentItems.push({
+          itemId: item.itemId,
+          link: item.link,
+          image: imageResult ? imageResult.result.url : null,
+          name: item.name,
+          type: item.type
+        });
+      });
+
+      // Prepare final grid data with processed URLs
+      const gridData = {
+        ...(editingConfig?._id && { _id: editingConfig._id }), // Include _id for updates
+        title: title.trim() || null, // Make title optional
+        contentType: contentType,
+        grid: {
+          rows: gridConfig.rows,
+          columns: gridConfig.columns
+        },
+        contentItems: processedContentItems,
+        bannerImage: processedBannerImage,
+        backgroundImage: processedBackgroundImage,
+        isActive: editingConfig?.isActive ?? true,
+        position: editingConfig?.position ?? 0
+      };
+
+      console.log("Saving grid data:", gridData);
+      
+      // Use TanStack Query mutation - it handles success/error automatically
+      await saveMutation.mutateAsync(gridData);
+      
+      // Dismiss loading toast - success toast will be shown by the mutation
+      toast.dismiss(loadingToast);
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error("Failed to save configuration");
+      console.error("Save error:", error);
     }
-
-    const gridData = {
-      title: title.trim(),
-      contentType: contentType,
-      grid: {
-        rows: gridConfig.rows,
-        columns: gridConfig.columns
-      },
-      contentItems: gridItems.filter(item => item.image || item.link).map(item => ({
-        itemId: item.itemId,
-        link: item.link,
-        image: item.image,
-        name: item.name,
-        type: item.type
-      })),
-      isActive: true,
-      position: 0
-    };
-
-    // Use TanStack Query mutation - it handles success/error automatically
-    await saveMutation.mutateAsync(gridData);
-  }, [title, contentType, gridConfig, gridItems, saveMutation]);
+  }, [title, contentType, gridConfig, gridItems, bannerImage, backgroundImage, editingConfig, saveMutation]);
 
   // Tab handlers
   const handlePreview = useCallback(() => {
@@ -200,41 +356,47 @@ export const useHomeConfiguration = () => {
     setShowContentTypeDialog(false);
   }, []);
 
-      return {
-      // State
-      title,
-      contentType,
-      gridConfig,
-      pendingGridConfig,
-      gridItems,
-      activeTab,
-      showConfirmDialog,
-      showContentTypeDialog,
-      pendingContentType,
-      isGeneratingGrid,
-      isSaving,
-      
-      // Setters
-      setTitle,
-      setActiveTab,
-      setShowConfirmDialog,
-      setShowContentTypeDialog,
-      
-      // Handlers
-      handleGridConfigChange,
-      handleGenerateGrid,
-      handleConfirmGridChange,
-      handleContentTypeChange,
-      handleConfirmContentTypeChange,
-      handleGridItemUpdate,
-      handleLinkChange,
-      handleDatabaseImageSelect,
-      handleSave,
-      handlePreview,
-      handleCloseConfirmDialog,
-      handleCloseContentTypeDialog,
-      
-      // Utility functions
-      hasUnsavedChanges,
-    };
-}; 
+  return {
+    // State
+    title,
+    contentType,
+    gridConfig,
+    pendingGridConfig,
+    gridItems,
+    bannerImage,
+    backgroundImage,
+    activeTab,
+    showConfirmDialog,
+    showContentTypeDialog,
+    pendingContentType,
+    isGeneratingGrid,
+    isSaving,
+    
+    // Setters
+    setTitle,
+    setActiveTab,
+    setShowConfirmDialog,
+    setShowContentTypeDialog,
+    
+    // Handlers
+    handleGridConfigChange,
+    handleGenerateGrid,
+    handleConfirmGridChange,
+    handleContentTypeChange,
+    handleConfirmContentTypeChange,
+    handleGridItemUpdate,
+    handleLinkChange,
+    handleDatabaseImageSelect,
+    handleBannerImageUpload,
+    handleBannerImageRemove,
+    handleBackgroundImageUpload,
+    handleBackgroundImageRemove,
+    handleSave,
+    handlePreview,
+    handleCloseConfirmDialog,
+    handleCloseContentTypeDialog,
+    
+    // Utility functions
+    hasUnsavedChanges,
+  };
+};
