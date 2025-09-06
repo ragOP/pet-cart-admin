@@ -84,23 +84,14 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header with Back Button */}
-            <div className="flex items-center space-x-4">
-                <Button 
-                    onClick={onBack} 
-                    variant="outline" 
-                    size="icon"
-                    className="rounded-full hover:cursor-pointer h-10 w-10"
-                >
-                    <ChevronLeft className="h-6 w-6" />
-                </Button>
+        <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h2 className="text-xl font-semibold">
-                        {editingConfig ? "Edit Configuration" : "Create New Configuration"}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        {editingConfig ? `Editing: ${editingConfig.title || "Untitled Grid"}` : "Create a new homepage grid layout"}
+                    <h1 className="text-xl font-bold text-gray-900">
+                        {editingConfig ? "Edit Grid Configuration" : "Create New Grid Configuration"}
+                    </h1>
+                    <p className="text-gray-600 text-base">
+                        {editingConfig ? "Update your existing grid layout and content" : "Design a custom grid layout for your homepage"}
                     </p>
                 </div>
             </div>
@@ -118,7 +109,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                                 <div>
                                     <CardTitle>Grid Configuration</CardTitle>
                                     <CardDescription>
-                                        Configure your grid settings and layout
+                                        Configure your grid settings and layout for desktop and mobile
                                     </CardDescription>
                                 </div>
                                 <SaveConfigBox
@@ -160,59 +151,99 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                                     </div>
                                 </div>
 
-                                {/* Grid Dimensions */}
-                                <div className="grid grid-cols-3 gap-6 items-end">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="rows" className="text-sm font-medium">Rows</Label>
-                                        <Input
-                                            id="rows"
-                                            type="number"
-                                            min="1"
-                                            max="8"
-                                            value={pendingGridConfig.rows}
-                                            onChange={(e) =>
-                                                handleGridConfigChange({
-                                                    ...pendingGridConfig,
-                                                    rows: parseInt(e.target.value) || 1,
-                                                })
-                                            }
-                                            className="h-10"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="columns" className="text-sm font-medium">Columns</Label>
-                                        <Input
-                                            id="columns"
-                                            type="number"
-                                            min="1"
-                                            max="8"
-                                            value={pendingGridConfig.columns}
-                                            onChange={(e) =>
-                                                handleGridConfigChange({
-                                                    ...pendingGridConfig,
-                                                    columns: parseInt(e.target.value) || 1,
-                                                })
-                                            }
-                                            className="h-10"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-transparent">Action</Label>
-                                        <Button
-                                            onClick={handleGenerateGrid}
-                                            className="bg-primary hover:bg-primary/90 w-full"
-                                            size="lg"
-                                            disabled={isGeneratingGrid}
-                                        >
-                                            {isGeneratingGrid ? (
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                    <span>Generating Grid...</span>
-                                                </div>
-                                            ) : (
-                                                "Generate Grid"
-                                            )}
-                                        </Button>
+                                {/* Desktop Grid Dimensions */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-900">Desktop Grid Dimensions</Label>
+                                    <div className="grid grid-cols-5 gap-6 items-end">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="rows" className="text-sm font-medium">Rows</Label>
+                                            <Input
+                                                id="rows"
+                                                type="number"
+                                                min="1"
+                                                max="8"
+                                                value={pendingGridConfig.rows}
+                                                onChange={(e) =>
+                                                    handleGridConfigChange({
+                                                        ...pendingGridConfig,
+                                                        rows: parseInt(e.target.value) || 1,
+                                                    })
+                                                }
+                                                className="h-10"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="columns" className="text-sm font-medium">Columns</Label>
+                                            <Input
+                                                id="columns"
+                                                type="number"
+                                                min="1"
+                                                max="8"
+                                                value={pendingGridConfig.columns}
+                                                onChange={(e) =>
+                                                    handleGridConfigChange({
+                                                        ...pendingGridConfig,
+                                                        columns: parseInt(e.target.value) || 1,
+                                                    })
+                                                }
+                                                className="h-10"
+                                            />
+                                        </div>
+                                        
+                                        {/* Mobile Grid Dimensions */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="mobileRows" className="text-sm font-medium">Mobile Rows</Label>
+                                            <Input
+                                                id="mobileRows"
+                                                type="number"
+                                                min="1"
+                                                max="6"
+                                                value={pendingGridConfig.mobileRows}
+                                                onChange={(e) =>
+                                                    handleGridConfigChange({
+                                                        ...pendingGridConfig,
+                                                        mobileRows: parseInt(e.target.value) || 1,
+                                                    })
+                                                }
+                                                className="h-10"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="mobileColumns" className="text-sm font-medium">Mobile Columns</Label>
+                                            <Input
+                                                id="mobileColumns"
+                                                type="number"
+                                                min="1"
+                                                max="4"
+                                                value={pendingGridConfig.mobileColumns}
+                                                onChange={(e) =>
+                                                    handleGridConfigChange({
+                                                        ...pendingGridConfig,
+                                                        mobileColumns: parseInt(e.target.value) || 1,
+                                                    })
+                                                }
+                                                className="h-10"
+                                            />
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <Label className="text-sm font-medium text-transparent">Action</Label>
+                                            <Button
+                                                onClick={handleGenerateGrid}
+                                                className="bg-primary hover:bg-primary/90 w-full"
+                                                size="lg"
+                                                disabled={isGeneratingGrid}
+                                            >
+                                                {isGeneratingGrid ? (
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                        <span>Generating Grid...</span>
+                                                    </div>
+                                                ) : (
+                                                    "Generate Grid"
+                                                )}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

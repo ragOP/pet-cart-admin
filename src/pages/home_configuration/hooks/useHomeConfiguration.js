@@ -3,15 +3,28 @@ import { toast } from "sonner";
 import { useSaveHomeConfiguration } from "./useSaveHomeConfiguration";
 import { processImage } from "../helpers/imageUploadApi";
 
-export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null) => {
+export const useHomeConfiguration = (
+  editingConfig = null,
+  onSaveSuccess = null
+) => {
   // Basic configuration state
   const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState("product");
-  
-  // Grid configuration state
-  const [gridConfig, setGridConfig] = useState({ rows: 2, columns: 4 });
-  const [pendingGridConfig, setPendingGridConfig] = useState({ rows: 2, columns: 4 });
-  
+
+  // Grid configuration state - now includes mobile dimensions
+  const [gridConfig, setGridConfig] = useState({
+    rows: 2,
+    columns: 4,
+    mobileRows: 2,
+    mobileColumns: 2,
+  });
+  const [pendingGridConfig, setPendingGridConfig] = useState({
+    rows: 2,
+    columns: 4,
+    mobileRows: 2,
+    mobileColumns: 2,
+  });
+
   // Grid items state
   const [gridItems, setGridItems] = useState(() => {
     const totalItems = 2 * 4;
@@ -46,13 +59,28 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
     if (editingConfig) {
       setTitle(editingConfig.title || "");
       setContentType(editingConfig.contentType || "product");
-      setGridConfig(editingConfig.grid || { rows: 2, columns: 4 });
-      setPendingGridConfig(editingConfig.grid || { rows: 2, columns: 4 });
-      
+
+      // Handle backward compatibility for grid config
+      const gridData = editingConfig.grid || {
+        rows: 2,
+        columns: 4,
+        mobileRows: 4,
+        mobileColumns: 2,
+      };
+      const fullGridConfig = {
+        rows: gridData.rows || 2,
+        columns: gridData.columns || 4,
+        mobileRows: gridData.mobileRows || 4,
+        mobileColumns: gridData.mobileColumns || 2,
+      };
+
+      setGridConfig(fullGridConfig);
+      setPendingGridConfig(fullGridConfig);
+
       // For editing, banner and background are already URLs
       setBannerImage(editingConfig.bannerImage || null);
       setBackgroundImage(editingConfig.backgroundImage || null);
-      
+
       // Transform contentItems back to gridItems format
       if (editingConfig.contentItems && editingConfig.grid) {
         const totalItems = editingConfig.grid.rows * editingConfig.grid.columns;
@@ -89,19 +117,31 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
   const hasUnsavedChanges = useCallback(() => {
     // Check if title has changed
     if (title.trim() !== "") return true;
-    
-    // Check if grid dimensions have changed
-    if (pendingGridConfig.rows !== gridConfig.rows || 
-        pendingGridConfig.columns !== gridConfig.columns) return true;
-    
+
+    // Check if grid dimensions have changed (including mobile)
+    if (
+      pendingGridConfig.rows !== gridConfig.rows ||
+      pendingGridConfig.columns !== gridConfig.columns ||
+      pendingGridConfig.mobileRows !== gridConfig.mobileRows ||
+      pendingGridConfig.mobileColumns !== gridConfig.mobileColumns
+    )
+      return true;
+
     // Check if any grid items have content
-    if (gridItems.some(item => item.image || item.link)) return true;
-    
+    if (gridItems.some((item) => item.image || item.link)) return true;
+
     // Check if banner or background images are set (File or URL)
     if (bannerImage || backgroundImage) return true;
-    
+
     return false;
-  }, [title, pendingGridConfig, gridConfig, gridItems, bannerImage, backgroundImage]);
+  }, [
+    title,
+    pendingGridConfig,
+    gridConfig,
+    gridItems,
+    bannerImage,
+    backgroundImage,
+  ]);
 
   // Grid configuration handlers
   const handleGridConfigChange = useCallback((newConfig) => {
@@ -126,15 +166,20 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
   }, [pendingGridConfig]);
 
   const handleGenerateGrid = useCallback(async () => {
-    if (pendingGridConfig.rows === gridConfig.rows &&
-        pendingGridConfig.columns === gridConfig.columns) {
+    if (
+      pendingGridConfig.rows === gridConfig.rows &&
+      pendingGridConfig.columns === gridConfig.columns &&
+      pendingGridConfig.mobileRows === gridConfig.mobileRows &&
+      pendingGridConfig.mobileColumns === gridConfig.mobileColumns
+    ) {
       toast.info("No changes detected", {
-        description: "The current grid configuration is already set to the values you've entered. No action needed."
+        description:
+          "The current grid configuration is already set to the values you've entered. No action needed.",
       });
       return;
     }
 
-    const hasImages = gridItems.some(item => item.image);
+    const hasImages = gridItems.some((item) => item.image);
     if (hasImages) {
       setShowConfirmDialog(true);
     } else {
@@ -145,11 +190,13 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
         setIsGeneratingGrid(false);
         // Scroll down to show the generated grid after delay
         setTimeout(() => {
-          const gridBuilderSection = document.querySelector('[data-section="grid-builder"]');
+          const gridBuilderSection = document.querySelector(
+            '[data-section="grid-builder"]'
+          );
           if (gridBuilderSection) {
-            gridBuilderSection.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start' 
+            gridBuilderSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
             });
           }
         }, 100);
@@ -162,26 +209,36 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
   }, [generateNewGrid]);
 
   // Content type handlers
-  const handleContentTypeChange = useCallback((newContentType) => {
-    if (contentType !== newContentType && gridItems.some(item => item.image)) {
-      setPendingContentType(newContentType);
-      setShowContentTypeDialog(true);
-    } else {
-      setContentType(newContentType);
-    }
-  }, [contentType, gridItems]);
+  const handleContentTypeChange = useCallback(
+    (newContentType) => {
+      if (
+        contentType !== newContentType &&
+        gridItems.some((item) => item.image)
+      ) {
+        setPendingContentType(newContentType);
+        setShowContentTypeDialog(true);
+      } else {
+        setContentType(newContentType);
+      }
+    },
+    [contentType, gridItems]
+  );
 
   const handleConfirmContentTypeChange = useCallback(() => {
     setContentType(pendingContentType);
-    setGridItems(Array(gridConfig.rows * gridConfig.columns).fill(null).map((_, index) => ({
-      id: `item-${index}`,
-      image: null,
-      link: "",
-      itemId: null,
-      name: "",
-      type: null,
-      position: index,
-    })));
+    setGridItems(
+      Array(gridConfig.rows * gridConfig.columns)
+        .fill(null)
+        .map((_, index) => ({
+          id: `item-${index}`,
+          image: null,
+          link: "",
+          itemId: null,
+          name: "",
+          type: null,
+          position: index,
+        }))
+    );
     setShowContentTypeDialog(false);
   }, [pendingContentType, gridConfig]);
 
@@ -191,28 +248,31 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
   }, []);
 
   const handleLinkChange = useCallback((itemId, link) => {
-    setGridItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, link } : item
-    ));
+    setGridItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, link } : item))
+    );
   }, []);
 
   const handleDatabaseImageSelect = useCallback((itemId, selectedItem) => {
-    setGridItems(prev => prev.map(item => 
-      item.id === itemId ? { 
-        ...item, 
-        image: selectedItem.image,
-        link: selectedItem.link,
-        itemId: selectedItem.itemId,
-        name: selectedItem.name,
-        type: selectedItem.type
-      } : item
-    ));
+    setGridItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              image: selectedItem.image,
+              link: selectedItem.link,
+              itemId: selectedItem.itemId,
+              name: selectedItem.name,
+              type: selectedItem.type,
+            }
+          : item
+      )
+    );
   }, []);
 
   // Banner and background image handlers
   const handleBannerImageUpload = useCallback((file) => {
     if (file) {
-      // Store the file directly - will be processed during save
       setBannerImage(file);
     }
   }, []);
@@ -223,7 +283,6 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
 
   const handleBackgroundImageUpload = useCallback((file) => {
     if (file) {
-      // Store the file directly - will be processed during save
       setBackgroundImage(file);
     }
   }, []);
@@ -234,37 +293,40 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
 
   // Save handler
   const handleSave = useCallback(async () => {
-    // Show initial loading toast
-    const loadingToast = toast.loading("Processing images and saving configuration...");
-    
+    const loadingToast = toast.loading(
+      "Processing images and saving configuration..."
+    );
+
     try {
-
-      // Collect all images that need processing
       const imagesToProcess = [];
-      
-      // Add banner image if exists
+
       if (bannerImage) {
-        imagesToProcess.push({ type: 'banner', value: bannerImage });
+        imagesToProcess.push({ type: "banner", value: bannerImage });
       }
-      
-      // Add background image if exists
+
       if (backgroundImage) {
-        imagesToProcess.push({ type: 'background', value: backgroundImage });
+        imagesToProcess.push({ type: "background", value: backgroundImage });
       }
-      
-      // Add grid item images
-      gridItems.filter(item => item.image || item.link).forEach((item, index) => {
-        if (item.image) {
-          imagesToProcess.push({ type: 'gridItem', value: item.image, itemIndex: index, item });
-        }
-      });
 
-      // Update loading message if there are images to upload
+      gridItems
+        .filter((item) => item.image || item.link)
+        .forEach((item, index) => {
+          if (item.image) {
+            imagesToProcess.push({
+              type: "gridItem",
+              value: item.image,
+              itemIndex: index,
+              item,
+            });
+          }
+        });
+
       if (imagesToProcess.length > 0) {
-        toast.loading(`Uploading ${imagesToProcess.length} image(s)...`, { id: loadingToast });
+        toast.loading(`Uploading ${imagesToProcess.length} image(s)...`, {
+          id: loadingToast,
+        });
       }
 
-      // Process all images concurrently using Promise.all
       const imageResults = await Promise.all(
         imagesToProcess.map(async (imageData) => {
           const result = await processImage(imageData.value);
@@ -272,75 +334,80 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
         })
       );
 
-      // Check for any upload failures
-      const failedUploads = imageResults.filter(img => !img.result.success);
+      const failedUploads = imageResults.filter((img) => !img.result.success);
       if (failedUploads.length > 0) {
         toast.dismiss(loadingToast);
         toast.error(`Failed to upload ${failedUploads.length} image(s)`);
         return;
       }
 
-      // Update loading message for saving
       toast.loading("Saving configuration...", { id: loadingToast });
 
-      // Extract processed URLs
       let processedBannerImage = null;
       let processedBackgroundImage = null;
       const processedContentItems = [];
 
-             // Process results
-       imageResults.forEach(({ type, result }) => {
-         if (type === 'banner') {
-           processedBannerImage = result.url;
-         } else if (type === 'background') {
-           processedBackgroundImage = result.url;
-         }
-       });
-
-      // Build content items with processed URLs
-      gridItems.filter(item => item.image || item.link).forEach((item) => {
-        const imageResult = imageResults.find(
-          img => img.type === 'gridItem' && img.item.id === item.id
-        );
-        
-        processedContentItems.push({
-          itemId: item.itemId,
-          link: item.link,
-          image: imageResult ? imageResult.result.url : null,
-          name: item.name,
-          type: item.type
-        });
+      imageResults.forEach(({ type, result }) => {
+        if (type === "banner") {
+          processedBannerImage = result.url;
+        } else if (type === "background") {
+          processedBackgroundImage = result.url;
+        }
       });
 
-      // Prepare final grid data with processed URLs
+      gridItems
+        .filter((item) => item.image || item.link)
+        .forEach((item) => {
+          const imageResult = imageResults.find(
+            (img) => img.type === "gridItem" && img.item.id === item.id
+          );
+
+          processedContentItems.push({
+            itemId: item.itemId,
+            link: item.link,
+            image: imageResult ? imageResult.result.url : null,
+            name: item.name,
+            type: item.type,
+          });
+        });
+
+      // Prepare final grid data with mobile configuration
       const gridData = {
-        ...(editingConfig?._id && { _id: editingConfig._id }), // Include _id for updates
-        title: title.trim() || null, // Make title optional
+        ...(editingConfig?._id && { _id: editingConfig._id }),
+        title: title.trim() || null,
         contentType: contentType,
         grid: {
           rows: gridConfig.rows,
-          columns: gridConfig.columns
+          columns: gridConfig.columns,
+          mobileRows: gridConfig.mobileRows,
+          mobileColumns: gridConfig.mobileColumns,
         },
         contentItems: processedContentItems,
         bannerImage: processedBannerImage,
         backgroundImage: processedBackgroundImage,
         isActive: editingConfig?.isActive ?? true,
-        position: editingConfig?.position ?? 0
+        position: editingConfig?.position ?? 0,
       };
 
       console.log("Saving grid data:", gridData);
-      
-      // Use TanStack Query mutation - it handles success/error automatically
+
       await saveMutation.mutateAsync(gridData);
-      
-      // Dismiss loading toast - success toast will be shown by the mutation
       toast.dismiss(loadingToast);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error("Failed to save configuration");
       console.error("Save error:", error);
     }
-  }, [title, contentType, gridConfig, gridItems, bannerImage, backgroundImage, editingConfig, saveMutation]);
+  }, [
+    title,
+    contentType,
+    gridConfig,
+    gridItems,
+    bannerImage,
+    backgroundImage,
+    editingConfig,
+    saveMutation,
+  ]);
 
   // Tab handlers
   const handlePreview = useCallback(() => {
@@ -371,13 +438,13 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
     pendingContentType,
     isGeneratingGrid,
     isSaving,
-    
+
     // Setters
     setTitle,
     setActiveTab,
     setShowConfirmDialog,
     setShowContentTypeDialog,
-    
+
     // Handlers
     handleGridConfigChange,
     handleGenerateGrid,
@@ -395,7 +462,7 @@ export const useHomeConfiguration = (editingConfig = null, onSaveSuccess = null)
     handlePreview,
     handleCloseConfirmDialog,
     handleCloseContentTypeDialog,
-    
+
     // Utility functions
     hasUnsavedChanges,
   };
