@@ -42,7 +42,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { fetchAllGridConfigs, deleteGridConfig, updateGridPositions, updateGridConfig } from "../helpers/homeConfigApi";
+import { fetchAllGridConfigs, deleteGridConfig, updateGridPosition, updateGridConfig } from "../helpers/homeConfigApi";
 import { toast } from "sonner";
 
 // Delete Confirmation Dialog Component
@@ -388,18 +388,34 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
       const newIndex = currentConfigs.findIndex((config) => config._id === over.id);
 
       const newConfigs = arrayMove(currentConfigs, oldIndex, newIndex);
+      const movedItem = newConfigs[newIndex];
 
-      // Update local state immediately
-      setConfigs(prev => ({ ...prev, [activeTab]: newConfigs }));
+      // Store original state for potential revert
+      const originalConfigs = currentConfigs;
 
       try {
-        // Update positions on server
-        await updateGridPositions(newConfigs);
-        toast.success("Configuration order updated");
-      } catch {
-        // Revert on error
-        setConfigs(prev => ({ ...prev, [activeTab]: currentConfigs }));
+        // Make SINGLE API call with just old and new position
+        setConfigs(prev => ({
+          ...prev,
+          [activeTab]: newConfigs.map((config, index) => ({
+            ...config,
+            position: index
+          }))
+        }));
+
+        const apiResponse = await updateGridPosition(movedItem._id, newIndex, oldIndex);
+
+        if (apiResponse?.response?.success) {
+          toast.success("Configuration order updated");
+        } else {
+          toast.error(apiResponse?.response?.message || "Failed to update configuration order");
+          setConfigs(prev => ({ ...prev, [activeTab]: originalConfigs }));
+        }
+
+      } catch (error) {
+        setConfigs(prev => ({ ...prev, [activeTab]: originalConfigs }));
         toast.error("Failed to update order");
+        console.error("Error updating positions:", error);
       }
     }
   };
@@ -420,6 +436,9 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
         [activeTab]: prev[activeTab].filter(c => c._id !== config._id)
       }));
       toast.success("Configuration deleted successfully");
+
+      // Reload the current section to ensure data consistency
+      await loadConfigurations(activeTab);
     } catch {
       toast.error("Failed to delete configuration");
     } finally {
@@ -447,6 +466,9 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
         )
       }));
       toast.success(`Configuration made ${updatedConfig.isActive ? 'active' : 'inactive'}`);
+
+      // Reload the current section to ensure data consistency
+      await loadConfigurations(activeTab);
     } catch {
       toast.error("Failed to update configuration status");
     } finally {

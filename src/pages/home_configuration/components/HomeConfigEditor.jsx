@@ -30,7 +30,7 @@ import { usePageLeaveConfirmation } from "../hooks/usePageLeaveConfirmation";
 
 const HomeConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
 
-    console.log("selectedSection >>>", selectedSection)
+    console.log("selectedSection >>>")
     const {
         // State
         title,

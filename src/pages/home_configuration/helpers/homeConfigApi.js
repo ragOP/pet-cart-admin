@@ -91,16 +91,19 @@ export const updateGridPosition = async (id, newPosition, oldPosition) => {
   }
 };
 
-// Update positions after drag and drop
+// Update positions after drag and drop - SINGLE API CALL
 export const updateGridPositions = async (configs) => {
   try {
-    // Update each configuration's position using the new API
-    const updatePromises = configs.map((config, index) =>
-      updateGridPosition(config._id, index, config.position)
-    );
-    
-    await Promise.all(updatePromises);
-    return { success: true };
+    // Make a single API call with just the moved item's old and new position
+    const response = await apiService({
+      endpoint: `api/home-config/update-grid-position/${configs[0]._id}`, // Use the moved item's ID
+      method: "PUT",
+      data: {
+        newPosition: configs.findIndex(config => config._id === configs[0]._id), // New position
+        oldPosition: configs[0].position // Old position
+      },
+    });
+    return response;
   } catch (error) {
     console.error("Error updating grid positions:", error);
     throw error;
