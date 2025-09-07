@@ -5,7 +5,8 @@ import { processImage } from "../helpers/imageUploadApi";
 
 export const useHomeConfiguration = (
   editingConfig = null,
-  onSaveSuccess = null
+  onSaveSuccess = null,
+  selectedSection = "home"
 ) => {
   // Basic configuration state
   const [title, setTitle] = useState("");
@@ -371,11 +372,12 @@ export const useHomeConfiguration = (
           });
         });
 
-      // Prepare final grid data with mobile configuration
+      // Prepare final grid data with mobile configuration and keyword
       const gridData = {
         ...(editingConfig?._id && { _id: editingConfig._id }),
         title: title.trim() || null,
         contentType: contentType,
+        keyword: selectedSection,
         grid: {
           rows: gridConfig.rows,
           columns: gridConfig.columns,
@@ -407,6 +409,7 @@ export const useHomeConfiguration = (
     backgroundImage,
     editingConfig,
     saveMutation,
+    selectedSection,
   ]);
 
   // Tab handlers

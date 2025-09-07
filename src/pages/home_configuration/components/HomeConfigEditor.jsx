@@ -28,7 +28,9 @@ import SaveConfigBox from "./SaveConfigBox";
 import { useHomeConfiguration } from "../hooks/useHomeConfiguration";
 import { usePageLeaveConfirmation } from "../hooks/usePageLeaveConfirmation";
 
-const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
+const HomeConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
+
+    console.log("selectedSection >>>", selectedSection)
     const {
         // State
         title,
@@ -70,7 +72,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
 
         // Utility functions
         hasUnsavedChanges,
-    } = useHomeConfiguration(editingConfig, onBack);
+    } = useHomeConfiguration(editingConfig, onBack, selectedSection);
 
     // Use page leave confirmation hook
     usePageLeaveConfirmation(hasUnsavedChanges);
@@ -83,15 +85,41 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
         return null;
     };
 
+    // Get section display info
+    const getSectionInfo = (section) => {
+        switch (section) {
+            case "home": return { title: "Home", icon: "🏠", color: "text-blue-600", keyword: "home" };
+            case "category": return { title: "Category", icon: "🏷️", color: "text-green-600", keyword: "category" };
+            case "cart": return { title: "Cart", icon: "🛒", color: "text-orange-600", keyword: "cart" };
+            default: return { title: "Home", icon: "🏠", color: "text-blue-600", keyword: "home" };
+        }
+    };
+
+    const sectionInfo = getSectionInfo(selectedSection);
+
     return (
-        <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h1 className="text-xl font-bold text-gray-900">
-                        {editingConfig ? "Edit Grid Configuration" : "Create New Grid Configuration"}
-                    </h1>
-                    <p className="text-gray-600 text-base">
-                        {editingConfig ? "Update your existing grid layout and content" : "Design a custom grid layout for your homepage"}
+        <div className="mx-auto">
+            {/* Header with Back Button */}
+
+            {/* Title Section */}
+            <div className="mb-6 flex flex-row items-center gap-4">
+                <div
+                    onClick={onBack}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer p-2 rounded-md transition-colors"
+                >                    <ChevronLeft className="h-6 w-6" />
+                </div>
+                <div className="flex flex-col">
+                    <div className="flex items-center space-x-2">
+                        <span className="text-lg">{sectionInfo.icon}</span>
+                        <h1 className="text-xl font-semibold text-gray-900">
+                            {editingConfig ? `Edit ${sectionInfo.title} Configuration` : `Create New ${sectionInfo.title} Configuration`}
+                        </h1>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                        {editingConfig
+                            ? `Update your existing ${sectionInfo.title.toLowerCase()} grid layout and content`
+                            : `Design a custom grid layout for your ${sectionInfo.title.toLowerCase()} page`
+                        }
                     </p>
                 </div>
             </div>
@@ -107,9 +135,12 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>Grid Configuration</CardTitle>
-                                    <CardDescription>
+                                    <CardTitle className="text-lg">Grid Configuration</CardTitle>
+                                    <CardDescription className="text-sm">
                                         Configure your grid settings and layout for desktop and mobile
+                                        <span className={`ml-2 font-medium ${sectionInfo.color}`}>
+                                            ({sectionInfo.title} Section)
+                                        </span>
                                     </CardDescription>
                                 </div>
                                 <SaveConfigBox
@@ -131,7 +162,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                                             id="title"
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
-                                            placeholder="Enter grid title (optional)"
+                                            placeholder={`Enter ${sectionInfo.title.toLowerCase()} grid title (optional)`}
                                             className="h-10"
                                         />
                                     </div>
@@ -189,7 +220,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                                                 className="h-10"
                                             />
                                         </div>
-                                        
+
                                         {/* Mobile Grid Dimensions */}
                                         <div className="space-y-2">
                                             <Label htmlFor="mobileRows" className="text-sm font-medium">Mobile Rows</Label>
@@ -225,7 +256,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                                                 className="h-10"
                                             />
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-transparent">Action</Label>
                                             <Button
@@ -261,7 +292,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
 
                     <Card data-section="grid-builder">
                         <CardHeader>
-                            <CardTitle>Grid Builder</CardTitle>
+                            <CardTitle className="text-lg">Grid Builder</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <GridBuilder
@@ -289,9 +320,9 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                 <TabsContent value="preview" className="space-y-6">
                     <Card>
                         <CardContent>
-                            <GridPreview 
-                                gridConfig={gridConfig} 
-                                gridItems={gridItems} 
+                            <GridPreview
+                                gridConfig={gridConfig}
+                                gridItems={gridItems}
                                 title={title}
                                 bannerImage={getDisplayUrl(bannerImage)}
                                 backgroundImage={getDisplayUrl(backgroundImage)}
@@ -305,9 +336,9 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Change Grid Configuration?</DialogTitle>
+                        <DialogTitle>Confirm Grid Change</DialogTitle>
                         <DialogDescription>
-                            You have uploaded images to the current grid. Changing the grid size will remove all uploaded images. Are you sure you want to continue?
+                            Changing the grid dimensions will clear all existing content. Are you sure you want to continue?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -315,19 +346,19 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                             Cancel
                         </Button>
                         <Button onClick={handleConfirmGridChange}>
-                            Yes, Change Grid
+                            Continue
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Content Type Change Warning Dialog */}
+            {/* Content Type Change Dialog */}
             <Dialog open={showContentTypeDialog} onOpenChange={setShowContentTypeDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Change Content Type?</DialogTitle>
+                        <DialogTitle>Change Content Type</DialogTitle>
                         <DialogDescription>
-                            Changing the content type will delete all uploaded images. The title will be preserved. Are you sure you want to continue?
+                            Changing the content type will clear all existing content. Are you sure you want to continue?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -335,7 +366,7 @@ const HomeConfigEditor = ({ onBack, editingConfig = null }) => {
                             Cancel
                         </Button>
                         <Button onClick={handleConfirmContentTypeChange}>
-                            Yes, Change Content Type
+                            Continue
                         </Button>
                     </DialogFooter>
                 </DialogContent>

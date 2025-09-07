@@ -6,6 +6,7 @@ import HomeConfigEditor from "./components/HomeConfigEditor";
 const HomeConfiguration = () => {
     const [currentView, setCurrentView] = useState("list"); // "list" or "editor"
     const [editingConfig, setEditingConfig] = useState(null);
+    const [selectedSection, setSelectedSection] = useState(null);
 
     const breadcrumbs = [{ title: "Home Configuration", isNavigation: false }];
 
@@ -14,9 +15,15 @@ const HomeConfiguration = () => {
         setCurrentView("editor");
     };
 
-    const handleAdd = () => {
+    const handleAdd = (section = "home", options = {}) => {
         setEditingConfig(null);
+        setSelectedSection(section);
         setCurrentView("editor");
+        // Store the keyword for use in the editor
+        if (options.keyword) {
+            // You can store this in state or pass it to the editor
+            console.log("Keyword for section:", options.keyword);
+        }
     };
 
     const handleBackToList = () => {

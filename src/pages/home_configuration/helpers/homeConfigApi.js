@@ -1,11 +1,11 @@
 import { apiService } from "@/api/api_services";
 import { endpoints } from "@/api/endpoint";
 
-// Get all grid configurations
-export const fetchAllGridConfigs = async () => {
+// Get all grid configurations by section
+export const fetchAllGridConfigs = async (section = "home") => {
   try {
     const response = await apiService({
-      endpoint: endpoints.homeConfigGetAll,
+      endpoint: `${endpoints.homeConfigGetAll}?keyword=${section}`,
       method: "GET",
     });
     return response?.response;
@@ -73,12 +73,30 @@ export const deleteGridConfig = async (id) => {
   }
 };
 
+// Update grid position
+export const updateGridPosition = async (id, newPosition, oldPosition) => {
+  try {
+    const response = await apiService({
+      endpoint: `api/home-config/update-grid-position/${id}`,
+      method: "PUT",
+      data: {
+        newPosition,
+        oldPosition
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error("Error updating grid position:", error);
+    throw error;
+  }
+};
+
 // Update positions after drag and drop
 export const updateGridPositions = async (configs) => {
   try {
-    // Update each configuration's position
+    // Update each configuration's position using the new API
     const updatePromises = configs.map((config, index) =>
-      updateGridConfig(config._id, { ...config, position: index })
+      updateGridPosition(config._id, index, config.position)
     );
     
     await Promise.all(updatePromises);

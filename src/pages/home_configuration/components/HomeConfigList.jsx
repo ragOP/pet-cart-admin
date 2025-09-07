@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -11,14 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  GripVertical, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  GripVertical,
   Grid3X3,
   Eye,
-  X
+  X,
+  Home,
+  Tag,
+  ShoppingCart
 } from "lucide-react";
 import {
   DndContext,
@@ -57,7 +61,7 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, config }) => {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
             variant="destructive"
           >
@@ -80,8 +84,8 @@ const ToggleConfirmationDialog = ({ isOpen, onClose, onConfirm, config, isActiva
           </DialogTitle>
           <DialogDescription>
             Are you sure you want to {isActivating ? "activate" : "deactivate"} the configuration "{config?.title || "Untitled Grid"}"?
-            {isActivating 
-              ? " This will make it visible on the homepage." 
+            {isActivating
+              ? " This will make it visible on the homepage."
               : " This will hide it from the homepage."
             }
           </DialogDescription>
@@ -90,7 +94,7 @@ const ToggleConfirmationDialog = ({ isOpen, onClose, onConfirm, config, isActiva
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
             variant={isActivating ? "default" : "secondary"}
           >
@@ -204,6 +208,11 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
               <span className="flex items-center">
                 <Grid3X3 className="h-4 w-4 mr-1" />
                 {config.grid.rows} × {config.grid.columns}
+                {config.grid.mobileRows && config.grid.mobileColumns && (
+                  <span className="ml-1 text-xs">
+                    (Mobile: {config.grid.mobileRows} × {config.grid.mobileColumns})
+                  </span>
+                )}
               </span>
               <span>{config.contentItems?.length || 0} items</span>
               <span>Position: {config.position}</span>
@@ -222,7 +231,7 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
           >
             <Eye className="h-4 w-4" />
           </Button>
-          
+
           {/* Active/Inactive Switch */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">
@@ -234,7 +243,7 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
               aria-label={`Toggle ${config.isActive ? 'inactive' : 'active'}`}
             />
           </div>
-          
+
           <Button
             onClick={() => onEdit(config)}
             variant="outline"
@@ -257,9 +266,83 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
   );
 };
 
+// Section Content Component
+const SectionContent = ({
+  section,
+  configs,
+  loading,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  onPreview,
+  onDragEnd,
+  onAdd
+}) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (configs.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No configurations found</h3>
+        <p className="text-gray-500 mb-4">Get started by creating your first {section} configuration</p>
+        <Button onClick={() => onAdd(section)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create First Configuration
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext items={configs.map(c => c._id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-3">
+          {configs.map((config) => (
+            <SortableConfigItem
+              key={config._id}
+              config={config}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleActive={onToggleActive}
+              onPreview={onPreview}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+};
+
 const HomeConfigList = ({ onEdit, onAdd }) => {
-  const [configs, setConfigs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("home");
+  const [configs, setConfigs] = useState({
+    home: [],
+    category: [],
+    cart: []
+  });
+  const [loading, setLoading] = useState({
+    home: false,
+    category: false,
+    cart: false
+  });
   const [toggleDialog, setToggleDialog] = useState({
     isOpen: false,
     config: null,
@@ -274,32 +357,25 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     config: null
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Fetch configurations on mount
+  // Fetch configurations on mount and when tab changes
   useEffect(() => {
-    loadConfigurations();
-  }, []);
+    loadConfigurations(activeTab);
+  }, [activeTab]);
 
-  const loadConfigurations = async () => {
+  const loadConfigurations = async (section) => {
     try {
-      setLoading(true);
-      const response = await fetchAllGridConfigs();
+      setLoading(prev => ({ ...prev, [section]: true }));
+      const response = await fetchAllGridConfigs(section);
       if (response.success && response.data) {
         // Sort by position
         const sortedConfigs = response.data.sort((a, b) => a.position - b.position);
-        setConfigs(sortedConfigs);
+        setConfigs(prev => ({ ...prev, [section]: sortedConfigs }));
       }
     } catch (error) {
-      toast.error("Failed to load configurations");
-      console.error("Error loading configurations:", error);
+      toast.error(`Failed to load ${section} configurations`);
+      console.error(`Error loading ${section} configurations:`, error);
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, [section]: false }));
     }
   };
 
@@ -307,13 +383,14 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      const oldIndex = configs.findIndex((config) => config._id === active.id);
-      const newIndex = configs.findIndex((config) => config._id === over.id);
+      const currentConfigs = configs[activeTab];
+      const oldIndex = currentConfigs.findIndex((config) => config._id === active.id);
+      const newIndex = currentConfigs.findIndex((config) => config._id === over.id);
 
-      const newConfigs = arrayMove(configs, oldIndex, newIndex);
-      
+      const newConfigs = arrayMove(currentConfigs, oldIndex, newIndex);
+
       // Update local state immediately
-      setConfigs(newConfigs);
+      setConfigs(prev => ({ ...prev, [activeTab]: newConfigs }));
 
       try {
         // Update positions on server
@@ -321,7 +398,7 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
         toast.success("Configuration order updated");
       } catch {
         // Revert on error
-        setConfigs(configs);
+        setConfigs(prev => ({ ...prev, [activeTab]: currentConfigs }));
         toast.error("Failed to update order");
       }
     }
@@ -338,7 +415,10 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     const { config } = deleteDialog;
     try {
       await deleteGridConfig(config._id);
-      setConfigs(prev => prev.filter(c => c._id !== config._id));
+      setConfigs(prev => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter(c => c._id !== config._id)
+      }));
       toast.success("Configuration deleted successfully");
     } catch {
       toast.error("Failed to delete configuration");
@@ -360,9 +440,12 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     try {
       const updatedConfig = { ...config, isActive: !config.isActive };
       await updateGridConfig(config._id, updatedConfig);
-      setConfigs(prev => prev.map(c => 
-        c._id === config._id ? { ...c, isActive: !c.isActive } : c
-      ));
+      setConfigs(prev => ({
+        ...prev,
+        [activeTab]: prev[activeTab].map(c =>
+          c._id === config._id ? { ...c, isActive: !c.isActive } : c
+        )
+      }));
       toast.success(`Configuration made ${updatedConfig.isActive ? 'active' : 'inactive'}`);
     } catch {
       toast.error("Failed to update configuration status");
@@ -378,6 +461,10 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     });
   };
 
+  const handleAdd = (section) => {
+    onAdd(section, { keyword: section });
+  };
+
   const closeToggleDialog = () => {
     setToggleDialog({ isOpen: false, config: null, isActivating: false });
   };
@@ -390,13 +477,23 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
     setPreviewDialog({ isOpen: false, config: null });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const getSectionIcon = (section) => {
+    switch (section) {
+      case "home": return <Home className="h-4 w-4" />;
+      case "category": return <Tag className="h-4 w-4" />;
+      case "cart": return <ShoppingCart className="h-4 w-4" />;
+      default: return <Grid3X3 className="h-4 w-4" />;
+    }
+  };
+
+  const getSectionTitle = (section) => {
+    switch (section) {
+      case "home": return "Home Configurations";
+      case "category": return "Category Configurations";
+      case "cart": return "Cart Configurations";
+      default: return "Configurations";
+    }
+  };
 
   return (
     <>
@@ -404,50 +501,76 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Home Grid Configurations</CardTitle>
+              <CardTitle>Grid Configurations</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Manage and reorder your homepage grid layouts
+                Manage and reorder your grid layouts for different sections
               </p>
             </div>
-            <Button onClick={onAdd} className="flex items-center space-x-2">
+            <Button onClick={() => handleAdd(activeTab)} className="flex items-center space-x-2">
               <Plus className="h-4 w-4" />
-              <span>Add New Configuration</span>
+              <span>Add New {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Configuration</span>
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {configs.length === 0 ? (
-            <div className="text-center py-12">
-              <Grid3X3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No configurations found</h3>
-              <p className="text-gray-500 mb-4">Get started by creating your first grid configuration</p>
-              <Button onClick={onAdd}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Configuration
-              </Button>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={configs.map(c => c._id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3">
-                  {configs.map((config) => (
-                    <SortableConfigItem
-                      key={config._id}
-                      config={config}
-                      onEdit={onEdit}
-                      onDelete={handleDelete}
-                      onToggleActive={handleToggleActive}
-                      onPreview={handlePreview}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="home" className="flex items-center space-x-2">
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </TabsTrigger>
+              <TabsTrigger value="category" className="flex items-center space-x-2">
+                <Tag className="h-4 w-4" />
+                <span>Category</span>
+              </TabsTrigger>
+              <TabsTrigger value="cart" className="flex items-center space-x-2">
+                <ShoppingCart className="h-4 w-4" />
+                <span>Cart</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="home" className="mt-6">
+              <SectionContent
+                section="home"
+                configs={configs.home}
+                loading={loading.home}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                onToggleActive={handleToggleActive}
+                onPreview={handlePreview}
+                onDragEnd={handleDragEnd}
+                onAdd={handleAdd}
+              />
+            </TabsContent>
+
+            <TabsContent value="category" className="mt-6">
+              <SectionContent
+                section="category"
+                configs={configs.category}
+                loading={loading.category}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                onToggleActive={handleToggleActive}
+                onPreview={handlePreview}
+                onDragEnd={handleDragEnd}
+                onAdd={handleAdd}
+              />
+            </TabsContent>
+
+            <TabsContent value="cart" className="mt-6">
+              <SectionContent
+                section="cart"
+                configs={configs.cart}
+                loading={loading.cart}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                onToggleActive={handleToggleActive}
+                onPreview={handlePreview}
+                onDragEnd={handleDragEnd}
+                onAdd={handleAdd}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
