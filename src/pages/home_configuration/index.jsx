@@ -48,6 +48,7 @@ const HomeConfiguration = () => {
                     <HomeConfigEditor
                         onBack={handleBackToList}
                         editingConfig={editingConfig}
+                        selectedSection={selectedSection}
                     />
                 )}
             </div>

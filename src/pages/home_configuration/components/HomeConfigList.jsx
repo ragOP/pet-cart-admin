@@ -198,7 +198,7 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
                 {config.title || "Untitled Grid"}
               </h3>
               <Badge className={getContentTypeColor(config.contentType)}>
-                {config.contentType}
+                {config.contentType === "product" ? "Product" : config.contentType === "category" ? "Category" : config.contentType === "subCategory" ? "Sub Category" : config.contentType === "collection" ? "Collection" : config?.contentType}
               </Badge>
               <Badge variant={config.isActive ? "default" : "secondary"}>
                 {config.isActive ? "Active" : "Inactive"}
@@ -215,7 +215,7 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
                 )}
               </span>
               <span>{config.contentItems?.length || 0} items</span>
-              <span>Position: {config.position}</span>
+              <span>Position: {config.position + 1}</span>
             </div>
           </div>
         </div>
