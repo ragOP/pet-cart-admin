@@ -438,7 +438,7 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
       toast.success("Configuration deleted successfully");
 
       // Reload the current section to ensure data consistency
-      await loadConfigurations(activeTab);
+      // await loadConfigurations(activeTab);
     } catch {
       toast.error("Failed to delete configuration");
     } finally {
@@ -468,7 +468,7 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
       toast.success(`Configuration made ${updatedConfig.isActive ? 'active' : 'inactive'}`);
 
       // Reload the current section to ensure data consistency
-      await loadConfigurations(activeTab);
+      // await loadConfigurations(activeTab);
     } catch {
       toast.error("Failed to update configuration status");
     } finally {
