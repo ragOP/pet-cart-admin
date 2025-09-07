@@ -12,6 +12,8 @@ export const useHomeConfiguration = (
   const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState("product");
 
+  console.log(">>", selectedSection)
+
   // Grid configuration state - now includes mobile dimensions
   const [gridConfig, setGridConfig] = useState({
     rows: 2,
@@ -372,6 +374,7 @@ export const useHomeConfiguration = (
           });
         });
 
+        console.log("SELECTED SECTION", selectedSection)
       // Prepare final grid data with mobile configuration and keyword
       const gridData = {
         ...(editingConfig?._id && { _id: editingConfig._id }),
@@ -410,6 +413,7 @@ export const useHomeConfiguration = (
     editingConfig,
     saveMutation,
     selectedSection,
+
   ]);
 
   // Tab handlers

@@ -7,6 +7,7 @@ export const useSaveHomeConfiguration = (onSuccess) => {
 
   return useMutation({
     mutationFn: async (configData) => {
+      console.log("configData >>", configData)
       const response = await saveHomeConfiguration(configData);
       
       // Handle API response and show errors in toast

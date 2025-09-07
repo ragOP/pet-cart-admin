@@ -5,7 +5,7 @@ export const saveHomeConfiguration = async (configData) => {
   try {
     // Determine if this is create or update based on presence of _id
     const isUpdate = configData._id;
-    const endpoint = isUpdate 
+    const endpoint = isUpdate
       ? `${endpoints.homeConfigUpdate}/${configData._id}`
       : endpoints.homeConfigCreate;
     const method = isUpdate ? "PUT" : "POST";
@@ -14,16 +14,17 @@ export const saveHomeConfiguration = async (configData) => {
     const apiData = {
       title: configData.title,
       contentType: configData.contentType,
-      contentItems: configData.contentItems.map(item => ({
+      contentItems: configData.contentItems.map((item) => ({
         itemId: item.itemId,
         link: item.link,
-        imageUrl: item.image
+        imageUrl: item.image,
       })),
+      keyword: configData.keyword || "home",
       grid: configData.grid,
       isActive: configData.isActive,
       position: configData.position,
       backgroundImage: configData.backgroundImage,
-      bannerImage: configData.bannerImage
+      bannerImage: configData.bannerImage,
     };
 
     const apiResponse = await apiService({
@@ -33,7 +34,9 @@ export const saveHomeConfiguration = async (configData) => {
     });
 
     // Return the entire API response for frontend handling
-    return apiResponse?.response || { success: false, error: 'No response from API' };
+    return (
+      apiResponse?.response || { success: false, error: "No response from API" }
+    );
   } catch (error) {
     console.error("Error saving home configuration:", error);
     return { success: false, error: error.message || "Network error occurred" };
@@ -52,7 +55,10 @@ export const updateHomeConfiguration = async (configId, configData) => {
       return { success: true, data: apiResponse?.response?.data };
     }
 
-    return { success: false, error: apiResponse?.response?.message || "Failed to update configuration" };
+    return {
+      success: false,
+      error: apiResponse?.response?.message || "Failed to update configuration",
+    };
   } catch (error) {
     console.error("Error updating home configuration:", error);
     return { success: false, error: "Network error occurred" };
@@ -70,9 +76,12 @@ export const getHomeConfiguration = async () => {
       return { success: true, data: apiResponse?.response?.data };
     }
 
-    return { success: false, error: apiResponse?.response?.message || "Failed to fetch configuration" };
+    return {
+      success: false,
+      error: apiResponse?.response?.message || "Failed to fetch configuration",
+    };
   } catch (error) {
     console.error("Error fetching home configuration:", error);
     return { success: false, error: "Network error occurred" };
   }
-}; 
+};
