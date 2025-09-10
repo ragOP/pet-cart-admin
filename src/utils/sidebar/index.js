@@ -28,7 +28,8 @@ import {
     PackagePlus,
     Receipt,
     Activity,
-    Mail
+    Mail,
+    HomeIcon
   } from "lucide-react";
   
   export const data = {
@@ -204,6 +205,13 @@ import {
         title: "Home Configuration",
         name: "Home Configuration",
         url: "/dashboard/home-configuration",
+        icon: HomeIcon,
+        roles: ["admin"],
+      },
+      {
+        title: "Grid Configuration",
+        name: "Grid Configuration",
+        url: "/dashboard/grid-configuration",
         icon: Settings2,
         roles: ["admin"],
       },

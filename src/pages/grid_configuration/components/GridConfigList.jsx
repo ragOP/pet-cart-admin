@@ -331,7 +331,7 @@ const SectionContent = ({
   );
 };
 
-const HomeConfigList = ({ onEdit, onAdd }) => {
+const GridConfigList = ({ onEdit, onAdd }) => {
   const [activeTab, setActiveTab] = useState("home");
   const [configs, setConfigs] = useState({
     home: [],
@@ -623,4 +623,4 @@ const HomeConfigList = ({ onEdit, onAdd }) => {
   );
 };
 
-export default HomeConfigList;
+export default GridConfigList;

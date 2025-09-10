@@ -28,7 +28,7 @@ import SaveConfigBox from "./SaveConfigBox";
 import { useHomeConfiguration } from "../hooks/useHomeConfiguration";
 import { usePageLeaveConfirmation } from "../hooks/usePageLeaveConfirmation";
 
-const HomeConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
+const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
 
     console.log("selectedSection >>>")
     const {
@@ -375,4 +375,4 @@ const HomeConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
     );
 };
 
-export default HomeConfigEditor; 
+export default GridConfigEditor; 

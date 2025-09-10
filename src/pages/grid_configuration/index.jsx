@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import NavbarItem from "@/components/navbar/navbar_items";
-import HomeConfigList from "./components/HomeConfigList";
-import HomeConfigEditor from "./components/HomeConfigEditor";
+import GridConfigList from "./components/GridConfigList";
+import GridConfigEditor from "./components/GridConfigEditor";
 
-const HomeConfiguration = () => {
+const GridConfiguration = () => {
     const [currentView, setCurrentView] = useState("list"); // "list" or "editor"
     const [editingConfig, setEditingConfig] = useState(null);
     const [selectedSection, setSelectedSection] = useState(null);
 
-    const breadcrumbs = [{ title: "Home Configuration", isNavigation: false }];
+    const breadcrumbs = [{ title: "Grid Configuration", isNavigation: false }];
 
     const handleEdit = (config) => {
         setEditingConfig(config);
@@ -34,18 +34,18 @@ const HomeConfiguration = () => {
     return (
         <div className="flex flex-col">
             <NavbarItem
-                title="Home Configuration"
+                title="Grid Configuration"
                 breadcrumbs={breadcrumbs}
             />
 
             <div className="py-1 px-4">
                 {currentView === "list" ? (
-                    <HomeConfigList
+                    <GridConfigList
                         onEdit={handleEdit}
                         onAdd={handleAdd}
                     />
                 ) : (
-                    <HomeConfigEditor
+                    <GridConfigEditor
                         onBack={handleBackToList}
                         editingConfig={editingConfig}
                         selectedSection={selectedSection}
@@ -56,4 +56,4 @@ const HomeConfiguration = () => {
     );
 };
 
-export default HomeConfiguration; 
+export default GridConfiguration; 
