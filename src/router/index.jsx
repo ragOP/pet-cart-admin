@@ -42,6 +42,7 @@ const ProductEditor = lazy(() => import("@/pages/product/pages/product_editor"))
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 const GridConfiguration = lazy(() => import("@/pages/grid_configuration"));
 
+
 const Sliders = lazy(() => import("@/pages/sliders"));
 const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
 
@@ -320,7 +321,7 @@ const Router = () => {
             </Suspense>
           } />
 
-          <Route path="home-configuration" element={
+          {/* <Route path="home-configuration" element={
             <Suspense fallback={
               <div className="w-full h-screen flex items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -328,7 +329,7 @@ const Router = () => {
             }>
               <HomeConfiguration />
             </Suspense>
-          } />
+          } /> */}
 
           <Route path="grid-configuration" element={
             <Suspense fallback={
