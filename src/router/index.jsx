@@ -72,6 +72,8 @@ const BlogEditor = lazy(() => import("@/pages/blog/pages/blog_editor"));
 const NewsLetter = lazy(() => import("@/pages/newsLetter"));
 const BlogFeaturedProducts = lazy(() => import("@/pages/blog_featured_products"));
 
+const HomeConfiguration = lazy(() => import("@/pages/home_configuration"));
+
 const Router = () => {
   const dispatch = useDispatch();
 
@@ -321,7 +323,7 @@ const Router = () => {
             </Suspense>
           } />
 
-          {/* <Route path="home-configuration" element={
+          <Route path="home-configuration" element={
             <Suspense fallback={
               <div className="w-full h-screen flex items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -329,7 +331,7 @@ const Router = () => {
             }>
               <HomeConfiguration />
             </Suspense>
-          } /> */}
+          } />
 
           <Route path="grid-configuration" element={
             <Suspense fallback={

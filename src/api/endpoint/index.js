@@ -32,6 +32,7 @@ export const endpoints = {
   homeConfigUpdate: "api/home-config/update-grid",
   homeConfigDelete: "api/home-config/delete-grid",
   imageUpload: "api/image/upload-image",
+  homeSections: "api/home-sections",
 };
 
 

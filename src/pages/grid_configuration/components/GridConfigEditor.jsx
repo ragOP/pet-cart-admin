@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import GridBuilder from "./GridBuilder";
 import GridPreview from "./GridPreview";
 import BannerUpload from "./BannerUpload";
 import SaveConfigBox from "./SaveConfigBox";
-import { useHomeConfiguration } from "../hooks/useHomeConfiguration";
+import { useGridConfiguration } from "../hooks/useGridConfiguration";
 import { usePageLeaveConfirmation } from "../hooks/usePageLeaveConfirmation";
 
 const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
@@ -72,7 +73,31 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
 
         // Utility functions
         hasUnsavedChanges,
-    } = useHomeConfiguration(editingConfig, onBack, selectedSection);
+    } = useGridConfiguration(editingConfig, onBack, selectedSection);
+
+    // Add validation state and function
+    const [validationError, setValidationError] = useState(null);
+
+    const validateGridConfiguration = (config) => {
+        const desktopTotal = config.rows * config.columns;
+        const mobileTotal = config.mobileRows * config.mobileColumns;
+        return {
+            isValid: desktopTotal === mobileTotal,
+            desktopTotal,
+            mobileTotal,
+            message: desktopTotal === mobileTotal
+                ? null
+                : `Desktop (${config.rows} × ${config.columns} = ${desktopTotal}) and mobile (${config.mobileRows} × ${config.mobileColumns} = ${mobileTotal}) grids must have equal total items`
+        };
+    };
+
+    // Update the handleGridConfigChange to include validation
+    const handleGridConfigChangeWithValidation = (newConfig) => {
+        handleGridConfigChange(newConfig);
+
+        const validation = validateGridConfiguration(newConfig);
+        setValidationError(validation.isValid ? null : validation.message);
+    };
 
     // Use page leave confirmation hook
     usePageLeaveConfirmation(hasUnsavedChanges);
@@ -185,6 +210,11 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                 {/* Desktop Grid Dimensions */}
                                 <div className="space-y-2">
                                     <Label className="text-sm font-medium text-gray-900">Desktop Grid Dimensions</Label>
+                                    {validationError && (
+                                        <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md border border-red-200">
+                                            {validationError}
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-5 gap-6 items-end">
                                         <div className="space-y-2">
                                             <Label htmlFor="rows" className="text-sm font-medium">Rows</Label>
@@ -195,7 +225,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 max="8"
                                                 value={pendingGridConfig.rows}
                                                 onChange={(e) =>
-                                                    handleGridConfigChange({
+                                                    handleGridConfigChangeWithValidation({
                                                         ...pendingGridConfig,
                                                         rows: parseInt(e.target.value) || 1,
                                                     })
@@ -212,7 +242,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 max="8"
                                                 value={pendingGridConfig.columns}
                                                 onChange={(e) =>
-                                                    handleGridConfigChange({
+                                                    handleGridConfigChangeWithValidation({
                                                         ...pendingGridConfig,
                                                         columns: parseInt(e.target.value) || 1,
                                                     })
@@ -231,7 +261,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 max="6"
                                                 value={pendingGridConfig.mobileRows}
                                                 onChange={(e) =>
-                                                    handleGridConfigChange({
+                                                    handleGridConfigChangeWithValidation({
                                                         ...pendingGridConfig,
                                                         mobileRows: parseInt(e.target.value) || 1,
                                                     })
@@ -248,7 +278,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 max="4"
                                                 value={pendingGridConfig.mobileColumns}
                                                 onChange={(e) =>
-                                                    handleGridConfigChange({
+                                                    handleGridConfigChangeWithValidation({
                                                         ...pendingGridConfig,
                                                         mobileColumns: parseInt(e.target.value) || 1,
                                                     })
@@ -263,7 +293,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 onClick={handleGenerateGrid}
                                                 className="bg-primary hover:bg-primary/90 w-full"
                                                 size="lg"
-                                                disabled={isGeneratingGrid}
+                                                disabled={isGeneratingGrid || validationError}
                                             >
                                                 {isGeneratingGrid ? (
                                                     <div className="flex items-center space-x-2">
@@ -290,7 +320,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                         onBackgroundImageRemove={handleBackgroundImageRemove}
                     />
 
-                    <Card data-section="grid-builder">
+                    <Card data-section="grid-builder" className="overflow-auto">
                         <CardHeader>
                             <CardTitle className="text-lg">Grid Builder</CardTitle>
                         </CardHeader>
@@ -338,7 +368,20 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                     <DialogHeader>
                         <DialogTitle>Confirm Grid Change</DialogTitle>
                         <DialogDescription>
-                            Changing the grid dimensions will clear all existing content. Are you sure you want to continue?
+                            {(() => {
+                                const currentTotal = gridConfig.rows * gridConfig.columns;
+                                const newTotal = pendingGridConfig.rows * pendingGridConfig.columns;
+
+                                if (newTotal < currentTotal) {
+                                    const itemsToRemove = currentTotal - newTotal;
+                                    return `Reducing grid size will remove ${itemsToRemove} item(s) from the end. Items 1-${newTotal} will be preserved. Are you sure you want to continue?`;
+                                } else if (newTotal > currentTotal) {
+                                    const itemsToAdd = newTotal - currentTotal;
+                                    return `Increasing grid size will add ${itemsToAdd} empty item(s). All existing content will be preserved. Are you sure you want to continue?`;
+                                } else {
+                                    return "No changes detected in grid dimensions.";
+                                }
+                            })()}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

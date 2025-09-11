@@ -223,14 +223,14 @@ const SortableConfigItem = ({ config, onEdit, onDelete, onToggleActive, onPrevie
         {/* Actions */}
         <div className="flex items-center space-x-3">
           {/* View Button */}
-          <Button
+          {/* <Button
             onClick={() => onPreview(config)}
             variant="outline"
             size="sm"
-            title="View configuration"
+            // title="View configuration"
           >
             <Eye className="h-4 w-4" />
-          </Button>
+          </Button> */}
 
           {/* Active/Inactive Switch */}
           <div className="flex items-center space-x-2">

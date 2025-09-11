@@ -15,12 +15,11 @@ const GridPreview = ({ gridConfig, gridItems, title, bannerImage, backgroundImag
     const desktopGridStyle = {
         display: "grid",
         gridTemplateColumns: `repeat(${gridConfig.columns}, 1fr)`,
-        gridTemplateRows: `repeat(${gridConfig.rows}, 1fr)`,
+        // gridTemplateRows: `repeat(${gridConfig.rows}, 1fr)`,
         gap: "1rem",
         padding: "1rem",
         backgroundColor: "#f8fafc",
         borderRadius: "0.5rem",
-        minHeight: "400px",
         backgroundImage: backgroundImage ? `url(${getDisplayUrl(backgroundImage)})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -30,12 +29,11 @@ const GridPreview = ({ gridConfig, gridItems, title, bannerImage, backgroundImag
     const mobileGridStyle = {
         display: "grid",
         gridTemplateColumns: `repeat(${gridConfig.mobileColumns || 2}, 1fr)`,
-        gridTemplateRows: `repeat(${gridConfig.mobileRows || 2}, 1fr)`,
+        // gridTemplateRows: `repeat(${gridConfig.mobileRows || 2}, 1fr)`,
         gap: "0.75rem",
         padding: "0.75rem",
         backgroundColor: "#f8fafc",
         borderRadius: "0.5rem",
-        minHeight: "300px",
         backgroundImage: backgroundImage ? `url(${getDisplayUrl(backgroundImage)})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -52,7 +50,7 @@ const GridPreview = ({ gridConfig, gridItems, title, bannerImage, backgroundImag
         }
 
         return (
-            <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-0">
                     {/* Image */}
                     <div className="relative bg-gray-100">

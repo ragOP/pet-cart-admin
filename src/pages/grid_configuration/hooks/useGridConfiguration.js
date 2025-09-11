@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useSaveHomeConfiguration } from "./useSaveHomeConfiguration";
 import { processImage } from "../helpers/imageUploadApi";
 
-export const useHomeConfiguration = (
+export const useGridConfiguration = (
   editingConfig = null,
   onSaveSuccess = null,
   selectedSection = "home"
@@ -146,27 +146,71 @@ export const useHomeConfiguration = (
     backgroundImage,
   ]);
 
+  // Add validation function
+  const validateGridConfiguration = useCallback((config) => {
+    const desktopTotal = config.rows * config.columns;
+    const mobileTotal = config.mobileRows * config.mobileColumns;
+    return {
+      isValid: desktopTotal === mobileTotal,
+      desktopTotal,
+      mobileTotal,
+      message: desktopTotal === mobileTotal 
+        ? null 
+        : `Desktop (${config.rows} × ${config.columns} = ${desktopTotal}) and mobile (${config.mobileRows} × ${config.mobileColumns} = ${mobileTotal}) grids must have equal total items`
+    };
+  }, []);
+
   // Grid configuration handlers
   const handleGridConfigChange = useCallback((newConfig) => {
     setPendingGridConfig(newConfig);
-  }, []);
+    
+    // Show validation message in real-time
+    const validation = validateGridConfiguration(newConfig);
+    if (!validation.isValid) {
+      toast.error("Grid validation", {
+        description: validation.message,
+        duration: 3000,
+      });
+    }
+  }, [validateGridConfiguration]);
 
   const generateNewGrid = useCallback(() => {
-    const totalItems = pendingGridConfig.rows * pendingGridConfig.columns;
-    const newItems = Array.from({ length: totalItems }, (_, index) => ({
-      id: `item-${index}`,
-      image: null,
-      link: "",
-      itemId: null,
-      name: "",
-      type: null,
-      position: index,
-    }));
+    const currentTotalItems = gridConfig.rows * gridConfig.columns;
+    const newTotalItems = pendingGridConfig.rows * pendingGridConfig.columns;
+    
+    let newItems;
+    
+    if (newTotalItems >= currentTotalItems) {
+      // If new grid is larger or same size, preserve existing items and add new empty ones
+      newItems = [...gridItems];
+      
+      // Add new empty items if needed
+      for (let i = currentTotalItems; i < newTotalItems; i++) {
+        newItems.push({
+          id: `item-${i}`,
+          image: null,
+          link: "",
+          itemId: null,
+          name: "",
+          type: null,
+          position: i,
+        });
+      }
+    } else {
+      // If new grid is smaller, keep only the first N items and remove the rest
+      newItems = gridItems.slice(0, newTotalItems);
+      
+      // Update positions for remaining items
+      newItems = newItems.map((item, index) => ({
+        ...item,
+        position: index,
+      }));
+    }
 
     setGridConfig(pendingGridConfig);
     setGridItems(newItems);
     setShowConfirmDialog(false);
-  }, [pendingGridConfig]);
+  }, [pendingGridConfig, gridConfig, gridItems]);
 
   const handleGenerateGrid = useCallback(async () => {
     if (
@@ -178,6 +222,17 @@ export const useHomeConfiguration = (
       toast.info("No changes detected", {
         description:
           "The current grid configuration is already set to the values you've entered. No action needed.",
+      });
+      return;
+    }
+
+    // Validate that desktop and mobile grids have the same total number of items
+    const desktopTotal = pendingGridConfig.rows * pendingGridConfig.columns;
+    const mobileTotal = pendingGridConfig.mobileRows * pendingGridConfig.mobileColumns;
+    
+    if (desktopTotal !== mobileTotal) {
+      toast.error("Grid validation failed", {
+        description: `Desktop grid (${pendingGridConfig.rows} × ${pendingGridConfig.columns} = ${desktopTotal} items) and mobile grid (${pendingGridConfig.mobileRows} × ${pendingGridConfig.mobileColumns} = ${mobileTotal} items) must have the same total number of items.`,
       });
       return;
     }
