@@ -8,7 +8,7 @@ import { SaveIcon, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import SortableSectionItem from "./SortableSectionItem";
 
-const HomeSectionList = ({
+const PageSectionList = ({
     sections,
     isLoading,
     isSaving,
@@ -118,4 +118,4 @@ const HomeSectionList = ({
     );
 };
 
-export default HomeSectionList; 
+export default PageSectionList; 

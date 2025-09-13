@@ -29,7 +29,8 @@ import {
     Receipt,
     Activity,
     Mail,
-    HomeIcon
+    HomeIcon,
+    Layout
   } from "lucide-react";
   
   export const data = {
@@ -121,64 +122,6 @@ import {
         roles: ["admin"],
       },
     ],
-    // projects: [
-    //   {
-    //     title: "Users",
-    //     url: "/dashboard/users",
-    //     icon: User,
-    //     isActive: true,
-    //     items: [],
-    //     roles: ["super_admin"],
-    //   },
-    //   {
-    //     title: "Configuration",
-    //     name: "Configuration",
-    //     url: "/dashboard/configuration",
-    //     icon: FormInput,
-    //     items: [
-    //       {
-    //         title: "Home",
-    //         url: "/dashboard/configuration/home",
-    //       },
-    //       {
-    //         title: "Service",
-    //         url: "/dashboard/configuration/service",
-    //       },
-    //       {
-    //         title: "Header & Footer",
-    //         url: "/dashboard/configuration/header",
-    //       },
-    //       {
-    //         title: "Internal Pages",
-    //         url: "/dashboard/configuration/internal",
-    //       },
-    //     ],
-    //     roles: ["super_admin"],
-    //   },
-    //   {
-    //     title: "Blogs",
-    //     name: "Blogs",
-    //     url: "/dashboard/blogs",
-    //     icon: FileText,
-    //     roles: ["super_admin"],
-    //   },
-    //   {
-    //     title: "Contact us form",
-    //     name: "Contact us form",
-    //     url: "/dashboard/contact-us",
-    //     icon: ContactIcon,
-    //     roles: ["super_admin", "admin"],
-    //   },
-    // ],
-    // extra: [
-    //   {
-    //     title: "Forms",
-    //     name: "Forms",
-    //     url: "/forms",
-    //     icon: FormInput,
-    //     roles: ["super_admin", "admin"],
-    //   },
-    // ],
     more: [
       {
         title: "Add Banner",
@@ -202,10 +145,10 @@ import {
         roles: ["admin"],
       },
       {
-        title: "Home Configuration",
-        name: "Home Configuration",
-        url: "/dashboard/home-configuration",
-        icon: HomeIcon,
+        title: "Page Configuration",
+        name: "Page Configuration",
+        url: "/dashboard/page-configuration",
+        icon: Layout,
         roles: ["admin"],
       },
       {

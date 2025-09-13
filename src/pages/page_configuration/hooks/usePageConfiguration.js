@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchHomeSections, saveHomeSections } from "../helpers/homeConfigurationApi";
+import { fetchHomeSections, saveHomeSections } from "../helpers/pageConfigurationApi";
 import { toast } from "sonner";
 
-export const useHomeConfiguration = () => {
+export const usePageConfiguration = () => {
     const queryClient = useQueryClient();
     const [sections, setSections] = useState([]);
     const [originalSections, setOriginalSections] = useState([]);

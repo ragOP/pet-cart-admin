@@ -41,7 +41,7 @@ const ProductEditor = lazy(() => import("@/pages/product/pages/product_editor"))
 
 const HeaderFooter = lazy(() => import("@/pages/headerFooter"));
 const GridConfiguration = lazy(() => import("@/pages/grid_configuration"));
-
+const PageConfiguration = lazy(() => import("@/pages/page_configuration"));
 
 const Sliders = lazy(() => import("@/pages/sliders"));
 const SliderEditor = lazy(() => import("@/pages/sliders/pages/slider_editor"));
@@ -71,8 +71,6 @@ const BlogEditor = lazy(() => import("@/pages/blog/pages/blog_editor"));
 
 const NewsLetter = lazy(() => import("@/pages/newsLetter"));
 const BlogFeaturedProducts = lazy(() => import("@/pages/blog_featured_products"));
-
-const HomeConfiguration = lazy(() => import("@/pages/home_configuration"));
 
 const Router = () => {
   const dispatch = useDispatch();
@@ -323,13 +321,23 @@ const Router = () => {
             </Suspense>
           } />
 
-          <Route path="home-configuration" element={
+          {/* Page Configuration Routes */}
+          <Route path="page-configuration" element={
             <Suspense fallback={
               <div className="w-full h-screen flex items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
               </div>
             }>
-              <HomeConfiguration />
+              <PageConfiguration />
+            </Suspense>
+          } />
+          <Route path="page-configuration/:pageKey" element={
+            <Suspense fallback={
+              <div className="w-full h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              </div>
+            }>
+              <PageConfiguration />
             </Suspense>
           } />
 
