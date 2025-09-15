@@ -13,7 +13,7 @@ import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
 import { updateBanner } from "../../../helpers/updateBanner";
 import { createBanner } from "../../../helpers/createBanner";
 import { urlToFile } from "@/utils/file/urlToFile";
-import { validateImageDimensions } from '@/utils/validate_image_dimensions';
+// import { validateImageDimensions } from '@/utils/validate_image_dimensions';
 
 const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
   const navigate = useNavigate();
@@ -74,15 +74,15 @@ const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
         return;
       }
 
-      const { valid, error } = await validateImageDimensions(
-        file,
-        formData.type,
-        'horizontal'
-      );
-      if (!valid) {
-        toast.error(error);
-        return;
-      }
+      // const { valid, error } = await validateImageDimensions(
+      //   file,
+      //   formData.type,
+      //   'horizontal'
+      // );
+      // if (!valid) {
+      //   toast.error(error);
+      //   return;
+      // }
 
       setSelectedFile(file);
 
@@ -310,7 +310,7 @@ const BannerForm = ({ initialData, isEdit, isLoading = false }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="web">Web</SelectItem>
-                  {/* <SelectItem value="mobile">Mobile</SelectItem> */}
+                  <SelectItem value="mobile">Mobile</SelectItem>
                   <SelectItem value="app">App</SelectItem>
                   <SelectItem value="tablet">Tablet</SelectItem>
                 </SelectContent>
