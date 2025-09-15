@@ -37,6 +37,3 @@ export const endpoints = {
   pageConfigGetByKey: "api/page-config/get-page-config-by-key",
   pageConfigUpdate: "api/page-config/update-page-config",
 };
-
-
-
