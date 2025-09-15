@@ -25,9 +25,9 @@ const SortableSectionItem = memo(({ id, section, index, isDisabled }) => {
     };
 
     // Format section key for display
-    const formatSectionKey = (key) => {
-        return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    };
+    // const formatSectionKey = (key) => {
+    //     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // };
 
     return (
         <div
@@ -54,7 +54,7 @@ const SortableSectionItem = memo(({ id, section, index, isDisabled }) => {
                     <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                             <h3 className="font-medium text-gray-900">
-                                {formatSectionKey(section.key)}
+                                {section.label}
                             </h3>
                             <Badge variant="secondary" className="text-xs">
                                 {section.type || 'Section'}
