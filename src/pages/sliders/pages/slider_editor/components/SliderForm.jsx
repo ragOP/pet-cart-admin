@@ -19,7 +19,6 @@ import { ArrowLeft, Upload, Image as ImageIcon, Save, X } from "lucide-react";
 import { updateSlider } from "../../../helpers/updateSlider";
 import { createSlider } from "../../../helpers/createSlider";
 import { urlToFile } from "@/utils/file/urlToFile";
-import { validateImageDimensions } from "@/utils/validate_image_dimensions";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
 
@@ -106,15 +105,15 @@ const SliderForm = ({ initialData, isEdit, isLoading = false }) => {
         return;
       }
 
-      const { valid, error } = await validateImageDimensions(
-        file,
-        formData.type,
-        "short-horizontal"
-      );
-      if (!valid) {
-        toast.error(error);
-        return;
-      }
+      // const { valid, error } = await validateImageDimensions(
+      //   file,
+      //   formData.type,
+      //   "short-horizontal"
+      // );
+      // if (!valid) {
+      //   toast.error(error);
+      //   return;
+      // }
 
       setSelectedFile(file);
 
