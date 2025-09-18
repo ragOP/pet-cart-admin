@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft } from "lucide-react";
-import { toast } from "sonner";
+ 
 
 import GridBuilder from "./GridBuilder";
 import GridPreview from "./GridPreview";
@@ -28,6 +28,7 @@ import BannerUpload from "./BannerUpload";
 import SaveConfigBox from "./SaveConfigBox";
 import { useGridConfiguration } from "../hooks/useGridConfiguration";
 import { usePageLeaveConfirmation } from "../hooks/usePageLeaveConfirmation";
+import { Switch } from "@/components/ui/switch";
 
 const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "home" }) => {
 
@@ -36,6 +37,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
         // State
         title,
         contentType,
+        isTitleShow,
         gridConfig,
         pendingGridConfig,
         gridItems,
@@ -49,6 +51,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
 
         // Setters
         setTitle,
+        setIsTitleShow,
         setActiveTab,
         setShowConfirmDialog,
         setShowContentTypeDialog,
@@ -190,6 +193,8 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                             placeholder={`Enter ${sectionInfo.title.toLowerCase()} grid title (optional)`}
                                             className="h-10"
                                         />
+                                        <Label htmlFor="isTitleShow" className="text-sm font-medium">Show Title On Web/Mobile</Label>
+                                        <Switch id="isTitleShow" checked={isTitleShow} onCheckedChange={setIsTitleShow} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="contentType" className="text-sm font-medium">Content Type</Label>

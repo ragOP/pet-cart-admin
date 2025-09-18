@@ -14,6 +14,7 @@ export const saveHomeConfiguration = async (configData) => {
     const apiData = {
       title: configData.title,
       contentType: configData.contentType,
+    isTitleShow: configData.isTitleShow,
       contentItems: configData.contentItems.map((item) => ({
         itemId: item.itemId,
         link: item.link,

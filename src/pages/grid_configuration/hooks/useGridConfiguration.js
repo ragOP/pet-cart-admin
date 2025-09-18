@@ -11,6 +11,7 @@ export const useGridConfiguration = (
   // Basic configuration state
   const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState("product");
+  const [isTitleShow, setIsTitleShow] = useState(true);
 
   console.log(">>", selectedSection)
 
@@ -62,6 +63,9 @@ export const useGridConfiguration = (
     if (editingConfig) {
       setTitle(editingConfig.title || "");
       setContentType(editingConfig.contentType || "product");
+      setIsTitleShow(
+        typeof editingConfig.isTitleShow === "boolean" ? editingConfig.isTitleShow : true
+      );
 
       // Handle backward compatibility for grid config
       const gridData = editingConfig.grid || {
@@ -120,6 +124,8 @@ export const useGridConfiguration = (
   const hasUnsavedChanges = useCallback(() => {
     // Check if title has changed
     if (title.trim() !== "") return true;
+    // Check if title show flag is toggled when editing existing config
+    if (editingConfig && typeof editingConfig.isTitleShow === "boolean" && editingConfig.isTitleShow !== isTitleShow) return true;
 
     // Check if grid dimensions have changed (including mobile)
     if (
@@ -139,11 +145,13 @@ export const useGridConfiguration = (
     return false;
   }, [
     title,
+    isTitleShow,
     pendingGridConfig,
     gridConfig,
     gridItems,
     bannerImage,
     backgroundImage,
+    editingConfig,
   ]);
 
   // Add validation function
@@ -436,6 +444,7 @@ export const useGridConfiguration = (
         title: title.trim() || null,
         contentType: contentType,
         keyword: selectedSection,
+        isTitleShow,
         grid: {
           rows: gridConfig.rows,
           columns: gridConfig.columns,
@@ -468,6 +477,7 @@ export const useGridConfiguration = (
     editingConfig,
     saveMutation,
     selectedSection,
+    isTitleShow,
 
   ]);
 
@@ -489,6 +499,7 @@ export const useGridConfiguration = (
     // State
     title,
     contentType,
+    isTitleShow,
     gridConfig,
     pendingGridConfig,
     gridItems,
@@ -503,6 +514,7 @@ export const useGridConfiguration = (
 
     // Setters
     setTitle,
+    setIsTitleShow,
     setActiveTab,
     setShowConfirmDialog,
     setShowContentTypeDialog,
