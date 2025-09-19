@@ -78,9 +78,10 @@ const ProductFormSchema = z.object({
   breedIds: z.optional(z.array(z.string())),
   hsnCodeId: z.string().min(1, "Please select a HSN code"),
   isBestSeller: z.boolean().default(false),
-  isEverydayEssential: z.boolean().default(false),
-  isNewleyLaunched: z.boolean().default(false),
-  isAddToCart: z.boolean().default(false),
+  isVeg: z.boolean().default(false),
+  lifeStage: z.enum(['Puppy', 'Adult', 'Starter', 'Kitten']).default('Adult'),
+  breedSize: z.enum(['Mini', 'Medium', 'Large', 'Giant']).default('Medium'),
+  productType: z.enum(['Wet Food', 'Dry Food', 'Food Toppers', 'Treat']).default('Dry Food'),
   images: imageArrayValidator,
   variants: z.array(VariantSchema).min(1, "At least one variant is required")
 });
@@ -91,12 +92,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialData?.categoryId || "");
   const [imageFiles, setImageFiles] = useState([]);
-  const [variantImages, setVariantImages] = useState([]);
-  const [newBreedName, setNewBreedName] = useState("");
-  const [isAddingBreed, setIsAddingBreed] = useState(false);
+  
   const [isAttributeDialogOpen, setIsAttributeDialogOpen] = useState(false);
   const [newAttributeName, setNewAttributeName] = useState('');
-  const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const variantImageMap = useRef({})
 
   // Process initial data for the form
@@ -111,9 +109,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         breedIds: [],
         hsnCodeId: "",
         isBestSeller: false,
-        isEverydayEssential: false,
-        isNewleyLaunched: false,
-        isAddToCart: false,
+        isVeg: false,
+        lifeStage: 'Adult',
+        breedSize: 'Medium',
+        productType: 'Dry Food',
         price: 0,
         salePrice: 0,
         stock: 0,
@@ -134,9 +133,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       breedIds: initialData.breedId?.map(breed => breed._id) || [],
       hsnCodeId: initialData.hsnCode?._id || "",
       isBestSeller: initialData.isBestSeller || false,
-      isEverydayEssential: initialData.isEverydayEssential || false,
-      isNewleyLaunched: initialData.newleyLaunched || false,
-      isAddToCart: initialData.isAddToCart || false,
+      isVeg: initialData.isVeg || false,
+      lifeStage: initialData.lifeStage || 'Adult',
+      breedSize: initialData.breedSize || 'Medium',
+      productType: initialData.productType || 'Dry Food',
       price: initialData.price || 0,
       salePrice: initialData.salePrice || 0,
       stock: initialData.stock || 0,
@@ -180,7 +180,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     enabled: !!selectedCategoryId,
   });
 
-  const { data: breedListRes, refetch: refetchBreeds } = useQuery({
+  const { data: breedListRes } = useQuery({
     queryKey: ["breeds"],
     queryFn: fetchBreeds
   });
@@ -268,10 +268,11 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("weight", data.weight);
       payload.append("brandId", data.brandId);
       payload.append("hsnCode", data.hsnCodeId);
-      payload.append("isAddToCart", data.isAddToCart);
-      payload.append("isBestSeller", data.isBestSeller);
-      payload.append("isNewleyLaunched", data.isNewleyLaunched);
-      payload.append("isEverydayEssential", data.isEverydayEssential);
+      payload.append("isBestSeller", String(data.isBestSeller));
+      payload.append("isVeg", String(data.isVeg));
+      payload.append("lifeStage", data.lifeStage);
+      payload.append("breedSize", data.breedSize);
+      payload.append("productType", data.productType);
 
       // Breed IDs
       data.breedIds.forEach((id) => payload.append("breedId[]", id));
@@ -287,7 +288,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       const variantImageMapArray = [];
 
       data.variants.forEach((variant, i) => {
-        const { images, ...rest } = variant;
+        const { images: _images, ...rest } = variant;
         payload.append("variants[]", JSON.stringify(rest));
 
         const files = variantImageMap.current?.[i] || [];
@@ -321,7 +322,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     },
   });
 
-  const validateSalePrice = (salePrice, price, context) => {
+  const validateSalePrice = (salePrice, price) => {
     if (salePrice && price && Number(salePrice) > Number(price)) {
       toast.warning('Sale price cannot be greater than the regular price');
       return false;
@@ -357,36 +358,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     form.setValue("images", newFiles);
   };
 
-  const handleVariantImageUpload = (e, variantIndex) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    const validFiles = files.filter((file) =>
-      allowedTypes.includes(file.type)
-    );
-
-    if (validFiles.length === 0) {
-      toast.error("Only image files are allowed");
-      return;
-    }
-
-    // Update variant images in the form
-    const currentVariantImages = form.getValues(`variants.${variantIndex}.images`) || [];
-    const newVariantImages = [...currentVariantImages, ...validFiles];
-    
-    // Update form with new images
-    form.setValue(`variants.${variantIndex}.images`, newVariantImages);
-
-    // Update variant image map for preview
-    const currentVariantImagesMap = variantImageMap.current[variantIndex] || [];
-    variantImageMap.current = {
-      ...variantImageMap.current,
-      [variantIndex]: [...currentVariantImagesMap, ...validFiles]
-    };
-
-    // Trigger form validation
-    form.trigger(`variants.${variantIndex}.images`);
-  };
+  
 
   return (
     <Form {...form}>
@@ -641,10 +613,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           )}
         />
 
-        {/* isEverydayEssential */}
+        {/* isVeg */}
         <FormField
           control={form.control}
-          name="isEverydayEssential"
+          name="isVeg"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
@@ -654,46 +626,77 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Everyday Essential</FormLabel>
+                <FormLabel>Vegetarian</FormLabel>
               </div>
             </FormItem>
           )}
         />
 
-        {/* isNewleyLaunched */}
+        {/* lifeStage */}
         <FormField
+          name="lifeStage"
           control={form.control}
-          name="isNewleyLaunched"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormItem>
+              <FormLabel>Life Stage</FormLabel>
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <select
+                  {...field}
+                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                >
+                  <option value="Puppy">Puppy</option>
+                  <option value="Adult">Adult</option>
+                  <option value="Starter">Starter</option>
+                  <option value="Kitten">Kitten</option>
+                </select>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Newly Launched</FormLabel>
-              </div>
+              <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* isAddToCart */}
+        {/* breedSize */}
         <FormField
+          name="breedSize"
           control={form.control}
-          name="isAddToCart"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormItem>
+              <FormLabel>Breed Size</FormLabel>
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <select
+                  {...field}
+                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                >
+                  <option value="Mini">Mini</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Large">Large</option>
+                  <option value="Giant">Giant</option>
+                </select>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Add To Cart</FormLabel>
-              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* productType */}
+        <FormField
+          name="productType"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product Type</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                >
+                  <option value="Wet Food">Wet Food</option>
+                  <option value="Dry Food">Dry Food</option>
+                  <option value="Food Toppers">Food Toppers</option>
+                  <option value="Treat">Treat</option>
+                </select>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
