@@ -207,6 +207,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                                 <SelectItem value="category">Category</SelectItem>
                                                 <SelectItem value="subCategory">Sub Category</SelectItem>
                                                 <SelectItem value="collection">Collection</SelectItem>
+                                                <SelectItem value="brand">Brand</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

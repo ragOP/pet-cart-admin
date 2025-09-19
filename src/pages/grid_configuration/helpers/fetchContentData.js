@@ -18,6 +18,9 @@ export const fetchContentData = async (contentType, params = {}) => {
       case 'collection':
         endpoint = endpoints.collection;
         break;
+      case 'brand':
+        endpoint = endpoints.brand;
+        break;
       default:
         return { success: false, error: 'Invalid content type' };
     }
