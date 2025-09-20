@@ -41,7 +41,7 @@ import { Switch } from "@/components/ui/switch";
 import MultiSelectBreeds from "./MultiSelectBreeds";
 import { Checkbox } from "@/components/ui/checkbox";
 import ProductImage from "./ProductImage";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
 
@@ -232,14 +232,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const brands = useMemo(() => brandListRes?.data || [], [brandListRes?.data]);
   const hsnCodes = hsnCodeListRes?.response?.data?.data || [];
 
-  // Function to generate SKU based on format [CATEGORY]-[BRAND]-[SUBCAT]-[FLAVOUR/VARIANT]-[SIZE]-[SERIAL]
-  const generateSKU = useCallback((categoryName, brandName, subCategoryName, variantName, breedSize) => {
+  // Function to generate SKU based on format [CATEGORY]-[BRAND]-[SUBCAT]-[FLAVOUR/VARIANT]-[WEIGHT]-[SERIAL]
+  const generateSKU = useCallback((categoryName, brandName, subCategoryName, variantName, weightInKgs) => {
     const skuParts = [];
-    
-    // Add category (first 3 letters)
-    if (categoryName && categoryName.length >= 3) {
-      skuParts.push(categoryName.substring(0, 3).toUpperCase());
-    }
     
     // Add brand (first 3 letters)
     if (brandName && brandName.length >= 3) {
@@ -256,15 +251,14 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       skuParts.push(variantName.substring(0, 3).toUpperCase());
     }
     
-    // Add size (first 3 letters)
-    if (breedSize && breedSize.length >= 3) {
-      skuParts.push(breedSize.substring(0, 3).toUpperCase());
+    // Add weight in kgs (formatted as W + weight value, e.g., W1.5 for 1.5kg)
+    if (weightInKgs && weightInKgs > 0) {
+      const weightStr = `${weightInKgs}KG`.replace('.', ''); // Remove decimal point for cleaner SKU
+      skuParts.push(weightStr);
     }
     
     // Add serial number based on total product count + 1
     const totalProducts = productsCountRes?.data?.total || productsCountRes?.data?.length || 0;
-    console.log('Product count response:', productsCountRes);
-    console.log('Total products:', totalProducts);
     const serial = (totalProducts + 1).toString().padStart(4, '0');
     skuParts.push(serial);
     
@@ -272,13 +266,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   }, [productsCountRes]);
 
   // Function to generate variant SKU
-  const generateVariantSKU = useCallback((categoryName, brandName, subCategoryName, variantAttributes, variantIndex) => {
+  const generateVariantSKU = useCallback((categoryName, brandName, subCategoryName, variantAttributes, variantIndex, weightInKgs) => {
     const skuParts = [];
     
-    // Add category (first 3 letters)
-    if (categoryName && categoryName.length >= 3) {
-      skuParts.push(categoryName.substring(0, 3).toUpperCase());
-    }
+    console.log('generateVariantSKU called with:', { categoryName, brandName, subCategoryName, variantAttributes, variantIndex, weightInKgs });
     
     // Add brand (first 3 letters)
     if (brandName && brandName.length >= 3) {
@@ -290,26 +281,41 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       skuParts.push(subCategoryName.substring(0, 3).toUpperCase());
     }
     
-    // Extract variant info and size from attributes
+    // Extract variant info from attributes (excluding weight-related attributes)
     if (variantAttributes && Object.keys(variantAttributes).length > 0) {
-      // Get all attribute values and filter out empty ones
-      const attributeValues = Object.values(variantAttributes).filter(value => 
-        value && typeof value === 'string' && value.trim().length >= 3
-      );
+      // Get all attribute values and filter out empty ones and weight-related attributes
+      const attributeValues = Object.entries(variantAttributes)
+        .filter(([key, value]) => 
+          value && 
+          typeof value === 'string' && 
+          value.trim().length >= 3 &&
+          !key.toLowerCase().includes('weight') && // Exclude weight-related attributes
+          !key.toLowerCase().includes('size') // Exclude size-related attributes since we're using weight
+        )
+        .map(([, value]) => value);
       
       console.log('Filtered attribute values:', attributeValues);
       
-      // Add up to 2 attribute values to SKU (variant info and size)
-      attributeValues.slice(0, 2).forEach(attrValue => {
+      // Add up to 1 attribute value to SKU (variant info, excluding size since we use weight)
+      attributeValues.slice(0, 1).forEach(attrValue => {
         skuParts.push(attrValue.substring(0, 3).toUpperCase());
       });
     }
     
-    // Add variant identifier (V for variant) and variant index
-    const variantSerial = `VAR-${(variantIndex + 1).toString().padStart(3, '0')}`;
+    // Add weight in kgs (formatted as W + weight value, e.g., W1.5 for 1.5kg)
+    if (weightInKgs && weightInKgs > 0) {
+      const weightStr = `${weightInKgs}KG`.replace('.', ''); // Remove decimal point for cleaner SKU
+      skuParts.push(weightStr);
+      console.log('Added weight to SKU:', weightStr);
+    }
+    
+    const variantSerial = `${(variantIndex + 1).toString().padStart(3, '0')}`;
     skuParts.push(variantSerial);
     
-    return skuParts.join('-');
+    const finalSKU = skuParts.join('-');
+    console.log('Generated variant SKU:', finalSKU);
+    
+    return finalSKU;
   }, []);
 
   // Function to update all variant SKUs
@@ -326,15 +332,34 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         // For new products, always update variant SKUs
         // For editing, only update if SKU is empty (manual override)
         if (!isEdit || !variant.sku) {
-          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index);
+          // Convert variant weight to kgs
+          const variantWeight = variant.weight || 0;
+          const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+            ? variantWeight 
+            : (variantWeight / 1000);
+          
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index, variantWeightInKgs);
           form.setValue(`variants.${index}.sku`, variantSKU);
         }
       });
     }
-  }, [categories, brands, subCategories, form, generateVariantSKU, isEdit]);
+  }, [categories, brands, subCategories, form, generateVariantSKU, isEdit, variantWeightUnits]);
 
-  const watchedFields = form.watch(['categoryId', 'brandId', 'subCategoryId', 'title', 'breedSize']);
+  const watchedFields = form.watch(['categoryId', 'brandId', 'subCategoryId', 'title', 'weight']);
   const watchedVariants = form.watch('variants');
+  
+  // Watch for variant weight unit changes to trigger SKU updates
+  const watchedVariantWeightUnits = JSON.stringify(variantWeightUnits);
+  
+  // Debug: Log when variants change
+  useEffect(() => {
+    console.log('Variants changed:', watchedVariants);
+  }, [watchedVariants]);
+  
+  // Debug: Log when variant weight units change
+  useEffect(() => {
+    console.log('Variant weight units changed:', variantWeightUnits);
+  }, [variantWeightUnits]);
   const [lastGeneratedSKU, setLastGeneratedSKU] = useState('');
   
   // For new products - always update SKU when fields change
@@ -347,10 +372,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       const brandName = brands.find(b => b._id === formValues.brandId)?.name;
       const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
       const variantName = formValues.title;
-      const breedSize = formValues.breedSize;
+      const weightInKgs = mainWeightUnit === 'kg' ? formValues.weight : (formValues.weight / 1000);
       
-      if (categoryName && brandName && subCategoryName && variantName && breedSize) {
-        const generatedSKU = generateSKU(categoryName, brandName, subCategoryName, variantName, breedSize);
+      if (categoryName && brandName && subCategoryName && variantName && weightInKgs) {
+        const generatedSKU = generateSKU(categoryName, brandName, subCategoryName, variantName, weightInKgs);
         
         if (generatedSKU !== lastGeneratedSKU) {
           form.setValue('sku', generatedSKU);
@@ -360,7 +385,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         }
       }
     }
-  }, [watchedFields, categories, brands, subCategories, isEdit, generateSKU, updateVariantSKUs, lastGeneratedSKU, form, productsCountRes]);
+  }, [watchedFields, categories, brands, subCategories, isEdit, generateSKU, updateVariantSKUs, lastGeneratedSKU, form, productsCountRes, mainWeightUnit]);
 
   // For editing products - show warning every time SKU-affecting fields change
   useEffect(() => {
@@ -375,7 +400,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       (formValues.brandId !== initialValues?.brandId?._id) ||
       (formValues.subCategoryId !== initialValues?.subCategoryId?._id) ||
       (formValues.title !== initialValues?.title) ||
-      (formValues.breedSize !== initialValues?.breedSize);
+      (formValues.weight !== initialValues?.weight);
     
     if (fieldsChanged) {
       toast.warning("Changing these fields might hamper your SKU. Please check your SKU and update manually.");
@@ -384,9 +409,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   // Watch for variant attribute changes and update variant SKUs
   useEffect(() => {
-    console.log('Variant SKU update useEffect triggered');
-    console.log('watchedVariants:', watchedVariants);
-    console.log('isEdit:', isEdit);
+    console.log('Variant watching useEffect triggered');
     
     if (isEdit) return; // Only for new products
     
@@ -402,23 +425,88 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       
       if (categoryName && brandName && subCategoryName) {
         formValues.variants?.forEach((variant, index) => {
-          console.log(`Processing variant ${index}:`, variant);
-          console.log(`Variant ${index} attributes:`, variant.attributes);
-          console.log(`Variant ${index} SKU:`, variant.sku);
           
           // Always generate new SKU when attributes change (for new products)
-          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index);
-          console.log(`Generated SKU for variant ${index}:`, variantSKU);
+          // Convert variant weight to kgs
+          const variantWeight = variant.weight || 0;
+          const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+            ? variantWeight 
+            : (variantWeight / 1000);
+          
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index, variantWeightInKgs);
           
           // Only update if the generated SKU is different from current SKU
           if (variantSKU !== variant.sku) {
-            console.log(`Updating variant ${index} SKU from "${variant.sku}" to "${variantSKU}"`);
             form.setValue(`variants.${index}.sku`, variantSKU);
           }
         });
       }
     }
-  }, [watchedVariants, categories, brands, subCategories, isEdit, form, generateVariantSKU]);
+  }, [watchedVariants, categories, brands, subCategories, isEdit, form, generateVariantSKU, variantWeightUnits]);
+
+  // Watch for variant weight unit changes and update SKUs
+  useEffect(() => {
+    console.log('Variant weight unit useEffect triggered');
+    if (isEdit) return; // Only for new products
+    
+    if (categories.length > 0 && brands.length > 0 && subCategories.length > 0) {
+      const formValues = form.getValues();
+      const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+      const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+      const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+      
+      if (categoryName && brandName && subCategoryName) {
+        formValues.variants?.forEach((variant, index) => {
+          // Convert variant weight to kgs
+          const variantWeight = variant.weight || 0;
+          const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+            ? variantWeight 
+            : (variantWeight / 1000);
+          
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index, variantWeightInKgs);
+          
+          // Only update if the generated SKU is different from current SKU
+          if (variantSKU !== variant.sku) {
+            form.setValue(`variants.${index}.sku`, variantSKU);
+          }
+        });
+      }
+    }
+  }, [watchedVariantWeightUnits, categories, brands, subCategories, isEdit, form, generateVariantSKU, variantWeightUnits]);
+
+  // Additional effect to watch for variant weight changes specifically
+  useEffect(() => {
+    if (isEdit) return; // Only for new products
+    
+    console.log('Variant weight change effect triggered');
+    
+    if (categories.length > 0 && brands.length > 0 && subCategories.length > 0) {
+      const formValues = form.getValues();
+      const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+      const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+      const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+      
+      if (categoryName && brandName && subCategoryName) {
+        formValues.variants?.forEach((variant, index) => {
+          // Convert variant weight to kgs
+          const variantWeight = variant.weight || 0;
+          const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+            ? variantWeight 
+            : (variantWeight / 1000);
+          
+          console.log(`Variant ${index} weight:`, { variantWeight, variantWeightInKgs, unit: variantWeightUnits[index] });
+          
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index, variantWeightInKgs);
+          
+          // Always update SKU when weight changes (for new products)
+          if (variantSKU !== variant.sku) {
+            console.log(`Updating variant ${index} SKU from ${variant.sku} to ${variantSKU}`);
+            form.setValue(`variants.${index}.sku`, variantSKU);
+          }
+        });
+      }
+    }
+  }, [watchedVariants, categories, brands, subCategories, isEdit, form, generateVariantSKU, variantWeightUnits]);
 
   // Handle image and variant image loading
   useEffect(() => {
@@ -629,7 +717,11 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Enter product description" {...field} />
+                <RichTextEditor 
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Enter product description"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -1167,6 +1259,26 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                                   form.setValue(`variants.${index}.weight`, field.value * 1000);
                                 }
                               }
+                              
+                              // Trigger SKU update when unit changes
+                              if (!isEdit) {
+                                setTimeout(() => {
+                                  const formValues = form.getValues();
+                                  const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+                                  const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+                                  const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+                                  
+                                  if (categoryName && brandName && subCategoryName) {
+                                    const variantWeight = formValues.variants[index]?.weight || 0;
+                                    const variantWeightInKgs = newUnit === 'kg' 
+                                      ? variantWeight 
+                                      : (variantWeight / 1000);
+                                    
+                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, formValues.variants[index]?.attributes || {}, index, variantWeightInKgs);
+                                    form.setValue(`variants.${index}.sku`, variantSKU);
+                                  }
+                                }, 100);
+                              }
                             }}
                           />
                           <span className={`text-xs ${(variantWeightUnits[index] || 'grams') === 'kg' ? 'font-medium' : 'text-gray-500'}`}>KG</span>
@@ -1176,7 +1288,29 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                         <Input 
                           type="number" 
                           placeholder={`Enter weight in ${variantWeightUnits[index] || 'grams'}`} 
-                          {...field} 
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            // Trigger SKU update immediately when weight changes
+                            if (!isEdit) {
+                              setTimeout(() => {
+                                const formValues = form.getValues();
+                                const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+                                const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+                                const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+                                
+                                if (categoryName && brandName && subCategoryName) {
+                                  const variantWeight = e.target.value || 0;
+                                  const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+                                    ? variantWeight 
+                                    : (variantWeight / 1000);
+                                  
+                                  const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, formValues.variants[index]?.attributes || {}, index, variantWeightInKgs);
+                                  form.setValue(`variants.${index}.sku`, variantSKU);
+                                }
+                              }, 100);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1212,7 +1346,13 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                                   const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
                                   
                                   if (categoryName && brandName && subCategoryName) {
-                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index);
+                                    // Convert variant weight to kgs
+                                    const variantWeight = formValues.variants[index]?.weight || 0;
+                                    const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+                                      ? variantWeight 
+                                      : (variantWeight / 1000);
+                                    
+                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index, variantWeightInKgs);
                                     form.setValue(`variants.${index}.sku`, variantSKU);
                                   }
                                 }, 100);
@@ -1238,7 +1378,13 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                                   const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
                                   
                                   if (categoryName && brandName && subCategoryName) {
-                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index);
+                                    // Convert variant weight to kgs
+                                    const variantWeight = formValues.variants[index]?.weight || 0;
+                                    const variantWeightInKgs = (variantWeightUnits[index] || 'grams') === 'kg' 
+                                      ? variantWeight 
+                                      : (variantWeight / 1000);
+                                    
+                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index, variantWeightInKgs);
                                     form.setValue(`variants.${index}.sku`, variantSKU);
                                   }
                                 }, 100);
@@ -1374,7 +1520,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               // Generate SKU for the new variant only if we have required fields
               let variantSKU = "";
               if (categoryName && brandName && subCategoryName) {
-                variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, {}, variantIndex);
+                // For new variants, weight will be 0 initially, so no weight in SKU
+                variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, {}, variantIndex, 0);
               }
               
               const newVariant = {
