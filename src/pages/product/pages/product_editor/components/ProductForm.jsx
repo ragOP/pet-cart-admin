@@ -97,6 +97,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialData?.categoryId || "");
   const [imageFiles, setImageFiles] = useState([]);
+  const [mainWeightUnit, setMainWeightUnit] = useState('grams'); // 'grams' or 'kg'
+  const [variantWeightUnits, setVariantWeightUnits] = useState({}); // Store weight units for each variant
   
   const [isAttributeDialogOpen, setIsAttributeDialogOpen] = useState(false);
   const [newAttributeName, setNewAttributeName] = useState('');
@@ -171,6 +173,17 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   useEffect(() => {
     if (initialData?.categoryId?._id) {
       setSelectedCategoryId(initialData.categoryId._id);
+    }
+  }, [initialData]);
+
+  // Initialize variant weight units when variants are loaded
+  useEffect(() => {
+    if (initialData?.variants?.length > 0) {
+      const initialVariantUnits = {};
+      initialData.variants.forEach((_, index) => {
+        initialVariantUnits[index] = 'grams'; // Default to grams
+      });
+      setVariantWeightUnits(initialVariantUnits);
     }
   }, [initialData]);
 
@@ -459,9 +472,20 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     loadImages();
   }, [isEdit, initialData, form]);
 
+  // Helper function to convert weight to grams
+  const convertWeightToGrams = (weight, unit) => {
+    if (unit === 'kg') {
+      return weight * 1000; // Convert kg to grams
+    }
+    return weight; // Already in grams
+  };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       const payload = new FormData();
+
+      // Convert main weight to grams before adding to payload
+      const mainWeightInGrams = convertWeightToGrams(data.weight || 0, mainWeightUnit);
 
       payload.append("title", data.title);
       payload.append("slug", slugify(data.title));
@@ -474,7 +498,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("price", data.price);
       payload.append("salePrice", data.salePrice);
       payload.append("stock", data.stock);
-      payload.append("weight", data.weight);
+      payload.append("weight", mainWeightInGrams);
       payload.append("brandId", data.brandId);
       payload.append("hsnCode", data.hsnCodeId);
       payload.append("isBestSeller", String(data.isBestSeller));
@@ -498,7 +522,15 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
       data.variants.forEach((variant, i) => {
         const { images: _images, ...rest } = variant;
-        payload.append("variants[]", JSON.stringify(rest));
+        
+        // Convert variant weight to grams before adding to payload
+        const variantWeightInGrams = convertWeightToGrams(variant.weight || 0, variantWeightUnits[i] || 'grams');
+        const variantWithConvertedWeight = {
+          ...rest,
+          weight: variantWeightInGrams
+        };
+        
+        payload.append("variants[]", JSON.stringify(variantWithConvertedWeight));
 
         const files = variantImageMap.current?.[i] || [];
         files.forEach((file) => {
@@ -713,9 +745,37 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Weight</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Weight ({mainWeightUnit})</FormLabel>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-sm ${mainWeightUnit === 'grams' ? 'font-medium' : 'text-gray-500'}`}>Grams</span>
+                  <Switch
+                    checked={mainWeightUnit === 'kg'}
+                    onCheckedChange={(checked) => {
+                      const newUnit = checked ? 'kg' : 'grams';
+                      setMainWeightUnit(newUnit);
+                      
+                      // Convert current weight value when switching units
+                      if (field.value) {
+                        if (newUnit === 'kg') {
+                          // Convert grams to kg
+                          form.setValue('weight', field.value / 1000);
+                        } else {
+                          // Convert kg to grams
+                          form.setValue('weight', field.value * 1000);
+                        }
+                      }
+                    }}
+                  />
+                  <span className={`text-sm ${mainWeightUnit === 'kg' ? 'font-medium' : 'text-gray-500'}`}>KG</span>
+                </div>
+              </div>
               <FormControl>
-                <Input type="number" placeholder="Enter weight in grams" {...field} />
+                <Input 
+                  type="number" 
+                  placeholder={`Enter weight in ${mainWeightUnit}`} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -1085,9 +1145,39 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Weight</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Weight ({variantWeightUnits[index] || 'grams'})</FormLabel>
+                        <div className="flex items-center space-x-1">
+                          <span className={`text-xs ${(variantWeightUnits[index] || 'grams') === 'grams' ? 'font-medium' : 'text-gray-500'}`}>Grams</span>
+                          <Switch
+                            checked={(variantWeightUnits[index] || 'grams') === 'kg'}
+                            onCheckedChange={(checked) => {
+                              const newUnit = checked ? 'kg' : 'grams';
+                              const newVariantUnits = { ...variantWeightUnits };
+                              newVariantUnits[index] = newUnit;
+                              setVariantWeightUnits(newVariantUnits);
+                              
+                              // Convert current weight value when switching units
+                              if (field.value) {
+                                if (newUnit === 'kg') {
+                                  // Convert grams to kg
+                                  form.setValue(`variants.${index}.weight`, field.value / 1000);
+                                } else {
+                                  // Convert kg to grams
+                                  form.setValue(`variants.${index}.weight`, field.value * 1000);
+                                }
+                              }
+                            }}
+                          />
+                          <span className={`text-xs ${(variantWeightUnits[index] || 'grams') === 'kg' ? 'font-medium' : 'text-gray-500'}`}>KG</span>
+                        </div>
+                      </div>
                       <FormControl>
-                        <Input type="number" placeholder="Enter weight in grams" {...field} />
+                        <Input 
+                          type="number" 
+                          placeholder={`Enter weight in ${variantWeightUnits[index] || 'grams'}`} 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1259,7 +1349,13 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </div>
               <button
                 type="button"
-                onClick={() => remove(index)}
+                onClick={() => {
+                  // Clean up variant weight unit when removing variant
+                  const newVariantUnits = { ...variantWeightUnits };
+                  delete newVariantUnits[index];
+                  setVariantWeightUnits(newVariantUnits);
+                  remove(index);
+                }}
                 className="absolute top-2 right-2 text-red-600"
               >
                 <X size={18} />
@@ -1290,6 +1386,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 isActive: false,
                 attributes: {},
               };
+              
+              // Initialize weight unit for the new variant
+              const newVariantUnits = { ...variantWeightUnits };
+              newVariantUnits[variantIndex] = 'grams'; // Default to grams
+              setVariantWeightUnits(newVariantUnits);
+              
               append(newVariant);
             }}
           >
