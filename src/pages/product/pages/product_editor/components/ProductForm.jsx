@@ -283,22 +283,25 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     
     // Extract variant info from attributes (excluding weight-related attributes)
     if (variantAttributes && Object.keys(variantAttributes).length > 0) {
+      console.log('All variant attributes:', variantAttributes);
+      
       // Get all attribute values and filter out empty ones and weight-related attributes
       const attributeValues = Object.entries(variantAttributes)
         .filter(([key, value]) => 
           value && 
           typeof value === 'string' && 
           value.trim().length >= 3 &&
-          !key.toLowerCase().includes('weight') && // Exclude weight-related attributes
-          !key.toLowerCase().includes('size') // Exclude size-related attributes since we're using weight
+          !key.toLowerCase().includes('weight') // Exclude weight-related attributes only
         )
         .map(([, value]) => value);
       
       console.log('Filtered attribute values:', attributeValues);
       
-      // Add up to 1 attribute value to SKU (variant info, excluding size since we use weight)
-      attributeValues.slice(0, 1).forEach(attrValue => {
-        skuParts.push(attrValue.substring(0, 3).toUpperCase());
+      // Add up to 2 attribute values to SKU (flavor, variant info, etc.)
+      attributeValues.slice(0, 2).forEach(attrValue => {
+        const shortValue = attrValue.substring(0, 3).toUpperCase();
+        skuParts.push(shortValue);
+        console.log('Added attribute to SKU:', shortValue);
       });
     }
     
