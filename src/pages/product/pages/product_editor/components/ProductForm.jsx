@@ -25,7 +25,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { X, Plus } from "lucide-react";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
@@ -34,12 +34,14 @@ import { fetchBrands } from "@/pages/brand/helpers/fetchBrand";
 import { fetchHsnCodes } from "@/pages/hsn_codes/helpers/fetchHsnCodes";
 import { createProduct } from "../helper/createProduct";
 import { updateProduct } from "../helper/updateProduct";
+import { fetchProducts } from "../../../helpers/fetchProducts";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { slugify } from "@/utils/convert_to_slug";
 import { Switch } from "@/components/ui/switch";
 import MultiSelectBreeds from "./MultiSelectBreeds";
 import { Checkbox } from "@/components/ui/checkbox";
 import ProductImage from "./ProductImage";
+import { Textarea } from "@/components/ui/textarea";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
 
@@ -55,7 +57,7 @@ const imageArrayValidator = z
   });
 
 const VariantSchema = z.object({
-  sku: z.string().min(1, "SKU is required"),
+  sku: z.string().optional(),
   price: z.coerce.number().positive("Price must be positive"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative().optional(),
@@ -68,6 +70,9 @@ const VariantSchema = z.object({
 const ProductFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(3, "Description must be at least 3 characters"),
+  sku: z.string().optional(),
+  importedBy: z.string().optional(),
+  countryOfOrigin: z.string().optional(),
   categoryId: z.string().min(1, "Please select a category"),
   subCategoryId: z.string().min(1, "Please select a subcategory"),
   price: z.coerce.number().positive("Price must be a positive number"),
@@ -96,13 +101,16 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   const [isAttributeDialogOpen, setIsAttributeDialogOpen] = useState(false);
   const [newAttributeName, setNewAttributeName] = useState('');
   const variantImageMap = useRef({})
+  
 
-  // Process initial data for the form
   const getDefaultValues = () => {
     if (!initialData) {
       return {
         title: "",
         description: "",
+        sku: "",
+        importedBy: "",
+        countryOfOrigin: "",
         categoryId: "",
         subCategoryId: "",
         brandId: "",
@@ -119,7 +127,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         weight: 0,  
         images: [],
         variants: [
-          { price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }
+          { sku: "", price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }
         ]
       };
     }
@@ -127,6 +135,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     return {
       title: initialData.title || "",
       description: initialData.description || "",
+      sku: initialData.sku || "",
+      importedBy: initialData.importedBy || "",
+      countryOfOrigin: initialData.countryOfOrigin || "",
       categoryId: initialData.categoryId?._id || "",
       subCategoryId: initialData.subCategoryId?._id || "",
       brandId: initialData.brandId?._id || "",
@@ -147,7 +158,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             ...variant,
             images: []
           }))
-        : [{ price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }]
+        : [{ sku: "", price: 0, salePrice: 0, stock: 0, weight: 0, isActive: true, attributes: {} }]
     };
   };
 
@@ -195,11 +206,206 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     queryFn: fetchHsnCodes
   });
 
-  const categories = categoryListRes?.data?.categories || [];
-  const subCategories = subCategoryListRes?.data || [];
+  // Fetch total product count for serial number generation
+  const { data: productsCountRes } = useQuery({
+    queryKey: ["products_count"],
+    queryFn: () => fetchProducts({ params: { per_page: 1000 } }), // Fetch all products to get total count
+    enabled: !isEdit, // Only fetch for new products
+  });
+
+  const categories = useMemo(() => categoryListRes?.data?.categories || [], [categoryListRes?.data?.categories]);
+  const subCategories = useMemo(() => subCategoryListRes?.data || [], [subCategoryListRes?.data]);
   const breeds = breedListRes?.data || [];
-  const brands = brandListRes?.data || [];
+  const brands = useMemo(() => brandListRes?.data || [], [brandListRes?.data]);
   const hsnCodes = hsnCodeListRes?.response?.data?.data || [];
+
+  // Function to generate SKU based on format [CATEGORY]-[BRAND]-[SUBCAT]-[FLAVOUR/VARIANT]-[SIZE]-[SERIAL]
+  const generateSKU = useCallback((categoryName, brandName, subCategoryName, variantName, breedSize) => {
+    const skuParts = [];
+    
+    // Add category (first 3 letters)
+    if (categoryName && categoryName.length >= 3) {
+      skuParts.push(categoryName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add brand (first 3 letters)
+    if (brandName && brandName.length >= 3) {
+      skuParts.push(brandName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add subcategory (first 3 letters)
+    if (subCategoryName && subCategoryName.length >= 3) {
+      skuParts.push(subCategoryName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add variant/flavour (first 3 letters)
+    if (variantName && variantName.length >= 3) {
+      skuParts.push(variantName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add size (first 3 letters)
+    if (breedSize && breedSize.length >= 3) {
+      skuParts.push(breedSize.substring(0, 3).toUpperCase());
+    }
+    
+    // Add serial number based on total product count + 1
+    const totalProducts = productsCountRes?.data?.total || productsCountRes?.data?.length || 0;
+    console.log('Product count response:', productsCountRes);
+    console.log('Total products:', totalProducts);
+    const serial = (totalProducts + 1).toString().padStart(4, '0');
+    skuParts.push(serial);
+    
+    return skuParts.join('-');
+  }, [productsCountRes]);
+
+  // Function to generate variant SKU
+  const generateVariantSKU = useCallback((categoryName, brandName, subCategoryName, variantAttributes, variantIndex) => {
+    const skuParts = [];
+    
+    // Add category (first 3 letters)
+    if (categoryName && categoryName.length >= 3) {
+      skuParts.push(categoryName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add brand (first 3 letters)
+    if (brandName && brandName.length >= 3) {
+      skuParts.push(brandName.substring(0, 3).toUpperCase());
+    }
+    
+    // Add subcategory (first 3 letters)
+    if (subCategoryName && subCategoryName.length >= 3) {
+      skuParts.push(subCategoryName.substring(0, 3).toUpperCase());
+    }
+    
+    // Extract variant info and size from attributes
+    if (variantAttributes && Object.keys(variantAttributes).length > 0) {
+      // Get all attribute values and filter out empty ones
+      const attributeValues = Object.values(variantAttributes).filter(value => 
+        value && typeof value === 'string' && value.trim().length >= 3
+      );
+      
+      console.log('Filtered attribute values:', attributeValues);
+      
+      // Add up to 2 attribute values to SKU (variant info and size)
+      attributeValues.slice(0, 2).forEach(attrValue => {
+        skuParts.push(attrValue.substring(0, 3).toUpperCase());
+      });
+    }
+    
+    // Add variant identifier (V for variant) and variant index
+    const variantSerial = `VAR-${(variantIndex + 1).toString().padStart(3, '0')}`;
+    skuParts.push(variantSerial);
+    
+    return skuParts.join('-');
+  }, []);
+
+  // Function to update all variant SKUs
+  const updateVariantSKUs = useCallback(() => {
+    if (brands.length === 0 || subCategories.length === 0) return;
+    
+    const formValues = form.getValues();
+    const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+    const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+    const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+    
+    if (categoryName && brandName && subCategoryName) {
+      formValues.variants?.forEach((variant, index) => {
+        // For new products, always update variant SKUs
+        // For editing, only update if SKU is empty (manual override)
+        if (!isEdit || !variant.sku) {
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index);
+          form.setValue(`variants.${index}.sku`, variantSKU);
+        }
+      });
+    }
+  }, [categories, brands, subCategories, form, generateVariantSKU, isEdit]);
+
+  const watchedFields = form.watch(['categoryId', 'brandId', 'subCategoryId', 'title', 'breedSize']);
+  const watchedVariants = form.watch('variants');
+  const [lastGeneratedSKU, setLastGeneratedSKU] = useState('');
+  
+  // For new products - always update SKU when fields change
+  useEffect(() => {
+    if (isEdit) return;
+    
+    if (categories.length > 0 && brands.length > 0 && subCategories.length > 0) {
+      const formValues = form.getValues();
+      const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+      const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+      const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+      const variantName = formValues.title;
+      const breedSize = formValues.breedSize;
+      
+      if (categoryName && brandName && subCategoryName && variantName && breedSize) {
+        const generatedSKU = generateSKU(categoryName, brandName, subCategoryName, variantName, breedSize);
+        
+        if (generatedSKU !== lastGeneratedSKU) {
+          form.setValue('sku', generatedSKU);
+          setLastGeneratedSKU(generatedSKU);
+          
+          updateVariantSKUs();
+        }
+      }
+    }
+  }, [watchedFields, categories, brands, subCategories, isEdit, generateSKU, updateVariantSKUs, lastGeneratedSKU, form, productsCountRes]);
+
+  // For editing products - show warning every time SKU-affecting fields change
+  useEffect(() => {
+    if (!isEdit) return;
+    
+    // Check if any SKU-affecting fields have changed from initial values
+    const formValues = form.getValues();
+    const initialValues = initialData;
+    
+    const fieldsChanged = 
+      (formValues.categoryId !== initialValues?.categoryId?._id) ||
+      (formValues.brandId !== initialValues?.brandId?._id) ||
+      (formValues.subCategoryId !== initialValues?.subCategoryId?._id) ||
+      (formValues.title !== initialValues?.title) ||
+      (formValues.breedSize !== initialValues?.breedSize);
+    
+    if (fieldsChanged) {
+      toast.warning("Changing these fields might hamper your SKU. Please check your SKU and update manually.");
+    }
+  }, [watchedFields, isEdit, initialData, form]);
+
+  // Watch for variant attribute changes and update variant SKUs
+  useEffect(() => {
+    console.log('Variant SKU update useEffect triggered');
+    console.log('watchedVariants:', watchedVariants);
+    console.log('isEdit:', isEdit);
+    
+    if (isEdit) return; // Only for new products
+    
+    if (categories.length > 0 && brands.length > 0 && subCategories.length > 0) {
+      const formValues = form.getValues();
+      console.log('Current form values:', formValues);
+      
+      const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+      const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+      const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+      
+      console.log('Category/Brand/SubCategory names:', { categoryName, brandName, subCategoryName });
+      
+      if (categoryName && brandName && subCategoryName) {
+        formValues.variants?.forEach((variant, index) => {
+          console.log(`Processing variant ${index}:`, variant);
+          console.log(`Variant ${index} attributes:`, variant.attributes);
+          console.log(`Variant ${index} SKU:`, variant.sku);
+          
+          // Always generate new SKU when attributes change (for new products)
+          const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, variant.attributes || {}, index);
+          console.log(`Generated SKU for variant ${index}:`, variantSKU);
+          
+          // Only update if the generated SKU is different from current SKU
+          if (variantSKU !== variant.sku) {
+            console.log(`Updating variant ${index} SKU from "${variant.sku}" to "${variantSKU}"`);
+            form.setValue(`variants.${index}.sku`, variantSKU);
+          }
+        });
+      }
+    }
+  }, [watchedVariants, categories, brands, subCategories, isEdit, form, generateVariantSKU]);
 
   // Handle image and variant image loading
   useEffect(() => {
@@ -260,6 +466,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("title", data.title);
       payload.append("slug", slugify(data.title));
       payload.append("description", data.description);
+      payload.append("sku", data.sku);
+      payload.append("importedBy", data.importedBy || "");
+      payload.append("countryOfOrigin", data.countryOfOrigin || "");
       payload.append("categoryId", data.categoryId);
       payload.append("subCategoryId", data.subCategoryId);
       payload.append("price", data.price);
@@ -311,6 +520,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       if (res?.success || res?.response?.success) {
         queryClient.invalidateQueries(["product", initialData?._id]);
         toast.success(`Product ${isEdit ? "updated" : "created"} successfully`);
+        
+        
         navigate("/dashboard/product");
       } else {
         toast.error(res?.response?.message || `Failed to ${isEdit ? "update" : "create"} product`);
@@ -386,7 +597,55 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="Enter product description" {...field} />
+                <Textarea placeholder="Enter product description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* SKU */}
+        <FormField
+          name="sku"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>SKU</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter SKU or leave empty for auto-generation" 
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Imported By */}
+        <FormField
+          name="importedBy"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Imported By</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter importer name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Country of Origin */}
+        <FormField
+          name="countryOfOrigin"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Country of Origin</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter country of origin" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -762,9 +1021,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU</FormLabel>
+                      <FormLabel>Variant SKU</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input 
+                          {...field} 
+                          placeholder="Enter variant SKU or leave empty for auto-generation"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -843,13 +1105,28 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                           <Input placeholder="Key" value={key} disabled />
                           <Input
                             placeholder="Value"
-                            defaultValue={value}
+                            value={value}
                             onChange={(e) => {
                               const newAttributes = {
                                 ...(field.value || {}),
                               };
                               newAttributes[key] = e.target.value;
                               field.onChange(newAttributes);
+                              
+                              // Trigger SKU update immediately when attributes change
+                              if (!isEdit) {
+                                setTimeout(() => {
+                                  const formValues = form.getValues();
+                                  const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+                                  const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+                                  const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+                                  
+                                  if (categoryName && brandName && subCategoryName) {
+                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index);
+                                    form.setValue(`variants.${index}.sku`, variantSKU);
+                                  }
+                                }, 100);
+                              }
                             }}
                           />
                           <Button
@@ -861,6 +1138,21 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                               };
                               delete newAttributes[key];
                               field.onChange(newAttributes);
+                              
+                              // Trigger SKU update immediately when attributes change
+                              if (!isEdit) {
+                                setTimeout(() => {
+                                  const formValues = form.getValues();
+                                  const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+                                  const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+                                  const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+                                  
+                                  if (categoryName && brandName && subCategoryName) {
+                                    const variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, newAttributes, index);
+                                    form.setValue(`variants.${index}.sku`, variantSKU);
+                                  }
+                                }, 100);
+                              }
                             }}
                           >
                             Remove
@@ -976,17 +1268,30 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           ))}
           <Button
             type="button"
-            onClick={() =>
-              append({
-                sku: "",
+            onClick={() => {
+              const formValues = form.getValues();
+              const categoryName = categories.find(c => c._id === formValues.categoryId)?.name;
+              const brandName = brands.find(b => b._id === formValues.brandId)?.name;
+              const subCategoryName = subCategories.find(s => s._id === formValues.subCategoryId)?.name;
+              const variantIndex = formValues.variants.length;
+              
+              // Generate SKU for the new variant only if we have required fields
+              let variantSKU = "";
+              if (categoryName && brandName && subCategoryName) {
+                variantSKU = generateVariantSKU(categoryName, brandName, subCategoryName, {}, variantIndex);
+              }
+              
+              const newVariant = {
+                sku: variantSKU,
                 price: 0,
                 salePrice: 0,
                 stock: 0,
                 weight: 0,
                 isActive: false,
                 attributes: {},
-              })
-            }
+              };
+              append(newVariant);
+            }}
           >
             <Plus size={18} /> Add Variant
           </Button>
