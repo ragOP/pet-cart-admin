@@ -101,6 +101,7 @@ const ProductFormSchema = z.object({
     .enum(["Wet Food", "Dry Food", "Food Toppers", "Treat"])
     .default("Dry Food"),
   images: imageArrayValidator,
+  commonImages: imageArrayValidator,
   variants: z.array(VariantSchema).min(1, "At least one variant is required"),
 });
 
@@ -143,6 +144,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         stock: 0,
         weight: 0,
         images: [],
+        commonImages: [],
         variants: [
           {
             sku: "",
@@ -178,6 +180,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       stock: initialData.stock || 0,
       weight: initialData.weight || 0,
       images: [],
+      commonImages: [],
       variants:
         initialData.variants?.length > 0
           ? initialData.variants.map((variant) => ({
@@ -740,6 +743,15 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           setImageFiles(files);
           form.setValue("images", files);
         }
+        if (initialData.commonImages?.length > 0) {
+          const files = await Promise.all(
+            initialData.commonImages.map((img, index) =>
+              urlToFile(img, `common_image_${index}.jpg`)
+            )
+          );
+          setCommonImagefiles(files);
+          form.setValue("commonImages", files);
+        }
 
         // Load variant images
         if (initialData.variants?.length > 0) {
@@ -926,6 +938,13 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     newFiles.splice(index, 1);
     setVarientImagefiles(newFiles);
     form.setValue(`variants.${index}.images`, newFiles);
+  };
+
+  const removeCommonImage = (index) => {
+    const newFiles = [...commonImagefiles];
+    newFiles.splice(index, 1);
+    setCommonImagefiles(newFiles);
+    form.setValue("commonImages", newFiles);
   };
 
   return (
@@ -1230,11 +1249,11 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
           {/* HSN Code */}
           <FormField
-            name="GST Percentage"
+            name="hsnCodeId"
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>GST Percentage</FormLabel>
+                <FormLabel>GST Code</FormLabel>
                 <FormControl>
                   <select
                     {...field}
@@ -1253,6 +1272,58 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             )}
           />
         </div>
+        {/*Common Section*/}
+        <div className="space-y-4">
+          <FormLabel className="block text-lg font-semibold">Common</FormLabel>
+          <div className="border p-3 rounded grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Common Images */}
+            <FormField
+              name="commonImages"
+              control={form.control}
+              render={() => (
+                <FormItem>
+                  <FormLabel>Common Images</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files);
+                        setCommonImagefiles(files);
+                        form.setValue("commonImages", files);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        {/* images previews */}
+        {commonImagefiles?.length > 0 && (
+          <div className="flex flex-wrap gap-4 mt-4">
+            {commonImagefiles.map((file, index) => (
+              <div key={index} className="relative z-30">
+                <ProductImage
+                  image={
+                    file instanceof File ? URL.createObjectURL(file) : file
+                  }
+                  alt={`preview-${index}`}
+                  className="w-34 h-34 object-cover rounded"
+                />
+                <button
+                  type="button"
+                  className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                  onClick={() => removeCommonImage(index)}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Main Section */}
         <div className="space-y-4 ">
@@ -1421,6 +1492,20 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               className="border p-4 rounded space-y-2 relative"
             >
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <FormField
+                  name={`variants.${index}.variantName`}
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Variant Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter varient name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   name={`variants.${index}.sku`}
                   control={form.control}
@@ -1961,6 +2046,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           type="submit"
           disabled={mutation.isPending}
           className="w-full md:w-auto"
+          onClick={() => {
+            console.log("🖱️ Submit button clicked");
+            console.log("🖱️ Form is valid:", form.formState.isValid);
+            console.log("🖱️ Form errors:", form.formState.errors);
+            console.log("🖱️ Mutation pending:", mutation.isPending);
+          }}
         >
           {mutation.isPending
             ? "Processing..."
