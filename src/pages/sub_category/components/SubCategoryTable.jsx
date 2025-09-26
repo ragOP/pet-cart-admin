@@ -130,18 +130,18 @@ const SubCategoriesTable = ({ setSubCategoryLength, params, setParams }) => {
     //     </Typography>
     //   ),
     // },
-    {
-      key: "dynamicFields",
-      label: "Dynamic Fields",
-      render: (value) =>
-        value ? (
-          <pre className="text-xs bg-gray-50 p-2 rounded max-w-xs overflow-x-auto">
-            {JSON.stringify(value, null, 2)}
-          </pre>
-        ) : (
-          <Typography className="text-sm text-gray-500">N/A</Typography>
-        ),
-    },
+    // {
+    //   key: "dynamicFields",
+    //   label: "Dynamic Fields",
+    //   render: (value) =>
+    //     value ? (
+    //       <pre className="text-xs bg-gray-50 p-2 rounded max-w-xs overflow-x-auto">
+    //         {JSON.stringify(value, null, 2)}
+    //       </pre>
+    //     ) : (
+    //       <Typography className="text-sm text-gray-500">N/A</Typography>
+    //     ),
+    // },
     {
       key: "isActive",
       label: "Status",

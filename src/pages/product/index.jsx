@@ -19,6 +19,7 @@ import {
   isVeg,
   productType,
 } from "@/utils/product_filters";
+import { Filter } from "lucide-react";
 
 const Product = () => {
   const navigate = useNavigate();
@@ -69,19 +70,6 @@ const Product = () => {
   });
   const breeds = breedRes?.data || [];
 
-  const filteredSubs = chipValues.categoryIds.length
-    ? subCategories.filter((s) => {
-        const selectedCategorySlug = chipValues.categoryIds[0];
-        const matchingCategory = categories.find(
-          (cat) => cat.slug === selectedCategorySlug
-        );
-        return (
-          matchingCategory &&
-          String(s.categoryId) === String(matchingCategory._id)
-        );
-      })
-    : subCategories;
-
   const sections = [
     {
       key: "categoryIds",
@@ -96,7 +84,7 @@ const Product = () => {
     {
       key: "subCategoryIds",
       title: "Sub Category",
-      options: filteredSubs
+      options: subCategories
         .map((p) => ({
           value: String(p.slug),
           label: p.name ?? p.subCategoryId ?? "Unknown",
@@ -174,10 +162,19 @@ const Product = () => {
       "Veg/Non Veg": "isVeg",
       "Product Type": "productType",
     };
-    setParams((prev) => ({
-      ...prev,
-      [mapper[key]]: value,
-    }));
+    
+    setParams((prev) => {
+      const paramKey = mapper[key];
+      if (!value || value === '') {
+        const { [paramKey]: _removed, ...rest } = prev;
+        return rest;
+      } else {
+        return {
+          ...prev,
+          [paramKey]: value,
+        };
+      }
+    });
   };
   const handleClearAllFilters = () => {
     setChipValues({
@@ -192,15 +189,14 @@ const Product = () => {
     });
     setParams((prev) => {
       const {
-        categorySlug,
-        subCategorySlug,
-        brandSlug,
-        breedSlug,
-        lifeStage,
-        breedSize,
-        isVeg,
-        productType,
-
+        categorySlug: _categorySlug,
+        subCategorySlug: _subCategorySlug,
+        brandSlug: _brandSlug,
+        breedSlug: _breedSlug,
+        lifeStage: _lifeStage,
+        breedSize: _breedSize,
+        isVeg: _isVeg,
+        productType: _productType,
         ...rest
       } = prev;
       return rest;
@@ -258,7 +254,6 @@ const Product = () => {
     }
   }, [debouncedSearch]);
 
-  console.log("Component will load now ");
   return (
     <div className="flex flex-col">
       <NavbarItem
@@ -281,6 +276,7 @@ const Product = () => {
           onBulkExport={onOpenBulkExportDialog}
           rightSlot={
             <Button variant="outline" onClick={() => setChipOpen(true)}>
+              <Filter />
               Filters
             </Button>
           }
@@ -289,12 +285,9 @@ const Product = () => {
           open={chipOpen}
           onOpenChange={setChipOpen}
           title="Filters"
-          searchText={searchText}
-          onSearchChange={handleSearch}
           sections={sections}
           values={chipValues}
           onChange={setChipValues}
-          onApply={() => setChipOpen(false)}
           onClear={handleClearAllFilters}
           onFilterSelect={onFilterSelect}
         />

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, formatDistanceToNow } from "date-fns";
 import ActionMenu from "@/components/action_menu";
 import { Pencil, Trash2 } from "lucide-react";
 import CustomTable from "@/components/custom_table";
@@ -8,7 +7,6 @@ import { useEffect, useState } from "react";
 import { CustomDialog } from "@/components/custom_dialog";
 import { toast } from "sonner";
 import { fetchCollections } from "../helpers/fetchCollections";
-import { getSubCategoryById } from "@/pages/sub_category/pages/sub_category_editor/helper/getSubCategoryById";
 import { deleteCollection } from "../helpers/deleteCollection";
 import { useNavigate } from "react-router";
 
@@ -30,7 +28,6 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
 
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null);
-  const [collectionsWithSubCategory, setCollectionsWithSubCategory] = useState([]);
 
   const handleOpenDialog = (collection) => {
     setOpenDelete(true);
@@ -147,27 +144,27 @@ const CollectionsTable = ({ setCollectionLength, params, setParams }) => {
         </Typography>
       ),
     },
-    {
-      key: "createdAt",
-      label: "Created On",
-      render: (value, row) => (
-        <div className="flex flex-col gap-1">
-          <Typography>
-            {row?.createdAt
-              ? format(new Date(row.createdAt), "dd/MM/yyyy")
-              : "N/A"}
-          </Typography>
-          {row?.updatedAt && row.createdAt !== row.updatedAt && (
-            <Typography className="text-gray-500 text-sm">
-              Updated{" "}
-              {formatDistanceToNow(new Date(row.updatedAt), {
-                addSuffix: true,
-              })}
-            </Typography>
-          )}
-        </div>
-      ),
-    },
+    // {
+    //   key: "createdAt",
+    //   label: "Created On",
+    //   render: (value, row) => (
+    //     <div className="flex flex-col gap-1">
+    //       <Typography>
+    //         {row?.createdAt
+    //           ? format(new Date(row.createdAt), "dd/MM/yyyy")
+    //           : "N/A"}
+    //       </Typography>
+    //       {row?.updatedAt && row.createdAt !== row.updatedAt && (
+    //         <Typography className="text-gray-500 text-sm">
+    //           Updated{" "}
+    //           {formatDistanceToNow(new Date(row.updatedAt), {
+    //             addSuffix: true,
+    //           })}
+    //         </Typography>
+    //       )}
+    //     </div>
+    //   ),
+    // },
     {
       key: "actions",
       label: "Actions",

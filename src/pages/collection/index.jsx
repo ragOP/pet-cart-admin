@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
+import { Filter } from "lucide-react";
 
 const Collection = () => {
   const navigate = useNavigate();
@@ -47,14 +48,7 @@ const Collection = () => {
   });
   const subCategories = subCatRes?.data || [];
 
-  //----Filtered Sub Categories------//
-  const filteredSubs = chipValues.categoryIds.length
-    ? subCategories.filter((s) =>
-        chipValues.categoryIds.includes(String(s.categoryId))
-      )
-    : subCategories;
-
-  //----Sections------//
+ 
   const sections = [
     {
       key: "categoryIds",
@@ -67,7 +61,7 @@ const Collection = () => {
     {
       key: "subCategoryIds",
       title: "Sub Category",
-      options: filteredSubs.map((s) => ({
+      options: subCategories.map((s) => ({
         value: String(s._id),
         label: s.name,
       })),
@@ -80,7 +74,6 @@ const Collection = () => {
     navigate("/dashboard/collection/add");
   };
 
-  //----Handle Search------//
   const handleSearch = (e) => {
     setSearchText(e.target.value);
   };
@@ -107,10 +100,19 @@ const Collection = () => {
       Product: "productId",
       Collection: "collectionId",
     };
-    setParams((prev) => ({
-      ...prev,
-      [mapper[key]]: value,
-    }));
+    
+    setParams((prev) => {
+      const paramKey = mapper[key];
+      if (!value || value === '') {
+        const { [paramKey]: _removed, ...rest } = prev;
+        return rest;
+      } else {
+        return {
+          ...prev,
+          [paramKey]: value,
+        };
+      }
+    });
   };
   const handleClearAllFilters = () => {
     setChipValues({
@@ -120,7 +122,7 @@ const Collection = () => {
       collectionIds: [],
     });
     setParams((prev) => {
-      const { categoryId, subCategoryId, productId, collectionId, ...rest } =
+      const { categoryId: _categoryId, subCategoryId: _subCategoryId, productId: _productId, collectionId: _collectionId, ...rest } =
         prev;
       return rest;
     });
@@ -182,6 +184,7 @@ const Collection = () => {
           onBulkExport={onOpenBulkExportDialog}
           rightSlot={
             <Button variant="outline" onClick={() => setChipOpen(true)}>
+              <Filter />
               Filters
             </Button>
           }
@@ -190,12 +193,9 @@ const Collection = () => {
           open={chipOpen}
           onOpenChange={setChipOpen}
           title="Filters"
-          searchText={searchText}
-          onSearchChange={handleSearch}
           sections={sections}
           values={chipValues}
           onChange={setChipValues}
-          onApply={() => setChipOpen(false)}
           onClear={handleClearAllFilters}
           onFilterSelect={onFilterSelect}
         />

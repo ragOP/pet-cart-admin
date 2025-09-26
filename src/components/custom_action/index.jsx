@@ -69,6 +69,7 @@ const CustomActionMenu = ({
             <span>Bulk Upload</span>
           </Button>
         )}
+        {rightSlot}
         {!disableAdd && (
           <Button
             onClick={onAdd}
@@ -78,7 +79,6 @@ const CustomActionMenu = ({
             <span>Add {capitalize(singularize(title))}</span>
           </Button>
         )}
-        {rightSlot}
       </div>
     </div>
   );

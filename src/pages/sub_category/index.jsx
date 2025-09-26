@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "../category/helpers/fetchCategories";
+import { Filter } from "lucide-react";
 
 const SubCategory = () => {
   const navigate = useNavigate();
@@ -52,17 +53,28 @@ const SubCategory = () => {
     const mapper = {
       Category: "categoryId",
     };
-    setParams((prev) => ({
-      ...prev,
-      [mapper[key]]: value,
-    }));
+    
+    setParams((prev) => {
+      const paramKey = mapper[key];
+      if (!value || value === '') {
+        // Remove the parameter when value is empty (unselecting)
+        const { [paramKey]: _removed, ...rest } = prev;
+        return rest;
+      } else {
+        // Set the parameter when value is provided (selecting)
+        return {
+          ...prev,
+          [paramKey]: value,
+        };
+      }
+    });
   };
   const handleClearAllFilters = () => {
     setChipValues({
       categoryIds: [],
     });
     setParams((prev) => {
-      const { categoryId, ...rest } = prev;
+      const { categoryId: _categoryId, ...rest } = prev;
       return rest;
     });
   };
@@ -147,6 +159,7 @@ const SubCategory = () => {
           onBulkExport={onOpenBulkExportDialog}
           rightSlot={
             <Button variant="outline" onClick={() => setChipOpen(true)}>
+              <Filter />
               Filters
             </Button>
           }
@@ -155,12 +168,9 @@ const SubCategory = () => {
           open={chipOpen}
           onOpenChange={setChipOpen}
           title="Filters"
-          searchText={searchText}
-          onSearchChange={handleSearch}
           sections={sections}
           values={chipValues}
           onChange={setChipValues}
-          onApply={() => setChipOpen(false)}
           onClear={handleClearAllFilters}
           onFilterSelect={onFilterSelect}
         />
