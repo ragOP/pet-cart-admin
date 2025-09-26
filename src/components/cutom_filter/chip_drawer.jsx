@@ -29,6 +29,13 @@ export default function ChipFilterDrawer({
       ...values,
       [sectionKey]: next,
     });
+    const section = sections.find(sec => sec.key === sectionKey);
+    if (section && onFilterSelect) {
+      onFilterSelect({ 
+        key: section.title, 
+        value: exists ? '' : value 
+      });
+    }
   };
 
   return (

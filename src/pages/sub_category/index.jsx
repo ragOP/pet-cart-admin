@@ -53,17 +53,28 @@ const SubCategory = () => {
     const mapper = {
       Category: "categoryId",
     };
-    setParams((prev) => ({
-      ...prev,
-      [mapper[key]]: value,
-    }));
+    
+    setParams((prev) => {
+      const paramKey = mapper[key];
+      if (!value || value === '') {
+        // Remove the parameter when value is empty (unselecting)
+        const { [paramKey]: _removed, ...rest } = prev;
+        return rest;
+      } else {
+        // Set the parameter when value is provided (selecting)
+        return {
+          ...prev,
+          [paramKey]: value,
+        };
+      }
+    });
   };
   const handleClearAllFilters = () => {
     setChipValues({
       categoryIds: [],
     });
     setParams((prev) => {
-      const { categoryId, ...rest } = prev;
+      const { categoryId: _categoryId, ...rest } = prev;
       return rest;
     });
   };
