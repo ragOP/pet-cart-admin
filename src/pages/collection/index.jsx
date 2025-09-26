@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
+import { Filter } from "lucide-react";
 
 const Collection = () => {
   const navigate = useNavigate();
@@ -182,6 +183,7 @@ const Collection = () => {
           onBulkExport={onOpenBulkExportDialog}
           rightSlot={
             <Button variant="outline" onClick={() => setChipOpen(true)}>
+              <Filter />
               Filters
             </Button>
           }
@@ -190,12 +192,9 @@ const Collection = () => {
           open={chipOpen}
           onOpenChange={setChipOpen}
           title="Filters"
-          searchText={searchText}
-          onSearchChange={handleSearch}
           sections={sections}
           values={chipValues}
           onChange={setChipValues}
-          onApply={() => setChipOpen(false)}
           onClear={handleClearAllFilters}
           onFilterSelect={onFilterSelect}
         />

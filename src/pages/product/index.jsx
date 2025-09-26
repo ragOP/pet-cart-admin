@@ -19,6 +19,7 @@ import {
   isVeg,
   productType,
 } from "@/utils/product_filters";
+import { Filter } from "lucide-react";
 
 const Product = () => {
   const navigate = useNavigate();
@@ -281,6 +282,7 @@ const Product = () => {
           onBulkExport={onOpenBulkExportDialog}
           rightSlot={
             <Button variant="outline" onClick={() => setChipOpen(true)}>
+              <Filter />
               Filters
             </Button>
           }
@@ -289,12 +291,9 @@ const Product = () => {
           open={chipOpen}
           onOpenChange={setChipOpen}
           title="Filters"
-          searchText={searchText}
-          onSearchChange={handleSearch}
           sections={sections}
           values={chipValues}
           onChange={setChipValues}
-          onApply={() => setChipOpen(false)}
           onClear={handleClearAllFilters}
           onFilterSelect={onFilterSelect}
         />
