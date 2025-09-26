@@ -27,6 +27,8 @@ import { urlToFile } from "@/utils/file/urlToFile";
 const BrandFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(3, "Description is required"),
+  importedBy: z.string().min(3, "Importer name is required"),
+  countryOfOrigin: z.string().min(3, "Country of origin is required"),
   logo: z
     .any()
     .optional()
@@ -62,6 +64,8 @@ const BrandForm = ({ isEdit = false, initialData }) => {
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
+      importedBy: initialData?.importedBy || "",
+      countryOfOrigin: initialData?.countryOfOrigin || "",
       logo: null,
       active: initialData?.active ?? true,
     },
