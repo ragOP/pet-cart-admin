@@ -6,6 +6,11 @@ import SubCategoryTable from "./components/SubCategoryTable";
 import { useDebounce } from "@uidotdev/usehooks";
 import { DateRangePicker } from "@/components/date_filter";
 import ExportSubCategoryDialog from "./components/ExportSubCategoryDialog";
+import ChipFilterDrawer from "@/components/cutom_filter/chip_drawer";
+import { Button } from "@/components/ui/button";
+import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
+import { useQuery } from "@tanstack/react-query";
+import { fetchCategories } from "../category/helpers/fetchCategories";
 
 const SubCategory = () => {
   const navigate = useNavigate();
@@ -21,6 +26,46 @@ const SubCategory = () => {
   const [params, setParams] = useState(paramInitialState);
   const [openBulkExportDialog, setOpenBulkExportDialog] = useState(false);
 
+  const [chipOpen, setChipOpen] = useState(false);
+  const [chipValues, setChipValues] = useState({
+    categoryIds: [],
+  });
+
+  const { data: categoryRes } = useQuery({
+    queryKey: ["all_categories"],
+    queryFn: () => fetchCategories({ params: { per_page: 200 } }),
+  });
+  const categories = categoryRes?.data?.categories || [];
+
+  const sections = [
+    {
+      key: "categoryIds",
+      title: "Category",
+      options: categories.map((c) => ({
+        value: String(c._id),
+        label: c.name,
+      })),
+    },
+  ];
+
+  const onFilterSelect = ({ key, value }) => {
+    const mapper = {
+      Category: "categoryId",
+    };
+    setParams((prev) => ({
+      ...prev,
+      [mapper[key]]: value,
+    }));
+  };
+  const handleClearAllFilters = () => {
+    setChipValues({
+      categoryIds: [],
+    });
+    setParams((prev) => {
+      const { categoryId, ...rest } = prev;
+      return rest;
+    });
+  };
   const debouncedSearch = useDebounce(searchText, 500);
 
   const onAdd = () => {
@@ -100,6 +145,24 @@ const SubCategory = () => {
           rowsPerPage={params.per_page}
           disableBulkExport={false}
           onBulkExport={onOpenBulkExportDialog}
+          rightSlot={
+            <Button variant="outline" onClick={() => setChipOpen(true)}>
+              Filters
+            </Button>
+          }
+        />
+        <ChipFilterDrawer
+          open={chipOpen}
+          onOpenChange={setChipOpen}
+          title="Filters"
+          searchText={searchText}
+          onSearchChange={handleSearch}
+          sections={sections}
+          values={chipValues}
+          onChange={setChipValues}
+          onApply={() => setChipOpen(false)}
+          onClear={handleClearAllFilters}
+          onFilterSelect={onFilterSelect}
         />
         <SubCategoryTable
           setSubCategoryLength={setSubCategoryLength}

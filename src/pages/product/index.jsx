@@ -6,6 +6,19 @@ import ProductTable from "./components/ProductTable";
 import { useDebounce } from "@uidotdev/usehooks";
 import { DateRangePicker } from "@/components/date_filter";
 import ExportProductDialog from "./components/ExportProductDialog";
+import ChipFilterDrawer from "@/components/cutom_filter/chip_drawer";
+import { Button } from "@/components/ui/button";
+import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
+import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
+import { fetchBrands } from "@/pages/brand/helpers/fetchBrand";
+import { fetchBreeds } from "@/pages/breed/helpers/fetchBreeds";
+import { useQuery } from "@tanstack/react-query";
+import {
+  lifeStage,
+  breedSize,
+  isVeg,
+  productType,
+} from "@/utils/product_filters";
 
 const Product = () => {
   const navigate = useNavigate();
@@ -20,6 +33,129 @@ const Product = () => {
   const [searchText, setSearchText] = useState("");
   const [params, setParams] = useState(paramInitialState);
   const [openBulkExportDialog, setOpenBulkExportDialog] = useState(false);
+  const [chipOpen, setChipOpen] = useState(false);
+  const [chipValues, setChipValues] = useState({
+    categoryIds: [],
+    subCategoryIds: [],
+    brandIds: [],
+    breedIds: [],
+    lifeStage: [],
+    breedSize: [],
+    isVeg: [],
+    productType: [],
+  });
+
+  const { data: categoryRes } = useQuery({
+    queryKey: ["all_categories"],
+    queryFn: () => fetchCategories({ params: { per_page: 200 } }),
+  });
+  const categories = categoryRes?.data?.categories || [];
+
+  const { data: subCatRes } = useQuery({
+    queryKey: ["all_sub_categories"],
+    queryFn: () => fetchSubCategories({ params: { per_page: 500 } }),
+  });
+  const subCategories = subCatRes?.data || [];
+
+  const { data: brandRes } = useQuery({
+    queryKey: ["all_brands"],
+    queryFn: () => fetchBrands({ params: { per_page: 500 } }),
+  });
+  const brands = brandRes?.data || [];
+
+  const { data: breedRes } = useQuery({
+    queryKey: ["all_breeds"],
+    queryFn: () => fetchBreeds({ params: { per_page: 500 } }),
+  });
+  const breeds = breedRes?.data || [];
+
+  const filteredSubs = chipValues.categoryIds.length
+    ? subCategories.filter((s) => {
+        const selectedCategorySlug = chipValues.categoryIds[0];
+        const matchingCategory = categories.find(
+          (cat) => cat.slug === selectedCategorySlug
+        );
+        return (
+          matchingCategory &&
+          String(s.categoryId) === String(matchingCategory._id)
+        );
+      })
+    : subCategories;
+
+  const sections = [
+    {
+      key: "categoryIds",
+      title: "Category",
+      options: categories
+        .map((p) => ({
+          value: String(p.slug),
+          label: p.name ?? p.categoryId ?? "Unknown",
+        }))
+        .filter((o) => o.value),
+    },
+    {
+      key: "subCategoryIds",
+      title: "Sub Category",
+      options: filteredSubs
+        .map((p) => ({
+          value: String(p.slug),
+          label: p.name ?? p.subCategoryId ?? "Unknown",
+        }))
+        .filter((o) => o.value),
+    },
+    {
+      key: "brandIds",
+      title: "Brand",
+      options: brands
+        .map((p) => ({
+          value: String(p.slug),
+          label: p.name ?? p.brandId ?? "Unknown",
+        }))
+        .filter((o) => o.value),
+    },
+    {
+      key: "breedIds",
+      title: "Breed",
+      options: breeds
+        .map((p) => ({
+          value: String(p.slug),
+          label: p.name ?? p.breedId ?? "Unknown",
+        }))
+        .filter((o) => o.value),
+    },
+    {
+      key: "lifeStage",
+      title: "Life Stage",
+      options: lifeStage.map((p) => ({
+        value: String(p.value),
+        label: p.label,
+      })),
+    },
+    {
+      key: "breedSize",
+      title: "Breed Size",
+      options: breedSize.map((p) => ({
+        value: String(p.value),
+        label: p.label,
+      })),
+    },
+    {
+      key: "isVeg",
+      title: "Veg/Non Veg",
+      options: isVeg.map((p) => ({
+        value: String(p.value),
+        label: p.label,
+      })),
+    },
+    {
+      key: "productType",
+      title: "Product Type",
+      options: productType.map((p) => ({
+        value: String(p.value),
+        label: p.label,
+      })),
+    },
+  ];
 
   const debouncedSearch = useDebounce(searchText, 500);
 
@@ -27,6 +163,49 @@ const Product = () => {
     navigate("/dashboard/product/add");
   };
 
+  const onFilterSelect = ({ key, value }) => {
+    const mapper = {
+      Category: "categorySlug",
+      "Sub Category": "subCategorySlug",
+      Brand: "brandSlug",
+      Breed: "breedSlug",
+      "Life Stage": "lifeStage",
+      "Breed Size": "breedSize",
+      "Veg/Non Veg": "isVeg",
+      "Product Type": "productType",
+    };
+    setParams((prev) => ({
+      ...prev,
+      [mapper[key]]: value,
+    }));
+  };
+  const handleClearAllFilters = () => {
+    setChipValues({
+      categoryIds: [],
+      subCategoryIds: [],
+      brandIds: [],
+      breedIds: [],
+      lifeStage: [],
+      breedSize: [],
+      isVeg: [],
+      productType: [],
+    });
+    setParams((prev) => {
+      const {
+        categorySlug,
+        subCategorySlug,
+        brandSlug,
+        breedSlug,
+        lifeStage,
+        breedSize,
+        isVeg,
+        productType,
+
+        ...rest
+      } = prev;
+      return rest;
+    });
+  };
   const handleSearch = (e) => {
     setSearchText(e.target.value);
   };
@@ -100,6 +279,24 @@ const Product = () => {
           rowsPerPage={params.per_page}
           disableBulkExport={false}
           onBulkExport={onOpenBulkExportDialog}
+          rightSlot={
+            <Button variant="outline" onClick={() => setChipOpen(true)}>
+              Filters
+            </Button>
+          }
+        />
+        <ChipFilterDrawer
+          open={chipOpen}
+          onOpenChange={setChipOpen}
+          title="Filters"
+          searchText={searchText}
+          onSearchChange={handleSearch}
+          sections={sections}
+          values={chipValues}
+          onChange={setChipValues}
+          onApply={() => setChipOpen(false)}
+          onClear={handleClearAllFilters}
+          onFilterSelect={onFilterSelect}
         />
         <ProductTable
           setProductLength={setProductLength}

@@ -24,6 +24,7 @@ const CustomActionMenu = ({
   rowsPerPage = 25,
   disableBulkExport = true,
   onBulkExport,
+  rightSlot,
 }) => {
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between w-full my-3">
@@ -39,6 +40,7 @@ const CustomActionMenu = ({
           value={searchText}
           onChange={handleSearch}
         />
+
         {showDateRangePicker && (
           <DateRangePicker onChange={handleDateRangeChange} />
         )}
@@ -76,6 +78,7 @@ const CustomActionMenu = ({
             <span>Add {capitalize(singularize(title))}</span>
           </Button>
         )}
+        {rightSlot}
       </div>
     </div>
   );

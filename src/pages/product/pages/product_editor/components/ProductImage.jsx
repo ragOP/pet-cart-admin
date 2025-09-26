@@ -29,7 +29,7 @@ const ProductImage = ({ image, alt, label, className = "" }) => {
         <CustomImage
           src={image}
           alt={alt}
-          className="w-32 h-32 object-contain relative z-10 drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)] transition-all group-hover:scale-110 group-focus:scale-110"
+          className="w-27 h-27 object-contain relative z-10 drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)] transition-all group-hover:scale-110 group-focus:scale-110"
           width={124}
           height={124}
           priority

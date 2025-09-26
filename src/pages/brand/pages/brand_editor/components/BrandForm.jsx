@@ -34,7 +34,13 @@ const BrandFormSchema = z.object({
       (files) => {
         if (!files || files.length === 0) return true; // Skip if no file (optional)
         const file = files[0];
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "image/gif",
+          "image/webp",
+        ];
         return allowedTypes.includes(file.type);
       },
       {
@@ -43,7 +49,6 @@ const BrandFormSchema = z.object({
     ),
   active: z.boolean().default(true),
 });
-
 
 const BrandForm = ({ isEdit = false, initialData }) => {
   const navigate = useNavigate();
@@ -81,6 +86,8 @@ const BrandForm = ({ isEdit = false, initialData }) => {
       payload.append("name", formData.name);
       payload.append("slug", slugify(formData.name));
       payload.append("description", formData.description);
+      payload.append("importedBy", formData.importedBy);
+      payload.append("countryOfOrigin", formData.countryOfOrigin);
       payload.append("active", formData.active);
 
       if (!logoRemoved && logoFile instanceof File) {
@@ -140,6 +147,35 @@ const BrandForm = ({ isEdit = false, initialData }) => {
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Input placeholder="Enter brand description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* Imported By */}
+        <FormField
+          name="importedBy"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Imported By</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter importer name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Country of Origin */}
+        <FormField
+          name="countryOfOrigin"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Country of Origin</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter country of origin" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

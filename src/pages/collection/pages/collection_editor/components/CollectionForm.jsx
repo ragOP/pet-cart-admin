@@ -26,6 +26,8 @@ import { urlToFile } from "@/utils/file/urlToFile";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
 import MultiSelectProducts from "./MultiProductSelect";
 import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
+import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
+import { fi } from "zod/v4/locales";
 
 const CollectionFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -60,16 +62,22 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   const adminId = useSelector(selectAdminId);
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
+  const [categoryId, setCategoryId] = useState(initialData?.categoryId || "");
 
   const form = useForm({
     resolver: zodResolver(CollectionFormSchema),
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
+      categoryId: initialData?.categoryId || "",
       subCategoryId: initialData?.subCategoryId || "",
       productsIds: initialData?.productsIds || [],
       image: null,
     },
+  });
+  const { data: categoryListRes, isLoading: categoryLoading } = useQuery({
+    queryKey: ["all_categories"],
+    queryFn: () => fetchCategories({ params: { per_page: 100 } }),
   });
 
   const { data: subCategoryListRes, isLoading: subCategoryLoading } = useQuery({
@@ -81,9 +89,18 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     queryKey: ["all_products"],
     queryFn: () => fetchProducts({ params: { per_page: 100 } }),
   });
+  const categories = categoryListRes?.data.categories || [];
+  console.log(categories, "categories");
+
   const products = productListRes?.data || [];
 
   const subCategories = subCategoryListRes?.data || [];
+  console.log(subCategories, "subCategories");
+
+  const filteredSubCategories = categoryId
+    ? subCategories.filter((sub) => sub.categoryId === categoryId)
+    : [];
+  console.log(filteredSubCategories, "fliterd subCategories");
 
   useEffect(() => {
     if (isEdit && initialData?.image && !imageFile) {
@@ -179,6 +196,33 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="CategoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setCategoryId(e.target.value);
+                  }}
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Parent SubCategory Dropdown */}
         <FormField
@@ -193,7 +237,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
                   className="w-full border rounded px-3 py-2 text-sm text-gray-700"
                 >
                   <option value="">Select a subcategory</option>
-                  {subCategories.map((sub) => (
+                  {filteredSubCategories.map((sub) => (
                     <option key={sub._id} value={sub._id}>
                       {sub.name}
                     </option>

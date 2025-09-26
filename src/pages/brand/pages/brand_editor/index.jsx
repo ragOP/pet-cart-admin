@@ -12,7 +12,7 @@ const BrandEditor = () => {
     queryKey: ["brand", id],
     queryFn: () => getBrandById({ id }),
     enabled: !!id,
-  });
+  }); 
   const initialData = initialDataRes?.response?.data;
 
   const breadcrumbs = [
