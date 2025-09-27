@@ -69,6 +69,7 @@ const imageArrayValidator = z
 
 const VariantSchema = z.object({
   sku: z.string().optional(),
+  variantName: z.string().optional(),
   price: z.coerce.number().positive("Price must be positive"),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().nonnegative().optional(),
@@ -148,6 +149,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         variants: [
           {
             sku: "",
+            variantName: "",
             price: 0,
             salePrice: 0,
             stock: 0,
@@ -190,6 +192,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           : [
               {
                 sku: "",
+                variantName: "",
                 price: 0,
                 salePrice: 0,
                 stock: 0,
@@ -836,6 +839,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           payload.append("images", file);
         }
       });
+      //Common Images
+      commonImagefiles?.forEach((file) => {
+        if (file instanceof File) {
+          payload.append("commonImages", file);
+        }
+      });
 
       // Add variant data & variant image map
       const variantImageMapArray = [];
@@ -946,7 +955,20 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     setCommonImagefiles(newFiles);
     form.setValue("commonImages", newFiles);
   };
+  const handleBrandChange = (selectedBrandId, field) => {
+    field.onChange(selectedBrandId);
 
+    if (selectedBrandId && brands.length > 0) {
+      const selectedBrand = brands.find((b) => b._id === selectedBrandId);
+      if (selectedBrand) {
+        form.setValue("importedBy", selectedBrand.importedBy);
+        form.setValue("countryOfOrigin", selectedBrand.countryOfOrigin);
+      }
+    } else {
+      form.setValue("importedBy", "");
+      form.setValue("countryOfOrigin", "");
+    }
+  };
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -1118,6 +1140,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 <FormControl>
                   <select
                     {...field}
+                    onChange={(e) => handleBrandChange(e.target.value, field)}
                     className="w-full border rounded px-3 py-2 text-sm text-gray-700"
                   >
                     <option value="">Select Brand</option>

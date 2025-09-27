@@ -289,7 +289,7 @@ const Product = () => {
           values={chipValues}
           onChange={setChipValues}
           onClear={handleClearAllFilters}
-          onFilterSelect={onFilterSelect}
+          onFilterSelect={onFilterSelect}  
         />
         <ProductTable
           setProductLength={setProductLength}
