@@ -1,3 +1,4 @@
+/*
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
@@ -188,3 +189,4 @@ const HsnCodesTable = ({ setHsnCodesLength, params }) => {
 };
 
 export default HsnCodesTable;
+*/

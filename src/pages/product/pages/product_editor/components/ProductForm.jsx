@@ -31,7 +31,7 @@ import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 import { fetchSubCategoriesByCategoryId } from "@/pages/sub_category/helpers/fetchSubCategories";
 import { fetchBreeds } from "@/pages/breed/helpers/fetchBreeds";
 import { fetchBrands } from "@/pages/brand/helpers/fetchBrand";
-import { fetchHsnCodes } from "@/pages/hsn_codes/helpers/fetchHsnCodes";
+// import { fetchHsnCodes } from "@/pages/hsn_codes/helpers/fetchHsnCodes";
 import { createProduct } from "../helper/createProduct";
 import { updateProduct } from "../helper/updateProduct";
 import { fetchProducts } from "../../../helpers/fetchProducts";
@@ -93,7 +93,7 @@ const ProductFormSchema = z.object({
   weight: z.coerce.number().optional(),
   brandId: z.string().min(1, "Please select a brand"),
   breedIds: z.optional(z.array(z.string())),
-  hsnCodeId: z.string().min(1, "Please select a HSN code"),
+  // hsnCodeId: z.string().min(1, "Please select a HSN code"),
   isBestSeller: z.boolean().default(false),
   isVeg: z.boolean().default(false),
   lifeStage: z.enum(["Puppy", "Adult", "Starter", "Kitten"]).default("Adult"),
@@ -134,7 +134,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         subCategoryId: "",
         brandId: "",
         breedIds: [],
-        hsnCodeId: "",
+        // hsnCodeId: "",
         isBestSeller: false,
         isVeg: false,
         lifeStage: "Adult",
@@ -171,7 +171,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       subCategoryId: initialData.subCategoryId?._id || "",
       brandId: initialData.brandId?._id || "",
       breedIds: initialData.breedId?.map((breed) => breed._id) || [],
-      hsnCodeId: initialData.hsnCode?._id || "",
+      // hsnCodeId: initialData.hsnCode?._id || "",
       isBestSeller: initialData.isBestSeller || false,
       isVeg: initialData.isVeg || false,
       lifeStage: initialData.lifeStage || "Adult",
@@ -260,10 +260,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     queryFn: fetchBrands,
   });
 
-  const { data: hsnCodeListRes } = useQuery({
-    queryKey: ["hsn_codes"],
-    queryFn: fetchHsnCodes,
-  });
+  // const { data: hsnCodeListRes } = useQuery({
+  //   queryKey: ["hsn_codes"],
+  //   queryFn: fetchHsnCodes,
+  // });
 
   // Fetch total product count for serial number generation
   const { data: productsCountRes } = useQuery({
@@ -282,7 +282,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   );
   const breeds = breedListRes?.data || [];
   const brands = useMemo(() => brandListRes?.data || [], [brandListRes?.data]);
-  const hsnCodes = hsnCodeListRes?.response?.data?.data || [];
+  // const hsnCodes = hsnCodeListRes?.response?.data?.data || [];
 
   // Function to generate SKU based on format [CATEGORY]-[BRAND]-[SUBCAT]-[FLAVOUR/VARIANT]-[WEIGHT]-[SERIAL]
   const generateSKU = useCallback(
@@ -823,7 +823,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("stock", data.stock);
       payload.append("weight", mainWeightInGrams);
       payload.append("brandId", data.brandId);
-      payload.append("hsnCode", data.hsnCodeId);
+      // payload.append("hsnCode", data.hsnCodeId);
       payload.append("isBestSeller", String(data.isBestSeller));
       payload.append("isVeg", String(data.isVeg));
       payload.append("lifeStage", data.lifeStage);
@@ -1270,7 +1270,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
             )}
           />
 
-          {/* HSN Code */}
+          {/* HSN Code 
           <FormField
             name="hsnCodeId"
             control={form.control}
@@ -1294,6 +1294,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               </FormItem>
             )}
           />
+          */}
         </div>
         {/*Common Section*/}
         <div className="space-y-4">

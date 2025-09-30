@@ -1,15 +1,15 @@
-import { apiService } from "@/api/api_services";
-import { endpoints } from "@/api/endpoint";
+// import { apiService } from "@/api/api_services";
+// import { endpoints } from "@/api/endpoint";
 
-export const deleteHsnCodes = async (id) => {
-  try {
-    const apiResponse = await apiService({
-      endpoint: `${endpoints.hsn_codes}/${id}`,
-      method: "DELETE",
-    });
+// export const deleteHsnCodes = async (id) => {
+//   try {
+//     const apiResponse = await apiService({
+//       endpoint: `${endpoints.hsn_codes}/${id}`,
+//       method: "DELETE",
+//     });
 
-    return apiResponse;
-  } catch (error) {
-    console.error(error);
-  }
-};
+//     return apiResponse;
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
