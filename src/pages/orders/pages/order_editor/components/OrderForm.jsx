@@ -183,6 +183,7 @@ const OrderForm = ({ initialData }) => {
       upi: "UPI Payment",
       netbanking: "Net Banking",
       wallet: "Wallet Payment",
+      razorpay: "Razorpay Payment",
     };
     return methods[method] || (method ? method.toUpperCase() : "N/A");
   };
@@ -359,27 +360,9 @@ const OrderForm = ({ initialData }) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
-                          {(item?.cgstAmount || 0) > 0 && (
-                            <div className="text-xs">
-                              CGST: {formatPrice(item?.cgstAmount || 0)}
-                            </div>
-                          )}
-                          {(item?.sgstAmount || 0) > 0 && (
-                            <div className="text-xs">
-                              SGST: {formatPrice(item?.sgstAmount || 0)}
-                            </div>
-                          )}
-                          {(item?.igstAmount || 0) > 0 && (
-                            <div className="text-xs">
-                              IGST: {formatPrice(item?.igstAmount || 0)}
-                            </div>
-                          )}
-                          {(item?.cessAmount || 0) > 0 && (
-                            <div className="text-xs">
-                              Cess: {formatPrice(item?.cessAmount || 0)}
-                            </div>
-                          )}
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          {/* GST components not available in new format */}
+                          <div>GST: Included in total</div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
@@ -630,67 +613,23 @@ const OrderForm = ({ initialData }) => {
                   </span>
                 </div>
                 <Separator />
-                {(() => {
-                  const totalCess = (initialData?.items || []).reduce(
-                    (sum, item) => sum + (item?.cessAmount || 0),
-                    0
-                  );
-                  const totalCgst = (initialData?.items || []).reduce(
-                    (sum, item) => sum + (item?.cgstAmount || 0),
-                    0
-                  );
-                  const totalSgst = (initialData?.items || []).reduce(
-                    (sum, item) => sum + (item?.sgstAmount || 0),
-                    0
-                  );
-                  const totalIgst = (initialData?.items || []).reduce(
-                    (sum, item) => sum + (item?.igstAmount || 0),
-                    0
-                  );
-                  return (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-muted-foreground">
-                        GST Breakdown
-                      </div>
-                      {initialData?.address?.state === "gujarat" ||
-                      initialData?.address?.state === "Gujarat" ? (
-                        <>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              CGST (Central GST)
-                            </span>
-                            <span>{formatPrice(totalCgst)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              SGST (State GST)
-                            </span>
-                            <span>{formatPrice(totalSgst)}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            IGST (Integrated GST)
-                          </span>
-                          <span>{formatPrice(totalIgst)}</span>
-                        </div>
-                      )}
-                      {totalCess > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Cess</span>
-                          <span>{formatPrice(totalCess)}</span>
-                        </div>
-                      )}
-                      {totalCess > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Shipping Cost</span>
-                          <span>{formatPrice(initialData.totalAmount - initialData.amountAfterTax)}</span>
-                        </div>
-                      )}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Tax Information
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      GST (Included in price)
+                    </span>
+                    <span className="text-muted-foreground">Included</span>
+                  </div>
+                  {initialData?.totalAmount > initialData?.discountedAmountAfterCoupon && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Shipping Cost</span>
+                      <span>{formatPrice(initialData.totalAmount - initialData.discountedAmountAfterCoupon)}</span>
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
                 <Separator />
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total Amount</span>
@@ -711,13 +650,17 @@ const OrderForm = ({ initialData }) => {
             <CardContent>
               <div className="space-y-3">
                 <div className="text-sm font-medium text-muted-foreground">Weight Breakdown</div>
-                <div className="space-y-2 border-b divide-dotted">
+                <div className="space-y-2 border-b pb-3 mb-3">
                   {initialData.items && initialData.items.map((item) => (
                     <div key={item._id} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{item.productId.title.slice(0, 30) + "..."}</span>
-                      <span>{item.productId.weight} kg</span>
+                      <span>{(item.productId.weight / 1000).toFixed(1)} kg</span>
                     </div>
                   ))}
+                  <div className="flex justify-between text-sm font-medium pt-2 border-t">
+                    <span>Total Weight</span>
+                    <span>{initialData?.weight || 0} kg</span>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
@@ -751,11 +694,23 @@ const OrderForm = ({ initialData }) => {
                 {initialData?.transcation && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
-                      Transaction Status
+                      Transaction Details
                     </p>
-                    <Badge variant="outline" className="text-xs">
-                      {initialData.transcation?.status || "N/A"}
-                    </Badge>
+                    <div className="space-y-1">
+                      <Badge variant="outline" className="text-xs">
+                        Status: {initialData.transcation?.status || "N/A"}
+                      </Badge>
+                      {initialData.transcation?.razorpayPaymentId && (
+                        <p className="text-xs text-muted-foreground">
+                          Payment ID: {initialData.transcation.razorpayPaymentId}
+                        </p>
+                      )}
+                      {initialData.transcation?.amount && (
+                        <p className="text-xs text-muted-foreground">
+                          Amount: {formatPrice(initialData.transcation.amount)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
