@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { X } from "lucide-react";
 
 import { createCollection } from "../helper/createCollection";
@@ -32,8 +32,9 @@ import { fi } from "zod/v4/locales";
 const CollectionFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(3, "Description is required"),
+  categoryId: z.string().min(1, "Please select a category"),
   subCategoryId: z.string().min(1, "Please select a subcategory"),
-  productsIds: z.optional(z.array(z.string())),
+  productsIds: z.array(z.string()).default([]),
   image: z
     .any()
     .optional()
@@ -62,16 +63,16 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   const adminId = useSelector(selectAdminId);
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
-  const [categoryId, setCategoryId] = useState(initialData?.categoryId || "");
+  const [categoryId, setCategoryId] = useState("");
 
   const form = useForm({
     resolver: zodResolver(CollectionFormSchema),
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
-      categoryId: initialData?.categoryId || "",
+      categoryId: "",
       subCategoryId: initialData?.subCategoryId || "",
-      productsIds: initialData?.productsIds || [],
+      productsIds: initialData?.productsIds || initialData?.productIds || [],
       image: null,
     },
   });
@@ -97,10 +98,62 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   const subCategories = subCategoryListRes?.data || [];
   console.log(subCategories, "subCategories");
 
-  const filteredSubCategories = categoryId
-    ? subCategories.filter((sub) => sub.categoryId === categoryId)
-    : [];
-  console.log(filteredSubCategories, "fliterd subCategories");
+  // Get filtered subcategories, but also include the currently selected one if editing
+  const filteredSubCategories = useMemo(() => {
+    if (categoryId) {
+      return subCategories.filter((sub) => sub.categoryId === categoryId);
+    }
+    // If editing and we have a selected subcategory but no category selected yet, include it
+    if (isEdit && initialData?.subCategoryId) {
+      const selectedSub = subCategories.find(sub => sub._id === initialData.subCategoryId);
+      return selectedSub ? [selectedSub] : [];
+    }
+    return [];
+  }, [categoryId, subCategories, isEdit, initialData?.subCategoryId]);
+  console.log(filteredSubCategories, "filtered subCategories");
+
+  // Initial category derivation when subcategories are loaded
+  useEffect(() => {
+    if (isEdit && initialData?.subCategoryId && subCategories.length > 0 && !categoryId) {
+      const selectedSubCategory = subCategories.find(sub => sub._id === initialData.subCategoryId);
+      if (selectedSubCategory) {
+        const derivedCategoryId = selectedSubCategory.categoryId;
+        setCategoryId(derivedCategoryId);
+        form.setValue("categoryId", derivedCategoryId);
+        console.log("Initial category derivation:", derivedCategoryId);
+      }
+    }
+  }, [isEdit, initialData?.subCategoryId, subCategories, categoryId, form]);
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (isEdit && initialData && subCategories.length > 0) {
+      console.log("Initial data for editing:", initialData);
+      // Handle both productsIds and productIds for API consistency
+      const productIds = initialData.productsIds || initialData.productIds || [];
+      console.log("Product IDs to set:", productIds);
+      
+      // Derive categoryId from subcategory since it's not provided by backend
+      let derivedCategoryId = "";
+      if (initialData.subCategoryId) {
+        const selectedSubCategory = subCategories.find(sub => sub._id === initialData.subCategoryId);
+        if (selectedSubCategory) {
+          derivedCategoryId = selectedSubCategory.categoryId;
+          console.log("Derived category ID from subcategory:", derivedCategoryId);
+        }
+      }
+      
+      form.reset({
+        name: initialData.name || "",
+        description: initialData.description || "",
+        categoryId: derivedCategoryId,
+        subCategoryId: initialData.subCategoryId || "",
+        productsIds: productIds,
+        image: null,
+      });
+      setCategoryId(derivedCategoryId);
+    }
+  }, [isEdit, initialData, form, subCategories]);
 
   useEffect(() => {
     if (isEdit && initialData?.image && !imageFile) {
@@ -121,15 +174,17 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       payload.append("name", formData.name);
       payload.append("slug", slugify(formData.name));
       payload.append("description", formData.description);
+      payload.append("categoryId", formData.categoryId);
       payload.append("subCategoryId", formData.subCategoryId);
-      // console.log(formData.productsIds);
-      // payload.append("productIds", Array.from(formData.productsIds));
-      if (formData.productsIds.length > 0) {
-        formData.productsIds.forEach((id) => {
-          payload.append("productIds", id);
+      // Ensure productsIds is always an array and handle single/multiple products
+      const productIds = Array.isArray(formData.productsIds) ? formData.productsIds : [];
+      console.log("Product IDs to send:", productIds);
+      
+      // Send product IDs using array notation (like other forms in the codebase)
+      if (productIds.length > 0) {
+        productIds.forEach((id) => {
+          payload.append("productIds[]", id);
         });
-      } else {
-        payload.append("productIds", []);
       }
 
       if (!imageRemoved && imageFile instanceof File) {
@@ -198,7 +253,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
         />
         <FormField
           control={form.control}
-          name="CategoryId"
+          name="categoryId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
@@ -257,9 +312,12 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
               <FormLabel>Products</FormLabel>
               <FormControl>
                 <MultiSelectProducts
-                  products={products} // You need to fetch or pass this array
-                  value={field.value || []}
-                  onChange={field.onChange}
+                  products={products}
+                  value={Array.isArray(field.value) ? field.value : []}
+                  onChange={(selectedIds) => {
+                    // Ensure we always pass an array, even for single selection
+                    field.onChange(Array.isArray(selectedIds) ? selectedIds : [selectedIds].filter(Boolean));
+                  }}
                 />
               </FormControl>
               <FormMessage />
