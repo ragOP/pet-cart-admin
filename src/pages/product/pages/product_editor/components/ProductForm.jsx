@@ -113,7 +113,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     initialData?.categoryId || ""
   );
   const [imageFiles, setImageFiles] = useState([]);
-  const [varientImagefiles, setVarientImagefiles] = useState([]);
   const [commonImagefiles, setCommonImagefiles] = useState([]);
   const [mainWeightUnit, setMainWeightUnit] = useState("grams"); // 'grams' or 'kg'
   const [variantWeightUnits, setVariantWeightUnits] = useState({}); // Store weight units for each variant
@@ -769,7 +768,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     urlToFile(img, `variant_${i}_image_${imgIndex}.jpg`)
                   )
                 );
-                setVarientImagefiles(files);
                 variantImagesMap[i] = files;
 
                 // Update variant images in form
@@ -935,23 +933,42 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   };
 
   const removeImage = (index) => {
-    console.log("removeImage");
+    console.log("removeImage - removing index:", index);
+    console.log("Current imageFiles:", imageFiles);
     const newFiles = [...imageFiles];
-    newFiles.splice(index, 1);
+    const removedFile = newFiles.splice(index, 1);
+    console.log("Removed file:", removedFile);
+    console.log("New imageFiles:", newFiles);
     setImageFiles(newFiles);
     form.setValue("images", newFiles);
   };
-  const removeVarientImage = (index) => {
-    console.log("removeVarientImage");
-    const newFiles = [...varientImagefiles];
-    newFiles.splice(index, 1);
-    setVarientImagefiles(newFiles);
-    form.setValue(`variants.${index}.images`, newFiles);
+  const removeVariantImage = (variantIndex, imageIndex) => {
+    console.log("removeVariantImage - removing imageIndex:", imageIndex, "from variantIndex:", variantIndex);
+    
+    // Get current variant images
+    const currentVariantImages = variantImageMap.current[variantIndex] || [];
+    console.log("Current variant images:", currentVariantImages);
+    
+    // Remove the specific image
+    const newFiles = [...currentVariantImages];
+    const removedFile = newFiles.splice(imageIndex, 1);
+    console.log("Removed file:", removedFile);
+    console.log("New variant images:", newFiles);
+    
+    // Update the variant image map
+    variantImageMap.current[variantIndex] = newFiles;
+    
+    // Update form value
+    form.setValue(`variants.${variantIndex}.images`, newFiles);
   };
 
   const removeCommonImage = (index) => {
+    console.log("removeCommonImage - removing index:", index);
+    console.log("Current commonImagefiles:", commonImagefiles);
     const newFiles = [...commonImagefiles];
-    newFiles.splice(index, 1);
+    const removedFile = newFiles.splice(index, 1);
+    console.log("Removed file:", removedFile);
+    console.log("New commonImagefiles:", newFiles);
     setCommonImagefiles(newFiles);
     form.setValue("commonImages", newFiles);
   };
@@ -1329,24 +1346,30 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         {/* images previews */}
         {commonImagefiles?.length > 0 && (
           <div className="flex flex-wrap gap-4 mt-4">
-            {commonImagefiles.map((file, index) => (
-              <div key={index} className="relative z-30">
-                <ProductImage
-                  image={
-                    file instanceof File ? URL.createObjectURL(file) : file
-                  }
-                  alt={`preview-${index}`}
-                  className="w-34 h-34 object-cover rounded"
-                />
-                <button
-                  type="button"
-                  className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                  onClick={() => removeCommonImage(index)}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+            {commonImagefiles.map((file, index) => {
+              const fileKey = file instanceof File ? `${file.name}-${file.size}-${index}` : `${file}-${index}`;
+              return (
+                <div key={fileKey} className="relative z-30">
+                  <ProductImage
+                    image={
+                      file instanceof File ? URL.createObjectURL(file) : file
+                    }
+                    alt={`preview-${index}`}
+                    className="w-34 h-34 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    onClick={() => {
+                      console.log("Common image remove button clicked for index:", index);
+                      removeCommonImage(index);
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -1486,24 +1509,30 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         {/* Image Previews */}
         {imageFiles?.length > 0 && (
           <div className="flex flex-wrap gap-4 mt-4">
-            {imageFiles.map((file, index) => (
-              <div key={index} className="relative z-30">
-                <ProductImage
-                  image={
-                    file instanceof File ? URL.createObjectURL(file) : file
-                  }
-                  alt={`preview-${index}`}
-                  className="w-34 h-34 object-cover rounded"
-                />
-                <button
-                  type="button"
-                  className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                  onClick={() => removeImage(index)}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+            {imageFiles.map((file, index) => {
+              const fileKey = file instanceof File ? `${file.name}-${file.size}-${index}` : `${file}-${index}`;
+              return (
+                <div key={fileKey} className="relative z-30">
+                  <ProductImage
+                    image={
+                      file instanceof File ? URL.createObjectURL(file) : file
+                    }
+                    alt={`preview-${index}`}
+                    className="w-34 h-34 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    onClick={() => {
+                      console.log("Main image remove button clicked for index:", index);
+                      removeImage(index);
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -1950,7 +1979,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                               ...files,
                             ];
                             variantImageMap.current[index] = updatedFiles;
-                            setVarientImagefiles(updatedFiles);
                             field.onChange(updatedFiles);
                           }}
                         />
@@ -1983,26 +2011,32 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               {/* Image Previews */}
               {variantImageMap.current[index]?.length > 0 && (
                 <div className="flex flex-wrap gap-4 mt-4">
-                  {variantImageMap.current[index].map((file, imgIndex) => (
-                    <div key={imgIndex} className="relative z-30">
-                      <ProductImage
-                        image={
-                          file instanceof File
-                            ? URL.createObjectURL(file)
-                            : file
-                        }
-                        alt={`preview-${index}`}
-                        className="w-34 h-34 object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                        onClick={() => removeVariantImage(index, imgIndex)}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  {variantImageMap.current[index].map((file, imgIndex) => {
+                    const fileKey = file instanceof File ? `variant-${index}-${file.name}-${file.size}-${imgIndex}` : `variant-${index}-${file}-${imgIndex}`;
+                    return (
+                      <div key={fileKey} className="relative z-30">
+                        <ProductImage
+                          image={
+                            file instanceof File
+                              ? URL.createObjectURL(file)
+                              : file
+                          }
+                          alt={`preview-${index}`}
+                          className="w-34 h-34 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                          onClick={() => {
+                            console.log("Variant image remove button clicked for variantIndex:", index, "imageIndex:", imgIndex);
+                            removeVariantImage(index, imgIndex);
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <button
