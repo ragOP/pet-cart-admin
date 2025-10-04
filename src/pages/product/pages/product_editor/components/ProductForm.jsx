@@ -1314,8 +1314,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                       accept="image/*"
                       onChange={(e) => {
                         const files = Array.from(e.target.files);
-                        setCommonImagefiles(files);
-                        form.setValue("commonImages", files);
+                        const updatedFiles = [...commonImagefiles, ...files];
+                        setCommonImagefiles(updatedFiles);
+                        form.setValue("commonImages", updatedFiles);
                       }}
                     />
                   </FormControl>
@@ -1470,8 +1471,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                       accept="image/*"
                       onChange={(e) => {
                         const files = Array.from(e.target.files);
-                        setImageFiles(files);
-                        form.setValue("images", files);
+                        const updatedFiles = [...imageFiles, ...files];
+                        setImageFiles(updatedFiles);
+                        form.setValue("images", updatedFiles);
                       }}
                     />
                   </FormControl>
@@ -1943,9 +1945,13 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                           accept="image/*"
                           onChange={(e) => {
                             const files = Array.from(e.target.files);
-                            setVarientImagefiles(files);
-                            variantImageMap.current[index] = files; // 👈 attach files by variant index
-                            field.onChange(files);
+                            const updatedFiles = [
+                              ...(variantImageMap.current[index] || []),
+                              ...files,
+                            ];
+                            variantImageMap.current[index] = updatedFiles;
+                            setVarientImagefiles(updatedFiles);
+                            field.onChange(updatedFiles);
                           }}
                         />
                       </FormControl>
@@ -1975,31 +1981,30 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 />
               </div>
               {/* Image Previews */}
-              {varientImagefiles?.length > 0 &&
-                varientImagefiles?.length > 0 && (
-                  <div className="flex flex-wrap gap-4 mt-4">
-                    {varientImagefiles.map((file, index) => (
-                      <div key={index} className="relative z-30">
-                        <ProductImage
-                          image={
-                            file instanceof File
-                              ? URL.createObjectURL(file)
-                              : file
-                          }
-                          alt={`preview-${index}`}
-                          className="w-34 h-34 object-cover rounded"
-                        />
-                        <button
-                          type="button"
-                          className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                          onClick={() => removeVarientImage(index)}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {variantImageMap.current[index]?.length > 0 && (
+                <div className="flex flex-wrap gap-4 mt-4">
+                  {variantImageMap.current[index].map((file, imgIndex) => (
+                    <div key={imgIndex} className="relative z-30">
+                      <ProductImage
+                        image={
+                          file instanceof File
+                            ? URL.createObjectURL(file)
+                            : file
+                        }
+                        alt={`preview-${index}`}
+                        className="w-34 h-34 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                        onClick={() => removeVariantImage(index, imgIndex)}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => {
