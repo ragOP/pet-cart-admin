@@ -99,7 +99,7 @@ const ProductFormSchema = z.object({
   lifeStage: z.enum(["Puppy", "Adult", "Starter", "Kitten"]).default("Adult"),
   breedSize: z.enum(["Mini", "Medium", "Large", "Giant"]).default("Medium"),
   productType: z
-    .enum(["Wet Food", "Dry Food", "Food Toppers", "Treat"])
+    .enum(["Wet Food", "Dry Food", "Food Toppers", "Treat", "Toys", "Accessories", "Clothes"])
     .default("Dry Food"),
   images: imageArrayValidator,
   commonImages: imageArrayValidator,
@@ -1037,6 +1037,9 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     <option value="Dry Food">Dry Food</option>
                     <option value="Food Toppers">Food Toppers</option>
                     <option value="Treat">Treat</option>
+                    <option value="Toys">Toys</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Clothes">Clothes</option>
                   </select>
                 </FormControl>
                 <FormMessage />
