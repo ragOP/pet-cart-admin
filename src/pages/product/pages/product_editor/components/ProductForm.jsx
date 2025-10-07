@@ -101,6 +101,7 @@ const ProductFormSchema = z.object({
   productType: z
     .enum(["Wet Food", "Dry Food", "Food Toppers", "Treat", "Toys", "Accessories", "Clothes"])
     .default("Dry Food"),
+  productLabel: z.string().optional(),
   images: imageArrayValidator,
   commonImages: imageArrayValidator,
   variants: z.array(VariantSchema).min(1, "At least one variant is required"),
@@ -139,6 +140,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         lifeStage: "Adult",
         breedSize: "Medium",
         productType: "Dry Food",
+        productLabel: "",
         price: 0,
         salePrice: 0,
         stock: 0,
@@ -176,6 +178,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       lifeStage: initialData.lifeStage || "Adult",
       breedSize: initialData.breedSize || "Medium",
       productType: initialData.productType || "Dry Food",
+      productLabel: initialData.productLabel || "",
       price: initialData.price || 0,
       salePrice: initialData.salePrice || 0,
       stock: initialData.stock || 0,
@@ -827,6 +830,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       payload.append("lifeStage", data.lifeStage);
       payload.append("breedSize", data.breedSize);
       payload.append("productType", data.productType);
+      payload.append("productLabel", data.productLabel || "");
 
       // Breed IDs
       data.breedIds.forEach((id) => payload.append("breedId[]", id));
@@ -1483,6 +1487,22 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                 </FormItem>
               )}
             />
+
+            {/* Product Label */}
+            <FormField
+              name="productLabel"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product Label</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter product label" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Images */}
             <FormField
               name="images"
