@@ -23,7 +23,6 @@ import { Filter } from "lucide-react";
 
 const Product = () => {
   const navigate = useNavigate();
-  console.log("Product");
 
   const paramInitialState = {
     page: 1,

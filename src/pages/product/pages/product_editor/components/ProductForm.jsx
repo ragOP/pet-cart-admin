@@ -335,14 +335,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     ) => {
       const skuParts = [];
 
-      console.log("generateVariantSKU called with:", {
-        categoryName,
-        brandName,
-        subCategoryName,
-        variantAttributes,
-        variantIndex,
-        weightInKgs,
-      });
 
       // Add brand (first 3 letters)
       if (brandName && brandName.length >= 3) {
@@ -356,7 +348,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
       // Extract variant info from attributes (excluding weight-related attributes)
       if (variantAttributes && Object.keys(variantAttributes).length > 0) {
-        console.log("All variant attributes:", variantAttributes);
 
         // Get all attribute values and filter out empty ones and weight-related attributes
         const attributeValues = Object.entries(variantAttributes)
@@ -369,13 +360,11 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           )
           .map(([, value]) => value);
 
-        console.log("Filtered attribute values:", attributeValues);
 
         // Add up to 2 attribute values to SKU (flavor, variant info, etc.)
         attributeValues.slice(0, 2).forEach((attrValue) => {
           const shortValue = attrValue.substring(0, 3).toUpperCase();
           skuParts.push(shortValue);
-          console.log("Added attribute to SKU:", shortValue);
         });
       }
 
@@ -383,14 +372,12 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       if (weightInKgs && weightInKgs > 0) {
         const weightStr = `${weightInKgs}KG`.replace(".", ""); // Remove decimal point for cleaner SKU
         skuParts.push(weightStr);
-        console.log("Added weight to SKU:", weightStr);
       }
 
       const variantSerial = `${(variantIndex + 1).toString().padStart(3, "0")}`;
       skuParts.push(variantSerial);
 
       const finalSKU = skuParts.join("-");
-      console.log("Generated variant SKU:", finalSKU);
 
       return finalSKU;
     },
@@ -458,12 +445,10 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   // Debug: Log when variants change
   useEffect(() => {
-    console.log("Variants changed:", watchedVariants);
   }, [watchedVariants]);
 
   // Debug: Log when variant weight units change
   useEffect(() => {
-    console.log("Variant weight units changed:", variantWeightUnits);
   }, [variantWeightUnits]);
   const [lastGeneratedSKU, setLastGeneratedSKU] = useState("");
 
@@ -549,7 +534,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   // Watch for variant attribute changes and update variant SKUs
   useEffect(() => {
-    console.log("Variant watching useEffect triggered");
 
     if (isEdit) return; // Only for new products
 
@@ -559,7 +543,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       subCategories.length > 0
     ) {
       const formValues = form.getValues();
-      console.log("Current form values:", formValues);
 
       const categoryName = categories.find(
         (c) => c._id === formValues.categoryId
@@ -568,12 +551,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       const subCategoryName = subCategories.find(
         (s) => s._id === formValues.subCategoryId
       )?.name;
-
-      console.log("Category/Brand/SubCategory names:", {
-        categoryName,
-        brandName,
-        subCategoryName,
-      });
 
       if (categoryName && brandName && subCategoryName) {
         formValues.variants?.forEach((variant, index) => {
@@ -614,7 +591,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   // Watch for variant weight unit changes and update SKUs
   useEffect(() => {
-    console.log("Variant weight unit useEffect triggered");
     if (isEdit) return; // Only for new products
 
     if (
@@ -671,7 +647,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   useEffect(() => {
     if (isEdit) return; // Only for new products
 
-    console.log("Variant weight change effect triggered");
 
     if (
       categories.length > 0 &&
@@ -696,11 +671,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               ? variantWeight
               : variantWeight / 1000;
 
-          console.log(`Variant ${index} weight:`, {
-            variantWeight,
-            variantWeightInKgs,
-            unit: variantWeightUnits[index],
-          });
 
           const variantSKU = generateVariantSKU(
             categoryName,
@@ -713,9 +683,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
           // Always update SKU when weight changes (for new products)
           if (variantSKU !== variant.sku) {
-            console.log(
-              `Updating variant ${index} SKU from ${variant.sku} to ${variantSKU}`
-            );
             form.setValue(`variants.${index}.sku`, variantSKU);
           }
         });
@@ -937,27 +904,19 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   };
 
   const removeImage = (index) => {
-    console.log("removeImage - removing index:", index);
-    console.log("Current imageFiles:", imageFiles);
     const newFiles = [...imageFiles];
     const removedFile = newFiles.splice(index, 1);
-    console.log("Removed file:", removedFile);
-    console.log("New imageFiles:", newFiles);
     setImageFiles(newFiles);
     form.setValue("images", newFiles);
   };
   const removeVariantImage = (variantIndex, imageIndex) => {
-    console.log("removeVariantImage - removing imageIndex:", imageIndex, "from variantIndex:", variantIndex);
     
     // Get current variant images
     const currentVariantImages = variantImageMap.current[variantIndex] || [];
-    console.log("Current variant images:", currentVariantImages);
     
     // Remove the specific image
     const newFiles = [...currentVariantImages];
     const removedFile = newFiles.splice(imageIndex, 1);
-    console.log("Removed file:", removedFile);
-    console.log("New variant images:", newFiles);
     
     // Update the variant image map
     variantImageMap.current[variantIndex] = newFiles;
@@ -967,12 +926,8 @@ const ProductForm = ({ isEdit = false, initialData }) => {
   };
 
   const removeCommonImage = (index) => {
-    console.log("removeCommonImage - removing index:", index);
-    console.log("Current commonImagefiles:", commonImagefiles);
     const newFiles = [...commonImagefiles];
     const removedFile = newFiles.splice(index, 1);
-    console.log("Removed file:", removedFile);
-    console.log("New commonImagefiles:", newFiles);
     setCommonImagefiles(newFiles);
     form.setValue("commonImages", newFiles);
   };
@@ -1368,7 +1323,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     type="button"
                     className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
                     onClick={() => {
-                      console.log("Common image remove button clicked for index:", index);
                       removeCommonImage(index);
                     }}
                   >
@@ -1547,7 +1501,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     type="button"
                     className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
                     onClick={() => {
-                      console.log("Main image remove button clicked for index:", index);
                       removeImage(index);
                     }}
                   >
@@ -2051,7 +2004,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                           type="button"
                           className="absolute z-50 top-1 right-1 bg-red-500 text-white rounded-full p-1"
                           onClick={() => {
-                            console.log("Variant image remove button clicked for variantIndex:", index, "imageIndex:", imgIndex);
                             removeVariantImage(index, imgIndex);
                           }}
                         >
@@ -2132,12 +2084,6 @@ const ProductForm = ({ isEdit = false, initialData }) => {
           type="submit"
           disabled={mutation.isPending}
           className="w-full md:w-auto"
-          onClick={() => {
-            console.log("🖱️ Submit button clicked");
-            console.log("🖱️ Form is valid:", form.formState.isValid);
-            console.log("🖱️ Form errors:", form.formState.errors);
-            console.log("🖱️ Mutation pending:", mutation.isPending);
-          }}
         >
           {mutation.isPending
             ? "Processing..."

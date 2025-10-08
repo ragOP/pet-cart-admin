@@ -29,6 +29,19 @@ export const apiService = async ({
       url: `${customUrl ? customUrl : BACKEND_URL}/${endpoint}`,
       method,
       params,
+      // Ensure full-text search queries with spaces/special chars are preserved
+      paramsSerializer: {
+        serialize: (p) => {
+          if (!p || typeof p !== 'object') return '';
+          return Object.entries(p)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => {
+              const value = typeof v === 'string' ? v : String(v);
+              return `${encodeURIComponent(k)}=${encodeURIComponent(value)}`;
+            })
+            .join('&');
+        },
+      },
       data,
       signal,
       headers: requestHeaders,
