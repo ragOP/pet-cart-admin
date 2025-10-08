@@ -21,11 +21,25 @@ const ProductsTable = ({ setProductLength, params, setParams }) => {
     error,
   } = useQuery({
     queryKey: ["products", params],
-    queryFn: () => fetchProducts({ params }),
+    queryFn: () =>
+      fetchProducts({
+        params: {
+          ...params,
+          perPage: params?.per_page ?? params?.perPage,
+          page: params?.page,
+        },
+      }),
   });
 
-  const total = productsRes?.data?.length || 0;
-  const products = productsRes?.data || [];
+  const total =
+    Number(productsRes?.data?.total ?? productsRes?.total) || 0;
+  const products = Array.isArray(productsRes?.data?.data)
+    ? productsRes.data.data
+    : Array.isArray(productsRes?.data)
+    ? productsRes.data
+    : Array.isArray(productsRes)
+    ? productsRes
+    : [];
 
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -60,9 +74,9 @@ const ProductsTable = ({ setProductLength, params, setParams }) => {
     navigate(`/dashboard/product/edit/${row._id}`);
   };
 
-  useEffect(() => {
-    setProductLength(total);
-  }, [products]);
+useEffect(() => {
+  setProductLength(total);
+}, [total, setProductLength]);
 
 const columns = [
   {
@@ -122,7 +136,7 @@ const columns = [
   {
     key: "price",
     label: "Price",
-    render: (value, row) => (
+    render: (value) => (
       <Typography className="text-sm">
         ₹{value}
       </Typography>
@@ -224,13 +238,13 @@ const columns = [
   const onPageChange = (page) => {
     setParams((prev) => ({
       ...prev,
-      page: page + 1,
+      page,
     }));
   };
 
-  const perPage = params.per_page;
-  const currentPage = params.page;
-  const totalPages = Math.ceil(total / perPage);
+  const perPage = Number(params.per_page);
+  const currentPage = Number(params.page);
+  const totalPages = perPage > 0 ? Math.ceil(total / perPage) : 1;
 
   return (
     <>
