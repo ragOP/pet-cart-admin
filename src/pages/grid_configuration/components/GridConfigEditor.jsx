@@ -42,6 +42,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
         pendingGridConfig,
         gridItems,
         bannerImage,
+        bannerImageMobile,
         backgroundImage,
         activeTab,
         showConfirmDialog,
@@ -67,6 +68,8 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
         handleDatabaseImageSelect,
         handleBannerImageUpload,
         handleBannerImageRemove,
+        handleBannerImageMobileUpload,
+        handleBannerImageMobileRemove,
         handleBackgroundImageUpload,
         handleBackgroundImageRemove,
         handleSave,
@@ -321,6 +324,9 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                         bannerImage={bannerImage}
                         onBannerImageUpload={handleBannerImageUpload}
                         onBannerImageRemove={handleBannerImageRemove}
+                        bannerImageMobile={bannerImageMobile}
+                        onBannerImageMobileUpload={handleBannerImageMobileUpload}
+                        onBannerImageMobileRemove={handleBannerImageMobileRemove}
                         backgroundImage={backgroundImage}
                         onBackgroundImageUpload={handleBackgroundImageUpload}
                         onBackgroundImageRemove={handleBackgroundImageRemove}
@@ -361,6 +367,7 @@ const GridConfigEditor = ({ onBack, editingConfig = null, selectedSection = "hom
                                 gridItems={gridItems}
                                 title={title}
                                 bannerImage={getDisplayUrl(bannerImage)}
+                                bannerImageMobile={getDisplayUrl(bannerImageMobile)}
                                 backgroundImage={getDisplayUrl(backgroundImage)}
                             />
                         </CardContent>

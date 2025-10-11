@@ -45,6 +45,7 @@ export const useGridConfiguration = (
 
   // Banner and background image state (can be File or URL)
   const [bannerImage, setBannerImage] = useState(null);
+  const [bannerImageMobile, setBannerImageMobile] = useState(null);
   const [backgroundImage, setBackgroundImage] = useState(null);
 
   // UI state
@@ -86,6 +87,7 @@ export const useGridConfiguration = (
 
       // For editing, banner and background are already URLs
       setBannerImage(editingConfig.bannerImage || null);
+      setBannerImageMobile(editingConfig.bannerImageMobile || null);
       setBackgroundImage(editingConfig.backgroundImage || null);
 
       // Transform contentItems back to gridItems format
@@ -140,7 +142,7 @@ export const useGridConfiguration = (
     if (gridItems.some((item) => item.image || item.link)) return true;
 
     // Check if banner or background images are set (File or URL)
-    if (bannerImage || backgroundImage) return true;
+    if (bannerImage || bannerImageMobile || backgroundImage) return true;
 
     return false;
   }, [
@@ -150,6 +152,7 @@ export const useGridConfiguration = (
     gridConfig,
     gridItems,
     bannerImage,
+    bannerImageMobile,
     backgroundImage,
     editingConfig,
   ]);
@@ -347,6 +350,16 @@ export const useGridConfiguration = (
     setBannerImage(null);
   }, []);
 
+  const handleBannerImageMobileUpload = useCallback((file) => {
+    if (file) {
+      setBannerImageMobile(file);
+    }
+  }, []);
+
+  const handleBannerImageMobileRemove = useCallback(() => {
+    setBannerImageMobile(null);
+  }, []);
+
   const handleBackgroundImageUpload = useCallback((file) => {
     if (file) {
       setBackgroundImage(file);
@@ -368,6 +381,10 @@ export const useGridConfiguration = (
 
       if (bannerImage) {
         imagesToProcess.push({ type: "banner", value: bannerImage });
+      }
+
+      if (bannerImageMobile) {
+        imagesToProcess.push({ type: "bannerMobile", value: bannerImageMobile });
       }
 
       if (backgroundImage) {
@@ -410,12 +427,15 @@ export const useGridConfiguration = (
       toast.loading("Saving configuration...", { id: loadingToast });
 
       let processedBannerImage = null;
+      let processedBannerImageMobile = null;
       let processedBackgroundImage = null;
       const processedContentItems = [];
 
       imageResults.forEach(({ type, result }) => {
         if (type === "banner") {
           processedBannerImage = result.url;
+        } else if (type === "bannerMobile") {
+          processedBannerImageMobile = result.url;
         } else if (type === "background") {
           processedBackgroundImage = result.url;
         }
@@ -453,6 +473,7 @@ export const useGridConfiguration = (
         },
         contentItems: processedContentItems,
         bannerImage: processedBannerImage,
+        bannerImageMobile: processedBannerImageMobile,
         backgroundImage: processedBackgroundImage,
         isActive: editingConfig?.isActive ?? true,
         position: editingConfig?.position ?? 0,
@@ -473,6 +494,7 @@ export const useGridConfiguration = (
     gridConfig,
     gridItems,
     bannerImage,
+    bannerImageMobile,
     backgroundImage,
     editingConfig,
     saveMutation,
@@ -504,6 +526,7 @@ export const useGridConfiguration = (
     pendingGridConfig,
     gridItems,
     bannerImage,
+    bannerImageMobile,
     backgroundImage,
     activeTab,
     showConfirmDialog,
@@ -530,6 +553,8 @@ export const useGridConfiguration = (
     handleDatabaseImageSelect,
     handleBannerImageUpload,
     handleBannerImageRemove,
+    handleBannerImageMobileUpload,
+    handleBannerImageMobileRemove,
     handleBackgroundImageUpload,
     handleBackgroundImageRemove,
     handleSave,

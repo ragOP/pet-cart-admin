@@ -81,10 +81,10 @@ const PageConfigEditor = ({ pageKey, pageConfig }) => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold capitalize">
+                    <h2 className="text-xl font-bold capitalize">
                         {pageKey.replace(/_/g, ' ')} Page Sections
                     </h2>
                     <p className="text-muted-foreground">

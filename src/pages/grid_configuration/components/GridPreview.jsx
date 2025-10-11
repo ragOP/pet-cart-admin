@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Smartphone, Monitor } from "lucide-react";
 
-const GridPreview = ({ gridConfig, gridItems, title, bannerImage, backgroundImage }) => {
+const GridPreview = ({ gridConfig, gridItems, title, bannerImage, bannerImageMobile, backgroundImage }) => {
     // Helper function to get display URL
     const getDisplayUrl = (imageValue) => {
         if (!imageValue) return null;
@@ -141,11 +141,11 @@ const GridPreview = ({ gridConfig, gridItems, title, bannerImage, backgroundImag
                 <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="max-w-sm mx-auto">
                         {/* Mobile Banner Image Display */}
-                        {bannerImage && (
+                        {(bannerImageMobile || bannerImage) && (
                             <div className="mb-3">
                                 <img
-                                    src={getDisplayUrl(bannerImage)}
-                                    alt="Banner"
+                                    src={getDisplayUrl(bannerImageMobile || bannerImage)}
+                                    alt="Mobile Banner"
                                     className="w-full object-cover rounded-lg"
                                 />
                             </div>

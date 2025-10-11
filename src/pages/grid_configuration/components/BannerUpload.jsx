@@ -7,17 +7,28 @@ const BannerUpload = ({
   bannerImage, 
   onBannerImageUpload, 
   onBannerImageRemove,
+  bannerImageMobile,
+  onBannerImageMobileUpload,
+  onBannerImageMobileRemove,
   backgroundImage,
   onBackgroundImageUpload,
   onBackgroundImageRemove
 }) => {
   const bannerFileInputRef = useRef(null);
+  const bannerMobileFileInputRef = useRef(null);
   const backgroundFileInputRef = useRef(null);
 
   const handleBannerFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       onBannerImageUpload(file);
+    }
+  };
+
+  const handleBannerMobileFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      onBannerImageMobileUpload(file);
     }
   };
 
@@ -48,7 +59,7 @@ const BannerUpload = ({
         <div className="space-y-6">
           {/* Banner Image Upload */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium">Banner Image (Optional)</h4>
+            <h4 className="text-sm font-medium">Banner Image (Desktop) (Optional)</h4>
             <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
               {bannerImage ? (
                 <div className="relative">
@@ -89,6 +100,54 @@ const BannerUpload = ({
                 type="file"
                 accept="image/*"
                 onChange={handleBannerFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          {/* Banner Image Mobile Upload */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Banner Image (Mobile) (Optional)</h4>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+              {bannerImageMobile ? (
+                <div className="relative">
+                  <img
+                    src={getDisplayUrl(bannerImageMobile)}
+                    alt="Mobile Banner preview"
+                    className="w-full object-cover rounded-lg"
+                  />
+                  <Button
+                    onClick={onBannerImageMobileRemove}
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="mt-2">
+                    <Button
+                      onClick={() => bannerMobileFileInputRef.current?.click()}
+                      variant="outline"
+                      className="cursor-pointer"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Mobile Banner Image
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    PNG, JPG, GIF up to 10MB
+                  </p>
+                </div>
+              )}
+              <input
+                ref={bannerMobileFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBannerMobileFileSelect}
                 className="hidden"
               />
             </div>

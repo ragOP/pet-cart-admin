@@ -76,7 +76,7 @@ const PageConfiguration = () => {
                 breadcrumbs={breadcrumbs}
             />
             
-            <div className="px-8 py-4">
+            <div className="px-8">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
                         {pageConfigs.map((config) => {
@@ -95,7 +95,7 @@ const PageConfiguration = () => {
                     </TabsList>
                     
                     {pageConfigs.map((config) => (
-                        <TabsContent key={config._id} value={config.pageKey} className="mt-6">
+                        <TabsContent key={config._id} value={config.pageKey} className="mt-2">
                             <PageConfigEditor 
                                 pageKey={config.pageKey}
                                 pageConfig={config}
