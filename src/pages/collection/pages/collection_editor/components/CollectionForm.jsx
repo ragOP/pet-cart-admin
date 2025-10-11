@@ -90,7 +90,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     queryKey: ["all_products"],
     queryFn: () => fetchProducts({ params: { per_page: 100 } }),
   });
-  const categories = categoryListRes?.data.categories || [];
+  const categories = categoryListRes?.data?.categories || [];
   console.log(categories, "categories");
 
   const products = productListRes?.data || [];

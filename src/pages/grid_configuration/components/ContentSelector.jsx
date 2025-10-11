@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,32 +16,78 @@ import {
   Folder,
   Layers,
   Tag,
-  ArrowUp,
   AlertCircle,
   BadgeCheck,
+  Loader2,
 } from "lucide-react";
-import { useContentData } from "../hooks/useContentData";
+import { useInfiniteContentData } from "../hooks/useInfiniteContentData";
 import { generateLink } from "@/utils/link_builder";
 
 const ContentSelector = ({ contentType, onSelect, currentItem }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const scrollContainerRef = useRef(null);
 
-  // Use TanStack Query for data fetching with search and pagination
-  const { data: response, isLoading: loading } = useContentData(contentType, {
-    limit: 50, // Show 50 items per page
-    page: 1,
-    search: searchTerm || undefined, // Add search parameter to API call
-  });
+  // Debounce search term to reduce API calls
+  useEffect(() => {
+    // If search is cleared, update immediately without debounce
+    if (searchTerm === "") {
+      setDebouncedSearchTerm("");
+      return;
+    }
 
-  // Extract data from API response
-  let contentData = response?.data?.data || response?.data || [];
-  if (contentType === "category")
-    contentData = response?.data?.data?.categories || [];
-  const totalCount =
-    response?.data?.total || response?.data?.length || contentData.length;
-  const limit = response?.data?.limit || 50;
+    // Otherwise, debounce the search
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Use TanStack Infinite Query for automatic pagination
+  const trimmedSearch = debouncedSearchTerm.trim();
+  
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteContentData(contentType, trimmedSearch);
+
+  // Flatten all pages into a single array
+  const allItems = useMemo(() => {
+    if (!data?.pages) return [];
+    
+    return data.pages.flatMap(page => {
+      if (contentType === "category") {
+        return page?.data?.data?.categories || [];
+      }
+      return page?.data?.data || page?.data || [];
+    });
+  }, [data, contentType]);
+
+  // Get total count from first page
+  const totalCount = useMemo(() => {
+    const firstPage = data?.pages?.[0];
+    if (!firstPage) return 0;
+    
+    // For categories, total is nested in data.data.total
+    if (contentType === "category") {
+      return firstPage?.data?.data?.total || 0;
+    }
+    
+    // For other types, total is in data.total
+    return firstPage?.data?.total || firstPage?.data?.length || 0;
+  }, [data, contentType]);
+
+  // Reset when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setSearchTerm("");
+    }
+  }, [isOpen]);
 
   // Content type configuration mapper
   const contentTypeConfig = {
@@ -108,11 +154,24 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
     return contentTypeConfig[type]?.getImageUrl(item);
   };
 
-  // Calculate display information - always show API results
-  const showingCount = Math.min(contentData.length, limit);
+  // Calculate display information - use accumulated items
+  const showingCount = allItems.length;
   const totalDisplayCount = totalCount;
-  const hasNoSearchResults = searchTerm && contentData.length === 0;
-  const hasNoData = !searchTerm && contentData.length === 0;
+  const hasNoSearchResults = trimmedSearch && allItems.length === 0 && !isLoading;
+  const hasNoData = !trimmedSearch && allItems.length === 0 && !isLoading;
+
+  // Handle scroll to load more
+  const handleScroll = (e) => {
+    if (!hasNextPage || isFetchingNextPage) return;
+
+    const container = e.target;
+    const scrollThreshold = 200; // Load more when 200px from bottom
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    if (distanceFromBottom < scrollThreshold) {
+      fetchNextPage();
+    }
+  };
 
   const buildContentLink = (type, item) => {
     const normalizedType = type === "subCategory" ? "subcategory" : type;
@@ -155,7 +214,7 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
   const renderNoResultsMessage = () => {
     if (hasNoSearchResults) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] max-h-[80vh] py-12">
+        <div className="flex flex-col items-center justify-center min-h-[400px] py-12">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
             <Search className="w-12 h-12 text-gray-400" />
           </div>
@@ -183,7 +242,7 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
 
     if (hasNoData) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] max-h-[80vh] py-12">
+        <div className="flex flex-col items-center justify-center min-h-[400px] py-12">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
             <AlertCircle className="w-12 h-12 text-gray-400" />
           </div>
@@ -231,15 +290,17 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            Select {contentTypeConfig[contentType]?.singular || contentType}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0">
+        <div className="px-6 pt-4 pb-3 border-b">
+          <DialogHeader>
+            <DialogTitle>
+              Select {contentTypeConfig[contentType]?.singular || contentType}
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
         {/* Fixed Header Section - No Scroll */}
-        <div className="space-y-4">
+        <div className="px-6 py-3 space-y-3 border-b">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -249,21 +310,25 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
-            {/* Search Results Counter */}
+            {/* Search Status Indicator */}
             {searchTerm && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <span className="text-xs text-gray-400">
-                  {contentData.length} results
-                </span>
+                {searchTerm !== debouncedSearchTerm ? (
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Typing...
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">
+                    {allItems.length} results
+                  </span>
+                )}
               </div>
             )}
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-200"></div>
-
           {/* Results Summary - Always show when there are products */}
-          {contentData.length > 0 && (
+          {allItems.length > 0 && !isLoading && (
             <div className="text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <span>📊</span>
@@ -278,10 +343,14 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
         </div>
 
         {/* Scrollable Content Section */}
-        <div className="flex-1 overflow-hidden">
-          {/* Loading State */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-full py-12">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-6 py-4"
+          onScroll={handleScroll}
+        >
+          {/* Initial Loading State */}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px] py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
@@ -293,16 +362,10 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
           ) : (
             <>
               {/* Content List */}
-              {contentData.length > 0 ? (
-                <div
-                  className="h-full overflow-y-auto"
-                  onScroll={(e) => {
-                    const { scrollTop } = e.target;
-                    setShowScrollTop(scrollTop > 100);
-                  }}
-                >
-                  <div className="space-y-2">
-                    {contentData.map((item) => (
+              {allItems.length > 0 ? (
+                <>
+                  <div className="space-y-2 pb-4">
+                    {allItems.map((item) => (
                       <div
                         key={item._id}
                         className="border rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
@@ -372,27 +435,25 @@ const ContentSelector = ({ contentType, onSelect, currentItem }) => {
                     ))}
                   </div>
 
-                  {/* Scroll to Top Button */}
-                  {showScrollTop && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="fixed bottom-6 right-6 z-50 shadow-lg"
-                      onClick={() => {
-                        const scrollContainer =
-                          document.querySelector(".min-h-\\[40vh\\]");
-                        if (scrollContainer) {
-                          scrollContainer.scrollTo({
-                            top: 0,
-                            behavior: "smooth",
-                          });
-                        }
-                      }}
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </Button>
+                  {/* Loading More Indicator */}
+                  {isFetchingNextPage && (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-gray-500">Loading more...</span>
+                    </div>
                   )}
-                </div>
+
+                  {/* End of Results Message */}
+                  {!hasNextPage && allItems.length > 0 && totalDisplayCount > 0 && (
+                    <div className="text-center py-4 text-sm text-gray-500">
+                      {allItems.length === totalDisplayCount ? (
+                        <>All {totalDisplayCount} {contentTypeConfig[contentType]?.plural || contentType} loaded</>
+                      ) : (
+                        <>Showing {allItems.length} of {totalDisplayCount} {contentTypeConfig[contentType]?.plural || contentType}</>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 renderNoResultsMessage()
               )}
