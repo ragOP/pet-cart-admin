@@ -27,7 +27,6 @@ import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategor
 import MultiSelectProducts from "./MultiProductSelect";
 import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
-import { fi } from "zod/v4/locales";
 
 const CollectionFormSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -64,6 +63,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   const [imageFile, setImageFile] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
   const [categoryId, setCategoryId] = useState("");
+  const [subCategoryId, setSubCategoryId] = useState("");
 
   const form = useForm({
     resolver: zodResolver(CollectionFormSchema),
@@ -86,12 +86,19 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     queryFn: () => fetchSubCategories({ params: { per_page: 100 } }),
   });
 
+  console.log(subCategoryListRes, "subCategoryListRes");
+
   const { data: productListRes } = useQuery({
-    queryKey: ["all_products"],
-    queryFn: () => fetchProducts({ params: { per_page: 100 } }),
+    queryKey: ["all_products", subCategoryId],
+    queryFn: () => fetchProducts({
+      params: {
+        per_page: 100,
+        ...(subCategoryId && { subCategorySlug: subCategoryListRes?.data?.find(sub => sub._id?.toString() === subCategoryId?.toString())?.slug })
+      }
+    }),
+    enabled: !!subCategoryId, // Only fetch when subcategory is selected
   });
   const categories = categoryListRes?.data?.categories || [];
-  console.log(categories, "categories");
 
   const products = productListRes?.data || [];
 
@@ -112,15 +119,17 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   }, [categoryId, subCategories, isEdit, initialData?.subCategoryId]);
   console.log(filteredSubCategories, "filtered subCategories");
 
-  // Initial category derivation when subcategories are loaded
+  // Initial category and subcategory derivation when subcategories are loaded
   useEffect(() => {
     if (isEdit && initialData?.subCategoryId && subCategories.length > 0 && !categoryId) {
       const selectedSubCategory = subCategories.find(sub => sub._id === initialData.subCategoryId);
       if (selectedSubCategory) {
         const derivedCategoryId = selectedSubCategory.categoryId;
         setCategoryId(derivedCategoryId);
+        setSubCategoryId(initialData.subCategoryId);
         form.setValue("categoryId", derivedCategoryId);
         console.log("Initial category derivation:", derivedCategoryId);
+        console.log("Initial subcategory set:", initialData.subCategoryId);
       }
     }
   }, [isEdit, initialData?.subCategoryId, subCategories, categoryId, form]);
@@ -132,7 +141,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       // Handle both productsIds and productIds for API consistency
       const productIds = initialData.productsIds || initialData.productIds || [];
       console.log("Product IDs to set:", productIds);
-      
+
       // Derive categoryId from subcategory since it's not provided by backend
       let derivedCategoryId = "";
       if (initialData.subCategoryId) {
@@ -142,7 +151,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
           console.log("Derived category ID from subcategory:", derivedCategoryId);
         }
       }
-      
+
       form.reset({
         name: initialData.name || "",
         description: initialData.description || "",
@@ -179,7 +188,7 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       // Ensure productsIds is always an array and handle single/multiple products
       const productIds = Array.isArray(formData.productsIds) ? formData.productsIds : [];
       console.log("Product IDs to send:", productIds);
-      
+
       // Send product IDs using array notation (like other forms in the codebase)
       if (productIds.length > 0) {
         productIds.forEach((id) => {
@@ -290,6 +299,12 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
                 <select
                   {...field}
                   className="w-full border rounded px-3 py-2 text-sm text-gray-700"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setSubCategoryId(e.target.value);
+                    // Reset selected products when subcategory changes
+                    form.setValue("productsIds", []);
+                  }}
                 >
                   <option value="">Select a subcategory</option>
                   {filteredSubCategories.map((sub) => (
@@ -311,14 +326,22 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
             <FormItem>
               <FormLabel>Products</FormLabel>
               <FormControl>
-                <MultiSelectProducts
-                  products={products}
-                  value={Array.isArray(field.value) ? field.value : []}
-                  onChange={(selectedIds) => {
-                    // Ensure we always pass an array, even for single selection
-                    field.onChange(Array.isArray(selectedIds) ? selectedIds : [selectedIds].filter(Boolean));
-                  }}
-                />
+                <div>
+                  {!subCategoryId ? (
+                    <div className="w-full border rounded px-3 py-2 text-sm text-gray-500 bg-gray-50">
+                      Please select a subcategory first to load products
+                    </div>
+                  ) : (
+                    <MultiSelectProducts
+                      products={products}
+                      value={Array.isArray(field.value) ? field.value : []}
+                      onChange={(selectedIds) => {
+                        // Ensure we always pass an array, even for single selection
+                        field.onChange(Array.isArray(selectedIds) ? selectedIds : [selectedIds].filter(Boolean));
+                      }}
+                    />
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -378,8 +401,8 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
           {mutation.isPending
             ? "Processing..."
             : isEdit
-            ? "Update Collection"
-            : "Create Collection"}
+              ? "Update Collection"
+              : "Create Collection"}
         </Button>
       </form>
     </Form>
