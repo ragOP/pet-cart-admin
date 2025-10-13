@@ -104,7 +104,7 @@ const ProductFormSchema = z.object({
   productLabel: z.string().optional(),
   images: imageArrayValidator,
   commonImages: imageArrayValidator,
-  variants: z.array(VariantSchema).min(1, "At least one variant is required"),
+  variants: z.array(VariantSchema).optional().default([]),
 });
 
 const ProductForm = ({ isEdit = false, initialData }) => {
@@ -147,18 +147,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         weight: 0,
         images: [],
         commonImages: [],
-        variants: [
-          {
-            sku: "",
-            variantName: "",
-            price: 0,
-            salePrice: 0,
-            stock: 0,
-            weight: 0,
-            isActive: true,
-            attributes: {},
-          },
-        ],
+        variants: [],
       };
     }
 
@@ -191,18 +180,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
               ...variant,
               images: [],
             }))
-          : [
-              {
-                sku: "",
-                variantName: "",
-                price: 0,
-                salePrice: 0,
-                stock: 0,
-                weight: 0,
-                isActive: true,
-                attributes: {},
-              },
-            ],
+          : [],
     };
   };
 
@@ -815,35 +793,39 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         }
       });
 
-      // Add variant data & variant image map
-      const variantImageMapArray = [];
+      // Add variant data & variant image map only if variants exist
+      if (Array.isArray(data.variants) && data.variants.length > 0) {
+        const variantImageMapArray = [];
 
-      data.variants.forEach((variant, i) => {
-        const { images: _images, ...rest } = variant;
+        data.variants.forEach((variant, i) => {
+          const { images: _images, ...rest } = variant;
 
-        // Convert variant weight to grams before adding to payload
-        const variantWeightInGrams = convertWeightToGrams(
-          variant.weight || 0,
-          variantWeightUnits[i] || "grams"
-        );
-        const variantWithConvertedWeight = {
-          ...rest,
-          weight: variantWeightInGrams,
-        };
+          // Convert variant weight to grams before adding to payload
+          const variantWeightInGrams = convertWeightToGrams(
+            variant.weight || 0,
+            variantWeightUnits[i] || "grams"
+          );
+          const variantWithConvertedWeight = {
+            ...rest,
+            weight: variantWeightInGrams,
+          };
 
-        payload.append(
-          "variants[]",
-          JSON.stringify(variantWithConvertedWeight)
-        );
+          payload.append(
+            "variants[]",
+            JSON.stringify(variantWithConvertedWeight)
+          );
 
-        const files = variantImageMap.current?.[i] || [];
-        files.forEach((file) => {
-          payload.append("variantImages", file);
-          variantImageMapArray.push({ index: i, name: file.name });
+          const files = variantImageMap.current?.[i] || [];
+          files.forEach((file) => {
+            payload.append("variantImages", file);
+            variantImageMapArray.push({ index: i, name: file.name });
+          });
         });
-      });
 
-      payload.append("variantImageMap", JSON.stringify(variantImageMapArray));
+        if (variantImageMapArray.length > 0) {
+          payload.append("variantImageMap", JSON.stringify(variantImageMapArray));
+        }
+      }
 
       if (isEdit) {
         return await updateProduct({ id: initialData._id, payload });
@@ -905,7 +887,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   const removeImage = (index) => {
     const newFiles = [...imageFiles];
-    const removedFile = newFiles.splice(index, 1);
+    newFiles.splice(index, 1);
     setImageFiles(newFiles);
     form.setValue("images", newFiles);
   };
@@ -916,7 +898,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
     
     // Remove the specific image
     const newFiles = [...currentVariantImages];
-    const removedFile = newFiles.splice(imageIndex, 1);
+    newFiles.splice(imageIndex, 1);
     
     // Update the variant image map
     variantImageMap.current[variantIndex] = newFiles;
@@ -927,7 +909,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
 
   const removeCommonImage = (index) => {
     const newFiles = [...commonImagefiles];
-    const removedFile = newFiles.splice(index, 1);
+    newFiles.splice(index, 1);
     setCommonImagefiles(newFiles);
     form.setValue("commonImages", newFiles);
   };
