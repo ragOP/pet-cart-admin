@@ -41,6 +41,8 @@ const ProductsTable = ({ setProductLength, params, setParams }) => {
     ? productsRes
     : [];
 
+    console.log(">>",productsRes, products)
+
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 

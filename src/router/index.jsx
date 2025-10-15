@@ -80,6 +80,12 @@ const CouponEditor = lazy(() => import("@/pages/coupons/pages/coupon_editor"));
 const Orders = lazy(() => import("@/pages/orders"));
 const OrderEditor = lazy(() => import("@/pages/orders/pages/order_editor"));
 
+const AbandonedOrders = lazy(() => import("@/pages/abandoned_orders"));
+const AbandonedOrderDetail = lazy(() => import("@/pages/abandoned_orders/pages/abandoned_order_detail"));
+
+const ReminderHistory = lazy(() => import("@/pages/reminder_history"));
+const ReminderHistoryDetail = lazy(() => import("@/pages/reminder_history/pages/reminder_history_detail"));
+
 const Blog = lazy(() => import("@/pages/blog"));
 const BlogEditor = lazy(() => import("@/pages/blog/pages/blog_editor"));
 
@@ -775,6 +781,64 @@ const Router = () => {
                 }
               >
                 <OrderEditor />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="abandoned-orders"
+            element={
+              <Suspense
+                fallback={
+                  <div className="w-full h-screen flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <AbandonedOrders />
+              </Suspense>
+            }
+          />
+          <Route
+            path="abandoned-orders/:id"
+            element={
+              <Suspense
+                fallback={
+                  <div className="w-full h-screen flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <AbandonedOrderDetail />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="reminder-history"
+            element={
+              <Suspense
+                fallback={
+                  <div className="w-full h-screen flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <ReminderHistory />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reminder-history/:id"
+            element={
+              <Suspense
+                fallback={
+                  <div className="w-full h-screen flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <ReminderHistoryDetail />
               </Suspense>
             }
           />

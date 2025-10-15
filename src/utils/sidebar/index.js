@@ -121,6 +121,14 @@ import {
         items: [],
         roles: ["admin"],
       },
+      {
+        title: "Abandoned Orders",
+        url: "/dashboard/abandoned-orders",
+        icon: PackageOpen,
+        isActive: true,
+        items: [],
+        roles: ["admin"],
+      },
     ],
     more: [
       {

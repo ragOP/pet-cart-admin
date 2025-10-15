@@ -7,6 +7,7 @@ import Typography from "@/components/typography";
 import { useEffect } from "react";
 import { fetchOrders } from "../helpers/fetchOrders";
 import { useNavigate } from "react-router";
+import { formatPrice } from "@/utils/format_price";
 
 const OrdersTable = ({ setOrdersLength, params, setParams }) => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const OrdersTable = ({ setOrdersLength, params, setParams }) => {
       key: "totalAmount",
       label: "Total Amount",
       render: (value, row) => (
-        <Typography className="font-medium text-sm">₹{row.totalAmount.toFixed(2)}</Typography>
+        <Typography className="font-medium text-sm">{formatPrice(row.totalAmount)}</Typography>
       ),
     },
     {

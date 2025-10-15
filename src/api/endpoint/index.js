@@ -24,6 +24,8 @@ export const endpoints = {
   hsn_codes: "api/hsn-code",
   coupons: "api/coupon",
   orders: "api/orders",
+  abandoned_carts: "api/cart/abandoned",
+  reminder_history: "api/reminder-history",
   blog: "api/blog",
   shiprocket: "api/shiprocket",
   homeConfigGetAll: "api/home-config/get-all-grid",
