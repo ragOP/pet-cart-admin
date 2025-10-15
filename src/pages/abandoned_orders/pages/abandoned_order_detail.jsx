@@ -11,8 +11,8 @@ import { formatPrice } from "@/utils/format_price";
 import { toast } from "sonner";
 import { bulkSendReminders } from "../helpers/bulkSendReminders";
 import { useState } from "react";
-import CustomSpinner from "@/components/loaders/CustomSpinner";
 import SendReminderDialog from "@/components/send_reminder_dialog";
+import { CustomSpinner } from "@/components/loaders/CustomSpinner";
 
 const AbandonedOrderDetail = () => {
   const { id } = useParams();
