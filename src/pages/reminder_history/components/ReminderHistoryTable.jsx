@@ -4,7 +4,7 @@ import Typography from "@/components/typography";
 import { useEffect } from "react";
 import { fetchReminderHistory } from "../helpers/fetchReminderHistory";
 import { useNavigate } from "react-router-dom";
-import { Eye, Mail, MessageSquare, CheckCircle, XCircle } from "lucide-react";
+import { Eye, Mail, MessageSquare, CheckCircle, XCircle, Bell } from "lucide-react";
 import { formatDateWithAgo } from "@/utils/format_date";
 import { Button } from "@/components/ui/button";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
@@ -13,6 +13,9 @@ const CHANNEL_ICONS = {
   email: Mail,
   sms: MessageSquare,
   whatsapp: WhatsAppIcon,
+  push_notification: Bell,
+  android: Bell,
+  ios: Bell,
 };
 
 const ReminderHistoryTable = ({ setHistoryLength, params, setParams }) => {
@@ -49,32 +52,35 @@ const ReminderHistoryTable = ({ setHistoryLength, params, setParams }) => {
       ),
     },
     {
-      key: "channel",
+      key: "type",
       label: "Channel",
       render: (value, row) => {
-        const Icon = CHANNEL_ICONS[row.channel] || Mail;
+        const Icon = CHANNEL_ICONS[row.type] || Mail;
         const channelConfig = {
           email: { color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
           sms: { color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/20" },
           whatsapp: { color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+          push_notification: { color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20" },
+          android: { color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/20" },
+          ios: { color: "text-gray-600", bg: "bg-gray-50 dark:bg-gray-900/20" },
         };
-        const config = channelConfig[row.channel] || channelConfig.email;
+        const config = channelConfig[row.type] || channelConfig.email;
         
         return (
           <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded ${config.bg}`}>
             <Icon className={`w-3.5 h-3.5 ${config.color}`} />
-            <span className={`text-xs font-medium capitalize ${config.color}`}>{row.channel}</span>
+            <span className={`text-xs font-medium capitalize ${config.color}`}>{row.type}</span>
           </div>
         );
       },
     },
     {
-      key: "template",
+      key: "name",
       label: "Campaign",
       render: (value, row) => (
         <div className="max-w-xs">
           <Typography className="text-sm font-medium truncate">
-            {row.templateName || "N/A"}
+            {row.name || "N/A"}
           </Typography>
           {row.subject && (
             <Typography className="text-xs text-gray-500 truncate">
@@ -88,10 +94,10 @@ const ReminderHistoryTable = ({ setHistoryLength, params, setParams }) => {
       key: "stats",
       label: "Delivery Stats",
       render: (value, row) => {
-        const total = row.totalRecipients || 0;
+        const total = row.totalCount || 0;
         const successful = row.successCount || 0;
-        const failed = row.failedCount || 0;
-        const rate = total > 0 ? ((successful / total) * 100).toFixed(0) : 0;
+        const failed = row.failureCount || 0;
+        const rate = row.successRate || (total > 0 ? ((successful / total) * 100).toFixed(0) : 0);
         
         return (
           <div className="space-y-1">
@@ -125,11 +131,11 @@ const ReminderHistoryTable = ({ setHistoryLength, params, setParams }) => {
       },
     },
     {
-      key: "sentBy",
+      key: "startedBy",
       label: "Sent By",
       render: (value, row) => (
         <Typography className="text-xs text-gray-600 dark:text-gray-400">
-          {row.sentBy?.name || "Admin"}
+          {row.startedBy || "Admin"}
         </Typography>
       ),
     },

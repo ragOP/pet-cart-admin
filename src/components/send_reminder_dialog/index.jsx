@@ -9,17 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import Typography from "@/components/typography";
 import { 
   Mail, 
-  MessageSquare, 
+  Bell, 
   Check, 
   ArrowLeft,
   ArrowRight,
   Send,
   User,
   ShoppingCart,
-  Calendar
+  Calendar,
+  Smartphone
 } from "lucide-react";
 import { formatPrice } from "@/utils/format_price";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
@@ -35,12 +39,30 @@ const CHANNELS = [
     iconColor: "text-blue-500",
   },
   {
-    id: "sms",
-    name: "SMS",
-    icon: MessageSquare,
-    description: "Send reminder via text message",
-    color: "bg-green-500",
-    iconColor: "text-green-500",
+    id: "push_notification",
+    name: "Push Notification",
+    icon: Bell,
+    description: "Send push notification to mobile devices",
+    color: "bg-purple-500",
+    iconColor: "text-purple-500",
+    subOptions: [
+      {
+        id: "android",
+        name: "Android",
+        icon: Smartphone,
+        description: "Send to Android devices (FCM)",
+        color: "bg-green-500",
+        iconColor: "text-green-500",
+      },
+      {
+        id: "ios",
+        name: "iOS",
+        icon: Smartphone,
+        description: "Send to iOS devices (APN)",
+        color: "bg-gray-500",
+        iconColor: "text-gray-500",
+      },
+    ],
   },
   {
     id: "whatsapp",
@@ -153,28 +175,49 @@ const SendReminderDialog = ({
 }) => {
   const [step, setStep] = useState(1);
   const [selectedChannel, setSelectedChannel] = useState(null);
+  const [selectedSubOption, setSelectedSubOption] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationBody, setNotificationBody] = useState("");
 
   const handleClose = () => {
     setStep(1);
     setSelectedChannel(null);
+    setSelectedSubOption(null);
     setSelectedTemplate(null);
+    setNotificationTitle("");
+    setNotificationBody("");
     onClose();
   };
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+    // For push notifications, skip template selection
+    if (selectedChannel?.id === "push_notification") {
+      if (step === 1) setStep(3);
+    } else {
+      if (step < 3) setStep(step + 1);
+    }
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    // For push notifications, go back to step 1 from step 3
+    if (selectedChannel?.id === "push_notification" && step === 3) {
+      setStep(1);
+    } else {
+      if (step > 1) setStep(step - 1);
+    }
   };
 
   const handleSend = async () => {
     if (onSend) {
       await onSend({
         channel: selectedChannel,
+        subOption: selectedSubOption,
         template: selectedTemplate,
+        notificationData: selectedChannel?.id === "push_notification" ? {
+          title: notificationTitle,
+          body: notificationBody,
+        } : undefined,
         customers,
       });
     }
@@ -204,10 +247,10 @@ const SendReminderDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="min-w-[80vw] max-w-[80vw] min-h-[80vh] max-h-[80vh] overflow-hidden p-0">
-        <div className="flex h-full">
+      <DialogContent className="min-w-[80vw] max-w-[80vw] h-[80vh] p-0 flex flex-col">
+        <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar - Vertical Stepper */}
-          <div className="w-48 bg-gray-50 dark:bg-gray-900 p-6 flex flex-col border-r">
+          <div className="w-48 bg-gray-50 dark:bg-gray-900 p-6 flex flex-col border-r flex-shrink-0">
             <div className="mb-6">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <Send className="w-3.5 h-3.5" />
@@ -262,14 +305,14 @@ const SendReminderDialog = ({
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-6 pb-4 border-b">
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="p-6 pb-4 border-b flex-shrink-0">
               <DialogDescription>
                 Follow the steps to send a personalized reminder to your customers
               </DialogDescription>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Step 1: Select Channel */}
           {step === 1 && (
             <div className="space-y-4">
@@ -288,7 +331,13 @@ const SendReminderDialog = ({
                   return (
                     <div
                       key={channel.id}
-                      onClick={() => setSelectedChannel(channel)}
+                      onClick={() => {
+                        setSelectedChannel(channel);
+                        // Reset sub-option when channel changes
+                        if (channel.id !== "push_notification") {
+                          setSelectedSubOption(null);
+                        }
+                      }}
                       className={`relative p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
                         isSelected 
                           ? 'border-primary bg-primary/5' 
@@ -315,6 +364,58 @@ const SendReminderDialog = ({
                   );
                 })}
               </div>
+
+              {/* Show sub-options for Push Notification */}
+              {selectedChannel?.id === "push_notification" && selectedChannel?.subOptions && (
+                <div className="mt-6 space-y-3">
+                  <div>
+                    <Typography variant="h4" className="mb-2">Select Platform</Typography>
+                    <Typography className="text-sm text-gray-600">
+                      Choose which platform to send push notifications to
+                    </Typography>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedChannel.subOptions.map((subOption) => {
+                      const SubIcon = subOption.icon;
+                      const isSubSelected = selectedSubOption?.id === subOption.id;
+                      
+                      return (
+                        <div
+                          key={subOption.id}
+                          onClick={() => setSelectedSubOption(subOption)}
+                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                            isSubSelected 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {isSubSelected && (
+                            <div className="absolute top-2 right-2">
+                              <Check className="w-4 h-4 text-primary" />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full bg-opacity-10 flex items-center justify-center ${subOption.color.replace('bg-', 'bg-').concat('/10')}`}>
+                              <SubIcon className={`w-5 h-5 ${subOption.iconColor}`} />
+                            </div>
+                            
+                            <div>
+                              <Typography className="font-semibold">
+                                {subOption.name}
+                              </Typography>
+                              <Typography className="text-xs text-gray-600">
+                                {subOption.description}
+                              </Typography>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -369,13 +470,17 @@ const SendReminderDialog = ({
             </div>
           )}
 
-          {/* Step 3: Preview */}
-          {step === 3 && selectedChannel && selectedTemplate && (
+          {/* Step 3: Preview / Input */}
+          {step === 3 && selectedChannel && (
             <div className="space-y-4">
               <div>
-                <Typography variant="h4" className="mb-2">Preview & Send</Typography>
+                <Typography variant="h4" className="mb-2">
+                  {selectedChannel.id === "push_notification" ? "Notification Details" : "Preview & Send"}
+                </Typography>
                 <Typography className="text-sm text-gray-600">
-                  Review your message before sending
+                  {selectedChannel.id === "push_notification" 
+                    ? "Enter the title and description for your push notification" 
+                    : "Review your message before sending"}
                 </Typography>
               </div>
 
@@ -386,7 +491,10 @@ const SendReminderDialog = ({
                     {selectedChannel.icon && <selectedChannel.icon className="w-4 h-4 text-blue-600" />}
                     <Typography className="text-sm font-medium">Channel</Typography>
                   </div>
-                  <Typography className="font-semibold">{selectedChannel.name}</Typography>
+                  <Typography className="font-semibold">
+                    {selectedChannel.name}
+                    {selectedSubOption && ` - ${selectedSubOption.name}`}
+                  </Typography>
                 </div>
 
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -399,60 +507,118 @@ const SendReminderDialog = ({
                   </Typography>
                 </div>
 
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Mail className="w-4 h-4 text-purple-600" />
-                    <Typography className="text-sm font-medium">Template</Typography>
-                  </div>
-                  <Typography className="font-semibold">{selectedTemplate.name}</Typography>
-                </div>
-              </div>
-
-              {/* Message Preview */}
-              <div className="border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
-                <Typography className="text-sm text-gray-500 mb-4">Message Preview</Typography>
-                
-                {selectedTemplate.subject && (
-                  <div className="mb-4">
-                    <Typography className="text-xs text-gray-500 mb-1">Subject:</Typography>
-                    <Typography className="font-semibold">
-                      {renderVariables(selectedTemplate.subject, currentCustomer)}
-                    </Typography>
+                {selectedTemplate && (
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Mail className="w-4 h-4 text-purple-600" />
+                      <Typography className="text-sm font-medium">Template</Typography>
+                    </div>
+                    <Typography className="font-semibold">{selectedTemplate.name}</Typography>
                   </div>
                 )}
-                
-                <div className="bg-white dark:bg-gray-800 p-4 rounded border">
-                  <pre className="whitespace-pre-wrap font-sans text-sm">
-                    {renderVariables(selectedTemplate.body || selectedTemplate.preview, currentCustomer)}
-                  </pre>
-                </div>
+              </div>
 
-                {currentCustomer && (
-                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
-                    <Typography className="text-xs text-gray-600 mb-2">Customer Details:</Typography>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-gray-500">Name:</span> {currentCustomer?.userId?.name || 'N/A'}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Email:</span> {currentCustomer?.userId?.email || 'N/A'}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Items:</span> {currentCustomer?.items?.length || 0}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Total:</span> {formatPrice(currentCustomer?.total_price || 0)}
+              {/* Push Notification Input Fields */}
+              {selectedChannel.id === "push_notification" ? (
+                <div className="space-y-4 border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-title">Notification Title *</Label>
+                    <Input
+                      id="notification-title"
+                      placeholder="Enter notification title"
+                      value={notificationTitle}
+                      onChange={(e) => setNotificationTitle(e.target.value)}
+                      className="bg-white dark:bg-gray-800"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-body">Notification Description *</Label>
+                    <Textarea
+                      id="notification-body"
+                      placeholder="Enter notification description"
+                      value={notificationBody}
+                      onChange={(e) => setNotificationBody(e.target.value)}
+                      rows={4}
+                      className="bg-white dark:bg-gray-800"
+                    />
+                  </div>
+
+                  {/* Preview */}
+                  {(notificationTitle || notificationBody) && (
+                    <div className="mt-4">
+                      <Typography className="text-sm text-gray-500 mb-3">Preview:</Typography>
+                      <div className="bg-white dark:bg-gray-800 p-4 rounded border shadow-sm max-w-md">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Bell className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {notificationTitle && (
+                              <Typography className="font-semibold text-sm mb-1">
+                                {notificationTitle}
+                              </Typography>
+                            )}
+                            {notificationBody && (
+                              <Typography className="text-xs text-gray-600 line-clamp-2">
+                                {notificationBody}
+                              </Typography>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
+              ) : (
+                /* Message Preview for other channels */
+                selectedTemplate && (
+                  <div className="border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
+                    <Typography className="text-sm text-gray-500 mb-4">Message Preview</Typography>
+                    
+                    {selectedTemplate.subject && (
+                      <div className="mb-4">
+                        <Typography className="text-xs text-gray-500 mb-1">Subject:</Typography>
+                        <Typography className="font-semibold">
+                          {renderVariables(selectedTemplate.subject, currentCustomer)}
+                        </Typography>
+                      </div>
+                    )}
+                    
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {renderVariables(selectedTemplate.body || selectedTemplate.preview, currentCustomer)}
+                      </pre>
+                    </div>
+
+                    {currentCustomer && (
+                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <Typography className="text-xs text-gray-600 mb-2">Customer Details:</Typography>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-500">Name:</span> {currentCustomer?.userId?.name || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Email:</span> {currentCustomer?.userId?.email || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Items:</span> {currentCustomer?.items?.length || 0}
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Total:</span> {formatPrice(currentCustomer?.total_price || 0)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                )
+              )}
             </div>
           )}
             </div>
 
             {/* Footer */}
-            <DialogFooter className="flex justify-between items-center p-6 border-t">
+            <DialogFooter className="flex justify-between items-center p-6 border-t flex-shrink-0">
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={handleBack}>
@@ -472,6 +638,7 @@ const SendReminderDialog = ({
                 onClick={handleNext}
                 disabled={
                   (step === 1 && !selectedChannel) ||
+                  (step === 1 && selectedChannel?.id === "push_notification" && !selectedSubOption) ||
                   (step === 2 && !selectedTemplate)
                 }
               >
@@ -481,7 +648,11 @@ const SendReminderDialog = ({
             ) : (
               <Button 
                 onClick={handleSend}
-                disabled={isSending}
+                disabled={
+                  isSending || 
+                  (selectedChannel?.id === "push_notification" && (!notificationTitle || !notificationBody)) ||
+                  (selectedChannel?.id !== "push_notification" && !selectedTemplate)
+                }
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Send className="w-4 h-4 mr-2" />

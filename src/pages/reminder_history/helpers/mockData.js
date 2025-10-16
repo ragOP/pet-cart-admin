@@ -1,5 +1,5 @@
 // Toggle this flag to switch between mock data and real API
-export const IS_TESTING = true;
+export const IS_TESTING = false;
 
 // Mock data for reminder history list
 export const MOCK_REMINDER_HISTORY = [

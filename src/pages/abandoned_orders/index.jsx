@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import AbandonedOrdersTable from "./components/AbandonedOrdersTable";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Button } from "@/components/ui/button";
-import { Mail, History } from "lucide-react";
+import { Mail, History, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { bulkSendReminders } from "./helpers/bulkSendReminders";
 import SendReminderDialog from "@/components/send_reminder_dialog";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AbandonedOrders = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const paramInitialState = {
     page: 1,
     per_page: 25,
@@ -23,6 +25,7 @@ const AbandonedOrders = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const debouncedSearch = useDebounce(searchText, 500);
 
@@ -52,11 +55,24 @@ const AbandonedOrders = () => {
       await bulkSendReminders({ 
         cartIds,
         channel: data.channel.id,
-        template: data.template.id,
+        template: data.template?.id,
+        notificationData: data.notificationData,
+        subOption: data.subOption?.id,
+        customers: selectedRows, // Pass the full customer data
       });
-      toast.success(`${data.channel.name} reminders sent to ${selectedRows.length} customers`);
+      
+      let successMessage = `${data.channel.name}`;
+      if (data.subOption) {
+        successMessage += ` (${data.subOption.name})`;
+      }
+      successMessage += ` reminders sent to ${selectedRows.length} customers`;
+      
+      toast.success(successMessage);
       setSelectedRows([]);
       setReminderDialogOpen(false);
+      
+      // Navigate to reminder history after successful send
+      navigate("/dashboard/reminder-history");
     } catch (error) {
       toast.error("Failed to send reminders");
       console.error(error);
@@ -69,6 +85,19 @@ const AbandonedOrders = () => {
 
   const handleViewHistory = () => {
     navigate("/dashboard/reminder-history");
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries(["abandoned_orders"]);
+      toast.success("Data refreshed successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to refresh data");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -86,14 +115,25 @@ const AbandonedOrders = () => {
         title="Abandoned Orders" 
         breadcrumbs={breadcrumbs}
         customBox={
-          <Button 
-            variant="outline" 
-            onClick={handleViewHistory}
-            className="flex items-center gap-2"
-          >
-            <History className="w-4 h-4" />
-            View History
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleViewHistory}
+              className="flex items-center gap-2"
+            >
+              <History className="w-4 h-4" />
+              View History
+            </Button>
+          </div>
         }
       />
 

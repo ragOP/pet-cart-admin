@@ -1,26 +1,32 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Mail, MessageSquare, CheckCircle, XCircle, Clock, User, Calendar, TrendingUp, CheckCheck } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Mail, MessageSquare, CheckCircle, XCircle, Clock, User, Calendar, TrendingUp, CheckCheck, RefreshCw, Bell } from "lucide-react";
 import NavbarItem from "@/components/navbar/navbar_items";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Typography from "@/components/typography";
 import { fetchReminderHistoryById } from "../helpers/fetchReminderHistoryById";
-import { formatPrice } from "@/utils/format_price";
 import { formatStandardDate } from "@/utils/format_date";
 import { Badge } from "@/components/ui/badge";
 import { CustomSpinner } from "@/components/loaders/CustomSpinner";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import { toast } from "sonner";
 
 const CHANNEL_ICONS = {
   email: Mail,
   sms: MessageSquare,
   whatsapp: WhatsAppIcon,
+  push_notification: Bell,
+  android: Bell,
+  ios: Bell,
 };
 
 const ReminderHistoryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: historyDetail, isLoading, error } = useQuery({
     queryKey: ["ReminderHistoryDetail", id],
@@ -29,6 +35,19 @@ const ReminderHistoryDetail = () => {
 
   const handleBack = () => {
     navigate("/dashboard/reminder-history");
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries(["ReminderHistoryDetail", id]);
+      toast.success("Campaign data refreshed");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to refresh data");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const breadcrumbs = [
@@ -60,12 +79,12 @@ const ReminderHistoryDetail = () => {
     );
   }
 
-  const ChannelIcon = CHANNEL_ICONS[historyDetail.channel] || Mail;
-  const total = historyDetail.totalRecipients || 0;
+  const ChannelIcon = CHANNEL_ICONS[historyDetail.type] || Mail;
+  const total = historyDetail.totalCount || 0;
   const successful = historyDetail.successCount || 0;
-  const failed = historyDetail.failedCount || 0;
+  const failed = historyDetail.failureCount || 0;
   const pending = historyDetail.pendingCount || 0;
-  const successRate = total > 0 ? ((successful / total) * 100).toFixed(1) : 0;
+  const successRate = historyDetail.successRate || (total > 0 ? ((successful / total) * 100).toFixed(1) : 0);
 
   return (
     <div className="flex flex-col">
@@ -79,6 +98,15 @@ const ReminderHistoryDetail = () => {
             Back to History
           </Button>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
             <Badge className="text-base px-4 py-2">
               Campaign #{historyDetail._id?.slice(-8).toUpperCase()}
             </Badge>
@@ -94,8 +122,8 @@ const ReminderHistoryDetail = () => {
                   <ChannelIcon className="w-4 h-4" />
                   <span className="text-xs font-medium uppercase tracking-wide">Channel</span>
                 </div>
-                <Typography className="text-xl font-bold capitalize">{historyDetail.channel}</Typography>
-                <Typography className="text-xs text-gray-600">{historyDetail.templateName}</Typography>
+                <Typography className="text-xl font-bold capitalize">{historyDetail.type}</Typography>
+                <Typography className="text-xs text-gray-600">{historyDetail.name}</Typography>
               </div>
 
               <div className="space-y-1">
@@ -151,44 +179,46 @@ const ReminderHistoryDetail = () => {
                   {formatStandardDate(historyDetail.createdAt)}
                 </Typography>
                 <Typography className="text-xs text-gray-600">
-                  By {historyDetail.sentBy?.name || "Admin"}
+                  By {historyDetail.startedBy || "Admin"}
                 </Typography>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Template & Message */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Template Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {historyDetail.subject && (
-                <div>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subject</span>
-                  <Typography className="text-sm font-medium mt-1">{historyDetail.subject}</Typography>
-                </div>
-              )}
+        {/* Campaign Details */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Campaign Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Campaign Name</span>
+              <Typography className="text-sm font-medium mt-1">{historyDetail.name || "N/A"}</Typography>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Campaign Type</span>
+              <div className="flex items-center gap-2 mt-1">
+                <ChannelIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                <Typography className="text-sm font-medium capitalize">{historyDetail.type || "N/A"}</Typography>
+              </div>
+            </div>
+            {historyDetail.subject && (
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Template Name</span>
-                <Typography className="text-sm font-medium mt-1">{historyDetail.templateName}</Typography>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subject</span>
+                <Typography className="text-sm font-medium mt-1">{historyDetail.subject}</Typography>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Message Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded border text-xs leading-relaxed max-h-32 overflow-y-auto">
-                {historyDetail.messagePreview || historyDetail.message || "No preview available"}
+            )}
+            {(historyDetail.messagePreview || historyDetail.message) && (
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Message Preview</span>
+                <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded border text-xs leading-relaxed max-h-32 overflow-y-auto mt-1">
+                  {historyDetail.messagePreview || historyDetail.message}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Analytics Card */}
         <Card>
@@ -238,34 +268,51 @@ const ReminderHistoryDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Performance Metrics */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Performance Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 divide-x dark:divide-gray-700">
-              <div className="px-4">
-                <Typography className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Cart Value</Typography>
-                <Typography className="text-lg font-bold text-primary">
-                  {formatPrice((historyDetail.recipients || []).reduce((sum, r) => sum + (r.cartValue || 0), 0))}
-                </Typography>
+        {/* Recipients List */}
+        {historyDetail.users && historyDetail.users.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Recipients ({historyDetail.users.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {historyDetail.users.map((user, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <Typography className="font-medium text-sm">
+                          {user.userId?.name || "Unknown User"}
+                        </Typography>
+                        <Typography className="text-xs text-gray-600">
+                          {user.userId?.email || user.userId?.phoneNumber || "N/A"}
+                        </Typography>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user.success ? (
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Sent
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Failed
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="px-4">
-                <Typography className="text-xs text-gray-500 uppercase tracking-wide mb-1">Avg. Cart Value</Typography>
-                <Typography className="text-lg font-bold">
-                  {formatPrice(total > 0 ? (historyDetail.recipients || []).reduce((sum, r) => sum + (r.cartValue || 0), 0) / total : 0)}
-                </Typography>
-              </div>
-              <div className="px-4">
-                <Typography className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Items</Typography>
-                <Typography className="text-lg font-bold">
-                  {(historyDetail.recipients || []).reduce((sum, r) => sum + (r.itemCount || 0), 0)}
-                </Typography>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

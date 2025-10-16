@@ -17,7 +17,7 @@ export const fetchReminderHistoryById = async ({ id }) => {
   // Real API call
   try {
     const apiResponse = await apiService({
-      endpoint: `${endpoints.reminder_history}/${id}`,
+      endpoint: `${endpoints.campaign_get_single}/${id}`,
       method: "GET",
     });
 
