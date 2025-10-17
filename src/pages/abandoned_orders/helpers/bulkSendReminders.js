@@ -38,12 +38,15 @@ export const bulkSendReminders = async ({ channel, customers = [] }) => {
 
       // Send to Android users if any
       if (androidUsers.length > 0) {
+        console.log("📤 Sending Android push notifications:", {
+          count: androidUsers.length,
+          userIds: androidUsers,
+        });
         const androidResponse = await apiService({
           endpoint: endpoints.campaign_start,
           method: "POST",
           data: {
-            campaignType: "push",
-            platform: "android",
+            campaignType: "push_notification_andriod",
             userIds: androidUsers,
           },
         });
@@ -54,13 +57,13 @@ export const bulkSendReminders = async ({ channel, customers = [] }) => {
       if (iosUsers.length > 0) {
         console.log("📤 Sending iOS push notifications:", {
           count: iosUsers.length,
+          userIds: iosUsers,
         });
         const iosResponse = await apiService({
           endpoint: endpoints.campaign_start,
           method: "POST",
           data: {
-            campaignType: "push",
-            platform: "ios",
+            campaignType: "push_notification_ios",
             userIds: iosUsers,
           },
         });
