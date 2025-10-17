@@ -45,24 +45,6 @@ const CHANNELS = [
     description: "Send push notification to mobile devices",
     color: "bg-purple-500",
     iconColor: "text-purple-500",
-    subOptions: [
-      {
-        id: "android",
-        name: "Android",
-        icon: Smartphone,
-        description: "Send to Android devices",
-        color: "bg-green-500",
-        iconColor: "text-green-500",
-      },
-      {
-        id: "ios",
-        name: "iOS",
-        icon: Smartphone,
-        description: "Send to iOS devices",
-        color: "bg-gray-500",
-        iconColor: "text-gray-500",
-      },
-    ],
   },
   {
     id: "whatsapp",
@@ -358,57 +340,7 @@ const SendReminderDialog = ({
                 })}
               </div>
 
-              {/* Show sub-options for Push Notification */}
-              {selectedChannel?.id === "push_notification" && selectedChannel?.subOptions && (
-                <div className="mt-6 space-y-3">
-                  <div>
-                    <Typography variant="h4" className="mb-2">Select Platform</Typography>
-                    <Typography className="text-sm text-gray-600">
-                      Choose which platform to send push notifications to
-                    </Typography>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedChannel.subOptions.map((subOption) => {
-                      const SubIcon = subOption.icon;
-                      const isSubSelected = selectedSubOption?.id === subOption.id;
-                      
-                      return (
-                        <div
-                          key={subOption.id}
-                          onClick={() => setSelectedSubOption(subOption)}
-                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                            isSubSelected 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          {isSubSelected && (
-                            <div className="absolute top-2 right-2">
-                              <Check className="w-4 h-4 text-primary" />
-                            </div>
-                          )}
-                          
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full bg-opacity-10 flex items-center justify-center ${subOption.color.replace('bg-', 'bg-').concat('/10')}`}>
-                              <SubIcon className={`w-5 h-5 ${subOption.iconColor}`} />
-                            </div>
-                            
-                            <div>
-                              <Typography className="font-semibold">
-                                {subOption.name}
-                              </Typography>
-                              <Typography className="text-xs text-gray-600">
-                                {subOption.description}
-                              </Typography>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Show sub-options for Push Notification - REMOVED */}
             </div>
           )}
 
@@ -482,7 +414,6 @@ const SendReminderDialog = ({
                   </div>
                   <Typography className="font-semibold">
                     {selectedChannel.name}
-                    {selectedSubOption && ` - ${selectedSubOption.name}`}
                   </Typography>
                 </div>
 
@@ -568,9 +499,7 @@ const SendReminderDialog = ({
             {step < 3 ? (
               <Button 
                 onClick={handleNext}
-                disabled={
-                  (step === 1 && (!selectedChannel || (selectedChannel?.id === "push_notification" && !selectedSubOption)))
-                }
+                disabled={step === 1 && !selectedChannel}
               >
                 Next
                 <ArrowRight className="w-4 h-4 ml-2" />
