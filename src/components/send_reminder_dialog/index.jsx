@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+// import { Input } from "@/components/ui/input";
+// import { Label } from "@/components/ui/label";
+// import { Textarea } from "@/components/ui/textarea";
 import Typography from "@/components/typography";
 import { 
   Mail, 
@@ -21,11 +21,11 @@ import {
   ArrowRight,
   Send,
   User,
-  ShoppingCart,
-  Calendar,
+  // ShoppingCart,
+  // Calendar,
   Smartphone
 } from "lucide-react";
-import { formatPrice } from "@/utils/format_price";
+// import { formatPrice } from "@/utils/format_price";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 // Channel options
@@ -50,7 +50,7 @@ const CHANNELS = [
         id: "android",
         name: "Android",
         icon: Smartphone,
-        description: "Send to Android devices (FCM)",
+        description: "Send to Android devices",
         color: "bg-green-500",
         iconColor: "text-green-500",
       },
@@ -58,7 +58,7 @@ const CHANNELS = [
         id: "ios",
         name: "iOS",
         icon: Smartphone,
-        description: "Send to iOS devices (APN)",
+        description: "Send to iOS devices",
         color: "bg-gray-500",
         iconColor: "text-gray-500",
       },
@@ -177,34 +177,30 @@ const SendReminderDialog = ({
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [selectedSubOption, setSelectedSubOption] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [notificationTitle, setNotificationTitle] = useState("");
-  const [notificationBody, setNotificationBody] = useState("");
 
   const handleClose = () => {
     setStep(1);
     setSelectedChannel(null);
     setSelectedSubOption(null);
     setSelectedTemplate(null);
-    setNotificationTitle("");
-    setNotificationBody("");
     onClose();
   };
 
   const handleNext = () => {
-    // For push notifications, skip template selection
-    if (selectedChannel?.id === "push_notification") {
-      if (step === 1) setStep(3);
-    } else {
-      if (step < 3) setStep(step + 1);
+    // Skip step 2 (template selection) for now
+    if (step === 1) {
+      setStep(3);
+    } else if (step < 3) {
+      setStep(step + 1);
     }
   };
 
   const handleBack = () => {
-    // For push notifications, go back to step 1 from step 3
-    if (selectedChannel?.id === "push_notification" && step === 3) {
+    // Skip step 2 when going back
+    if (step === 3) {
       setStep(1);
-    } else {
-      if (step > 1) setStep(step - 1);
+    } else if (step > 1) {
+      setStep(step - 1);
     }
   };
 
@@ -214,36 +210,33 @@ const SendReminderDialog = ({
         channel: selectedChannel,
         subOption: selectedSubOption,
         template: selectedTemplate,
-        notificationData: selectedChannel?.id === "push_notification" ? {
-          title: notificationTitle,
-          body: notificationBody,
-        } : undefined,
         customers,
       });
     }
     handleClose();
   };
 
-  const renderVariables = (text, customer) => {
-    if (!customer) return text;
-    
-    const itemCount = customer.items?.length || 0;
-    const totalAmount = formatPrice(customer.total_price || 0);
-    const itemsList = customer.items?.slice(0, 3).map((item, idx) => 
-      `${idx + 1}. ${item?.productId?.title} (${item?.quantity}x) - ${formatPrice(item?.total)}`
-    ).join('\n') || '';
+  // COMMENTED OUT - Template rendering (for future use)
+  // const renderVariables = (text, customer) => {
+  //   if (!customer) return text;
+  //   
+  //   const itemCount = customer.items?.length || 0;
+  //   const totalAmount = formatPrice(customer.total_price || 0);
+  //   const itemsList = customer.items?.slice(0, 3).map((item, idx) => 
+  //     `${idx + 1}. ${item?.productId?.title} (${item?.quantity}x) - ${formatPrice(item?.total)}`
+  //   ).join('\n') || '';
 
-    return text
-      .replace(/{{name}}/g, customer?.userId?.name || 'Customer')
-      .replace(/{{itemCount}}/g, itemCount)
-      .replace(/{{totalAmount}}/g, totalAmount)
-      .replace(/{{itemsList}}/g, itemsList)
-      .replace(/{{checkoutLink}}/g, 'https://petcaart.com/checkout')
-      .replace(/{{link}}/g, 'https://petcaart.com/cart')
-      .replace(/{{discountedAmount}}/g, formatPrice((customer.total_price || 0) * 0.9));
-  };
+  //   return text
+  //     .replace(/{{name}}/g, customer?.userId?.name || 'Customer')
+  //     .replace(/{{itemCount}}/g, itemCount)
+  //     .replace(/{{totalAmount}}/g, totalAmount)
+  //     .replace(/{{itemsList}}/g, itemsList)
+  //     .replace(/{{checkoutLink}}/g, 'https://petcaart.com/checkout')
+  //     .replace(/{{link}}/g, 'https://petcaart.com/cart')
+  //     .replace(/{{discountedAmount}}/g, formatPrice((customer.total_price || 0) * 0.9));
+  // };
 
-  const currentCustomer = customers[0]; // For preview, use first customer
+  // const currentCustomer = customers[0]; // For preview, use first customer
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -262,8 +255,8 @@ const SendReminderDialog = ({
             <div className="flex flex-col gap-0 flex-1">
               {[
                 { num: 1, label: 'Select Channel' },
-                { num: 2, label: 'Choose Template' },
-                { num: 3, label: 'Preview & Send' }
+                // { num: 2, label: 'Choose Template' }, // COMMENTED OUT
+                { num: 3, label: 'Confirm & Send' }
               ].map((stepItem, idx) => (
                 <div key={stepItem.num} className="flex flex-col items-start">
                   <div className="flex items-center gap-3 py-3">
@@ -272,13 +265,13 @@ const SendReminderDialog = ({
                         ? 'border-primary bg-primary text-white' 
                         : 'border-gray-300 text-gray-400'
                     }`}>
-                      {step > stepItem.num ? <Check className="w-4 h-4" /> : stepItem.num}
+                      {step > stepItem.num ? <Check className="w-4 h-4" /> : idx + 1}
                     </div>
                     <div className="flex flex-col">
                       <span className={`text-xs font-medium ${
                         step >= stepItem.num ? 'text-primary' : 'text-gray-500'
                       }`}>
-                        Step {stepItem.num}
+                        Step {idx + 1}
                       </span>
                       <span className={`text-xs ${
                         step >= stepItem.num ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500'
@@ -287,7 +280,7 @@ const SendReminderDialog = ({
                       </span>
                     </div>
                   </div>
-                  {idx < 2 && (
+                  {idx < 1 && (
                     <div className={`w-0.5 h-8 ml-4 ${step > stepItem.num ? 'bg-primary' : 'bg-gray-300'}`} />
                   )}
                 </div>
@@ -419,8 +412,8 @@ const SendReminderDialog = ({
             </div>
           )}
 
-          {/* Step 2: Select Template */}
-          {step === 2 && selectedChannel && (
+          {/* Step 2: Select Template - COMMENTED OUT FOR NOW */}
+          {/* {step === 2 && selectedChannel && (
             <div className="space-y-4">
               <div>
                 <Typography variant="h4" className="mb-2">Select Template</Typography>
@@ -468,24 +461,20 @@ const SendReminderDialog = ({
                 })}
               </div>
             </div>
-          )}
+          )} */}
 
-          {/* Step 3: Preview / Input */}
+          {/* Step 3: Preview & Send */}
           {step === 3 && selectedChannel && (
             <div className="space-y-4">
               <div>
-                <Typography variant="h4" className="mb-2">
-                  {selectedChannel.id === "push_notification" ? "Notification Details" : "Preview & Send"}
-                </Typography>
+                <Typography variant="h4" className="mb-2">Preview & Send</Typography>
                 <Typography className="text-sm text-gray-600">
-                  {selectedChannel.id === "push_notification" 
-                    ? "Enter the title and description for your push notification" 
-                    : "Review your message before sending"}
+                  Review your message before sending
                 </Typography>
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     {selectedChannel.icon && <selectedChannel.icon className="w-4 h-4 text-blue-600" />}
@@ -507,112 +496,55 @@ const SendReminderDialog = ({
                   </Typography>
                 </div>
 
-                {selectedTemplate && (
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Mail className="w-4 h-4 text-purple-600" />
-                      <Typography className="text-sm font-medium">Template</Typography>
-                    </div>
-                    <Typography className="font-semibold">{selectedTemplate.name}</Typography>
+                {/* Template card - COMMENTED OUT */}
+                {/* <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mail className="w-4 h-4 text-purple-600" />
+                    <Typography className="text-sm font-medium">Template</Typography>
                   </div>
-                )}
+                  <Typography className="font-semibold">{selectedTemplate?.name}</Typography>
+                </div> */}
               </div>
 
-              {/* Push Notification Input Fields */}
-              {selectedChannel.id === "push_notification" ? (
-                <div className="space-y-4 border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
-                  <div className="space-y-2">
-                    <Label htmlFor="notification-title">Notification Title *</Label>
-                    <Input
-                      id="notification-title"
-                      placeholder="Enter notification title"
-                      value={notificationTitle}
-                      onChange={(e) => setNotificationTitle(e.target.value)}
-                      className="bg-white dark:bg-gray-800"
-                    />
+              {/* Message Preview - COMMENTED OUT */}
+              {/* <div className="border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
+                <Typography className="text-sm text-gray-500 mb-4">Message Preview</Typography>
+                
+                {selectedTemplate?.subject && (
+                  <div className="mb-4">
+                    <Typography className="text-xs text-gray-500 mb-1">Subject:</Typography>
+                    <Typography className="font-semibold">
+                      {renderVariables(selectedTemplate.subject, currentCustomer)}
+                    </Typography>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notification-body">Notification Description *</Label>
-                    <Textarea
-                      id="notification-body"
-                      placeholder="Enter notification description"
-                      value={notificationBody}
-                      onChange={(e) => setNotificationBody(e.target.value)}
-                      rows={4}
-                      className="bg-white dark:bg-gray-800"
-                    />
-                  </div>
-
-                  {/* Preview */}
-                  {(notificationTitle || notificationBody) && (
-                    <div className="mt-4">
-                      <Typography className="text-sm text-gray-500 mb-3">Preview:</Typography>
-                      <div className="bg-white dark:bg-gray-800 p-4 rounded border shadow-sm max-w-md">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Bell className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            {notificationTitle && (
-                              <Typography className="font-semibold text-sm mb-1">
-                                {notificationTitle}
-                              </Typography>
-                            )}
-                            {notificationBody && (
-                              <Typography className="text-xs text-gray-600 line-clamp-2">
-                                {notificationBody}
-                              </Typography>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                )}
+                
+                <div className="bg-white dark:bg-gray-800 p-4 rounded border">
+                  <pre className="whitespace-pre-wrap font-sans text-sm">
+                    {renderVariables(selectedTemplate.body || selectedTemplate.preview, currentCustomer)}
+                  </pre>
                 </div>
-              ) : (
-                /* Message Preview for other channels */
-                selectedTemplate && (
-                  <div className="border rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
-                    <Typography className="text-sm text-gray-500 mb-4">Message Preview</Typography>
-                    
-                    {selectedTemplate.subject && (
-                      <div className="mb-4">
-                        <Typography className="text-xs text-gray-500 mb-1">Subject:</Typography>
-                        <Typography className="font-semibold">
-                          {renderVariables(selectedTemplate.subject, currentCustomer)}
-                        </Typography>
-                      </div>
-                    )}
-                    
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded border">
-                      <pre className="whitespace-pre-wrap font-sans text-sm">
-                        {renderVariables(selectedTemplate.body || selectedTemplate.preview, currentCustomer)}
-                      </pre>
-                    </div>
 
-                    {currentCustomer && (
-                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
-                        <Typography className="text-xs text-gray-600 mb-2">Customer Details:</Typography>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-gray-500">Name:</span> {currentCustomer?.userId?.name || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Email:</span> {currentCustomer?.userId?.email || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Items:</span> {currentCustomer?.items?.length || 0}
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Total:</span> {formatPrice(currentCustomer?.total_price || 0)}
-                          </div>
-                        </div>
+                {currentCustomer && (
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
+                    <Typography className="text-xs text-gray-600 mb-2">Customer Details:</Typography>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Name:</span> {currentCustomer?.userId?.name || 'N/A'}
                       </div>
-                    )}
+                      <div>
+                        <span className="text-gray-500">Email:</span> {currentCustomer?.userId?.email || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Items:</span> {currentCustomer?.items?.length || 0}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Total:</span> {formatPrice(currentCustomer?.total_price || 0)}
+                      </div>
+                    </div>
                   </div>
-                )
-              )}
+                )}
+              </div> */}
             </div>
           )}
             </div>
@@ -637,9 +569,7 @@ const SendReminderDialog = ({
               <Button 
                 onClick={handleNext}
                 disabled={
-                  (step === 1 && !selectedChannel) ||
-                  (step === 1 && selectedChannel?.id === "push_notification" && !selectedSubOption) ||
-                  (step === 2 && !selectedTemplate)
+                  (step === 1 && (!selectedChannel || (selectedChannel?.id === "push_notification" && !selectedSubOption)))
                 }
               >
                 Next
@@ -648,11 +578,7 @@ const SendReminderDialog = ({
             ) : (
               <Button 
                 onClick={handleSend}
-                disabled={
-                  isSending || 
-                  (selectedChannel?.id === "push_notification" && (!notificationTitle || !notificationBody)) ||
-                  (selectedChannel?.id !== "push_notification" && !selectedTemplate)
-                }
+                disabled={isSending}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Send className="w-4 h-4 mr-2" />

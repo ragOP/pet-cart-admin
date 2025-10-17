@@ -33,9 +33,8 @@ const AbandonedOrderDetail = () => {
     setIsSending(true);
     try {
       await bulkSendReminders({ 
-        cartIds: [id],
         channel: data.channel.id,
-        template: data.template.id,
+        customers: abandonedOrder ? [abandonedOrder] : [],
       });
       toast.success(`${data.channel.name} reminder sent successfully`);
       setReminderDialogOpen(false);

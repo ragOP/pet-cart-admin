@@ -1,63 +1,100 @@
 import { apiService } from "@/api/api_services";
 import { endpoints } from "@/api/endpoint";
 
-export const bulkSendReminders = async ({ 
-  cartIds, 
-  channel, 
-  template, 
-  notificationData, 
-  subOption,
-  customers = []
-}) => {
+export const bulkSendReminders = async ({ channel, customers = [] }) => {
   try {
-    let data;
-    let endpoint;
+    // Extract userIds from customers
+    const userIds = customers
+      .map((customer) => customer.userId?._id)
+      .filter(Boolean);
 
-    // Extract userIds from customers (for push notifications and campaigns)
-    const userIds = customers.map(customer => customer.userId?._id || customer.userId).filter(Boolean);
-
-    // For push notifications
-    if (channel === "push_notification") {
-      data = {
-        notificationData: {
-          title: notificationData?.title || "",
-          body: notificationData?.body || "",
-        },
-        userIds: userIds.length > 0 ? userIds : cartIds,
-        topicOverride: "com.example.app",
-      };
-      
-      // Choose endpoint based on platform
-      endpoint = subOption === "ios" 
-        ? endpoints.push_notification_ios 
-        : endpoints.push_notification_android;
-    } 
-    // For WhatsApp and Email, use campaign API
-    else if (channel === "whatsapp" || channel === "email") {
-      data = {
-        campaignType: channel, // "whatsapp" or "email"
-        userIds: userIds.length > 0 ? userIds : cartIds,
-      };
-      endpoint = endpoints.campaign_start;
-    } 
-    // For other channels (fallback)
-    else {
-      data = { 
-        cartIds, 
-        channel, 
-        template 
-      };
-      endpoint = `${endpoints.abandoned_carts}/send-reminders`;
+    if (userIds.length === 0) {
+      throw new Error("No valid user IDs found");
     }
 
+    console.log(channel, userIds);
+
+    // For push notifications, classify users by platform and send separately
+    if (channel === "push_notification") {
+      const results = [];
+
+      console.log(customers);
+
+      // Filter Android users (those with FCM tokens)
+      const androidUsers = customers
+        .filter((customer) => {
+          const user = customer.userId;
+          return user?.fcmToken;
+        })
+        .map((customer) => customer.userId?._id);
+
+      // Filter iOS users (those with APN tokens)
+      const iosUsers = customers
+        .filter((customer) => {
+          const user = customer.userId;
+          return user?.apnToken;
+        })
+        .map((customer) => customer.userId?._id || customer.userId);
+
+      // Send to Android users if any
+      if (androidUsers.length > 0) {
+        const androidResponse = await apiService({
+          endpoint: endpoints.campaign_start,
+          method: "POST",
+          data: {
+            campaignType: "push",
+            platform: "android",
+            userIds: androidUsers,
+          },
+        });
+        results.push({ platform: "android", response: androidResponse });
+      }
+
+      // Send to iOS users if any
+      if (iosUsers.length > 0) {
+        console.log("📤 Sending iOS push notifications:", {
+          count: iosUsers.length,
+        });
+        const iosResponse = await apiService({
+          endpoint: endpoints.campaign_start,
+          method: "POST",
+          data: {
+            campaignType: "push",
+            platform: "ios",
+            userIds: iosUsers,
+          },
+        });
+        results.push({ platform: "ios", response: iosResponse });
+      }
+
+      return { success: true, results };
+    }
+
+    // For other channels (whatsapp, email), use campaign API
+    const campaignTypeMap = {
+      whatsapp: "whatsapp",
+      email: "email",
+    };
+
+    const campaignType = campaignTypeMap[channel];
+
+    if (!campaignType) {
+      throw new Error(`Invalid channel: ${channel}`);
+    }
+
+    const data = {
+      campaignType,
+      userIds,
+    };
+
     console.log("📤 Sending reminder:", {
-      endpoint,
+      endpoint: endpoints.campaign_start,
       channel,
       data,
     });
 
     const apiResponse = await apiService({
-      endpoint,
+      endpoint: endpoints.campaign_start,
       method: "POST",
       data,
     });
@@ -73,4 +110,3 @@ export const bulkSendReminders = async ({
     throw error;
   }
 };
-

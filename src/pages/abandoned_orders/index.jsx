@@ -51,14 +51,9 @@ const AbandonedOrders = () => {
   const handleSendReminder = async (data) => {
     setIsSending(true);
     try {
-      const cartIds = selectedRows.map((row) => row._id);
       await bulkSendReminders({ 
-        cartIds,
         channel: data.channel.id,
-        template: data.template?.id,
-        notificationData: data.notificationData,
-        subOption: data.subOption?.id,
-        customers: selectedRows, // Pass the full customer data
+        customers: selectedRows,
       });
       
       let successMessage = `${data.channel.name}`;
