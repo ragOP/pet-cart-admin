@@ -18,14 +18,20 @@ import { useSelector } from "react-redux";
 import { selectAdminId } from "@/redux/admin/adminSelector";
 import { useEffect, useState, useMemo } from "react";
 import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { createCollection } from "../helper/createCollection";
 import { updateCollection } from "../helper/updateCollection";
 import { slugify } from "@/utils/convert_to_slug";
 import { urlToFile } from "@/utils/file/urlToFile";
 import { fetchSubCategories } from "@/pages/sub_category/helpers/fetchSubCategories";
-import MultiSelectProducts from "./MultiProductSelect";
-import { fetchProducts } from "@/pages/product/helpers/fetchProducts";
+import ProductSelectionDialog from "@/components/product-selection-dialog";
 import { fetchCategories } from "@/pages/category/helpers/fetchCategories";
 
 const CollectionFormSchema = z.object({
@@ -64,6 +70,8 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
   const [imageRemoved, setImageRemoved] = useState(false);
   const [categoryId, setCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
   const form = useForm({
     resolver: zodResolver(CollectionFormSchema),
@@ -76,33 +84,21 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
       image: null,
     },
   });
-  const { data: categoryListRes, isLoading: categoryLoading } = useQuery({
+  const { data: categoryListRes } = useQuery({
     queryKey: ["all_categories"],
     queryFn: () => fetchCategories({ params: { per_page: 100 } }),
   });
 
-  const { data: subCategoryListRes, isLoading: subCategoryLoading } = useQuery({
+  const { data: subCategoryListRes } = useQuery({
     queryKey: ["all_sub_categories"],
     queryFn: () => fetchSubCategories({ params: { per_page: 100 } }),
   });
 
   console.log(subCategoryListRes, "subCategoryListRes");
 
-  const { data: productListRes } = useQuery({
-    queryKey: ["all_products", subCategoryId],
-    queryFn: () => fetchProducts({
-      params: {
-        per_page: 100,
-        ...(subCategoryId && { subCategorySlug: subCategoryListRes?.data?.find(sub => sub._id?.toString() === subCategoryId?.toString())?.slug })
-      }
-    }),
-    enabled: !!subCategoryId, // Only fetch when subcategory is selected
-  });
   const categories = categoryListRes?.data?.categories || [];
 
-  const products = productListRes?.data || [];
-
-  const subCategories = subCategoryListRes?.data || [];
+  const subCategories = useMemo(() => subCategoryListRes?.data || [], [subCategoryListRes?.data]);
   console.log(subCategories, "subCategories");
 
   // Get filtered subcategories, but also include the currently selected one if editing
@@ -113,9 +109,10 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     // If editing and we have a selected subcategory but no category selected yet, include it
     if (isEdit && initialData?.subCategoryId) {
       const selectedSub = subCategories.find(sub => sub._id === initialData.subCategoryId);
-      return selectedSub ? [selectedSub] : [];
+      return selectedSub ? [selectedSub] : subCategories;
     }
-    return [];
+    // If no category selected, show all subcategories
+    return subCategories;
   }, [categoryId, subCategories, isEdit, initialData?.subCategoryId]);
   console.log(filteredSubCategories, "filtered subCategories");
 
@@ -161,6 +158,11 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
         image: null,
       });
       setCategoryId(derivedCategoryId);
+      
+      // Initialize selected products for the dialog
+      if (initialData.products && Array.isArray(initialData.products)) {
+        setSelectedProducts(initialData.products);
+      }
     }
   }, [isEdit, initialData, form, subCategories]);
 
@@ -228,6 +230,26 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
     mutation.mutate(data);
   };
 
+  // Handle product selection from dialog
+  const handleProductSelect = (products) => {
+    setSelectedProducts(products);
+    const productIds = products.map(product => product._id);
+    form.setValue("productsIds", productIds);
+  };
+
+  // Handle opening product selection dialog
+  const handleOpenProductDialog = () => {
+    setIsProductDialogOpen(true);
+  };
+
+  // Handle removing a selected product
+  const handleRemoveProduct = (productId) => {
+    const updatedProducts = selectedProducts.filter(p => p._id !== productId);
+    setSelectedProducts(updatedProducts);
+    const productIds = updatedProducts.map(product => product._id);
+    form.setValue("productsIds", productIds);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -260,69 +282,87 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="categoryId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <select
-                  {...field}
-                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setCategoryId(e.target.value);
-                  }}
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Category and SubCategory in same line */}
+        <div className="w-full grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setCategoryId(value);
+                      
+                      // Auto-select first subcategory when category is selected
+                      if (value) {
+                        const categorySubCategories = subCategories.filter((sub) => sub.categoryId === value);
+                        if (categorySubCategories.length > 0) {
+                          const firstSubCategory = categorySubCategories[0];
+                          form.setValue("subCategoryId", firstSubCategory._id);
+                          setSubCategoryId(firstSubCategory._id);
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Parent SubCategory Dropdown */}
-        <FormField
-          control={form.control}
-          name="subCategoryId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>SubCategory</FormLabel>
-              <FormControl>
-                <select
-                  {...field}
-                  className="w-full border rounded px-3 py-2 text-sm text-gray-700"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setSubCategoryId(e.target.value);
-                    // Reset selected products when subcategory changes
-                    form.setValue("productsIds", []);
-                  }}
-                >
-                  <option value="">Select a subcategory</option>
-                  {filteredSubCategories.map((sub) => (
-                    <option key={sub._id} value={sub._id}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="subCategoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SubCategory</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSubCategoryId(value);
+                      // Reset selected products when subcategory changes
+                      form.setValue("productsIds", []);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredSubCategories.map((sub) => (
+                        <SelectItem key={sub._id} value={sub._id}>
+                          {sub.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
           name="productsIds"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
               <FormLabel>Products</FormLabel>
               <FormControl>
@@ -332,14 +372,21 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
                       Please select a subcategory first to load products
                     </div>
                   ) : (
-                    <MultiSelectProducts
-                      products={products}
-                      value={Array.isArray(field.value) ? field.value : []}
-                      onChange={(selectedIds) => {
-                        // Ensure we always pass an array, even for single selection
-                        field.onChange(Array.isArray(selectedIds) ? selectedIds : [selectedIds].filter(Boolean));
-                      }}
-                    />
+                    <div className="space-y-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleOpenProductDialog}
+                        className="w-fit"
+                      >
+                        {selectedProducts.length > 0 
+                          ? `Select Products (${selectedProducts.length} selected)`
+                          : "Select Products"
+                        }
+                      </Button>
+                      
+                     
+                    </div>
                   )}
                 </div>
               </FormControl>
@@ -405,6 +452,20 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
               : "Create Collection"}
         </Button>
       </form>
+
+      {/* Product Selection Dialog */}
+      <ProductSelectionDialog
+        isOpen={isProductDialogOpen}
+        onClose={() => setIsProductDialogOpen(false)}
+        onProductSelect={handleProductSelect}
+        title="Select Products for Collection"
+        fixedFilters={{
+          categoryIds: categoryId ? [categoryId] : [],
+          subCategoryIds: subCategoryId ? [subCategoryId] : [],
+        }}
+        selectedProducts={selectedProducts}
+        multiple={true}
+      />
     </Form>
   );
 };

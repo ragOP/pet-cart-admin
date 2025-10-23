@@ -41,4 +41,11 @@ export const endpoints = {
   pageConfigGetAll: "api/page-config/get-all-page-configs",
   pageConfigGetByKey: "api/page-config/get-page-config-by-key",
   pageConfigUpdate: "api/page-config/update-page-config",
+  // Stats endpoints
+  monthlyStats: "api/stats/get-monthly-stats",
+  customerStats: "api/stats/get-customer-stats",
+  topCategories: "api/stats/get-top-categories",
+  topSubcategories: "api/stats/get-top-subcategories",
+  topProducts: "api/stats/get-top-products",
+  totalSales: "api/stats/get-total-sales",
 };
