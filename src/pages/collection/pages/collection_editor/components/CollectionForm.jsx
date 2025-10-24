@@ -460,8 +460,8 @@ const CollectionForm = ({ isEdit = false, initialData }) => {
         onProductSelect={handleProductSelect}
         title="Select Products for Collection"
         fixedFilters={{
-          categoryIds: categoryId ? [categoryId] : [],
-          subCategoryIds: subCategoryId ? [subCategoryId] : [],
+          categorySlug: categoryId ? [categories.find(cat => cat._id === categoryId)?.slug].filter(Boolean) : [],
+          subCategorySlug: subCategoryId ? [subCategories.find(sub => sub._id === subCategoryId)?.slug].filter(Boolean) : [],
         }}
         selectedProducts={selectedProducts}
         multiple={true}

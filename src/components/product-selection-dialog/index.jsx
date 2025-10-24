@@ -18,6 +18,7 @@ import {
     rating
 } from "@/utils/product_filters";
 import { Search, X, ChevronDown, Check, CheckCircle } from "lucide-react";
+import { useDebounce } from "@uidotdev/usehooks";
 
 const VegSwitchButton = ({ value, onValueChange, label }) => {
     return (
@@ -65,6 +66,9 @@ const ProductSelectionDialog = ({
     const [appliedFilters, setAppliedFilters] = useState({});
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+    // Debounce search text
+    const debouncedSearchText = useDebounce(searchText, 500);
+
     console.log(appliedFilters);
 
     // Fetch brands for filter
@@ -84,9 +88,11 @@ const ProductSelectionDialog = ({
                 breedSize: [],
                 productType: [],
                 lifeStage: [],
-                brandIds: [],
+                brandSlug: [],
                 rating: [],
                 isVeg: null,
+                categorySlug: [],
+                subCategorySlug: [],
                 ...fixedFilters,
                 ...dynamicFilters,
             });
@@ -103,13 +109,13 @@ const ProductSelectionDialog = ({
         isLoading,
         error,
     } = useInfiniteQuery({
-        queryKey: ["products", "selection", appliedFilters, searchText],
+        queryKey: ["products", "selection", appliedFilters, debouncedSearchText],
         queryFn: ({ pageParam = 1 }) =>
             fetchProducts({
                 params: {
                     page: pageParam,
                     per_page: 100,
-                    search: searchText,
+                    search: debouncedSearchText,
                     ...appliedFilters,
                 },
             }),
@@ -265,8 +271,8 @@ const ProductSelectionDialog = ({
             return count;
         }, 0);
 
-        // Add count for brandIds and rating filters
-        const brandCount = Array.isArray(appliedFilters.brandIds) ? appliedFilters.brandIds.length : 0;
+        // Add count for brandSlug and rating filters
+        const brandCount = Array.isArray(appliedFilters.brandSlug) ? appliedFilters.brandSlug.length : 0;
         const ratingCount = Array.isArray(appliedFilters.rating) ? appliedFilters.rating.length : 0;
 
         return dynamicFilterCount + brandCount + ratingCount;
@@ -490,7 +496,7 @@ const ProductSelectionDialog = ({
                                                     size="sm"
                                                     className="justify-between"
                                                 >
-                                                    Brand{Array.isArray(appliedFilters.brandIds) && appliedFilters.brandIds.length > 0 ? ` (${appliedFilters.brandIds.length})` : ''}
+                                                    Brand{Array.isArray(appliedFilters.brandSlug) && appliedFilters.brandSlug.length > 0 ? ` (${appliedFilters.brandSlug.length})` : ''}
                                                     <ChevronDown className="h-4 w-4" />
                                                 </Button>
                                             </PopoverTrigger>
@@ -498,19 +504,19 @@ const ProductSelectionDialog = ({
                                                 <Command>
                                                     <CommandInput placeholder="Search brands..." />
                                                     <CommandEmpty>No brands found.</CommandEmpty>
-                                                    <CommandGroup>
+                                                    <CommandGroup className="max-h-120 overflow-y-auto">
                                                         {brands.map((brand) => (
                                                             <CommandItem
                                                                 key={brand._id}
-                                                                onSelect={() => handleFilterChange("brandIds", brand._id)}
+                                                                onSelect={() => handleFilterChange("brandSlug", brand.slug)}
                                                                 className="cursor-pointer"
                                                             >
                                                                 <div className="flex items-center space-x-2">
-                                                                    <div className={`w-4 h-4 border rounded flex items-center justify-center ${appliedFilters.brandIds?.includes(brand._id)
+                                                                    <div className={`w-4 h-4 border rounded flex items-center justify-center ${appliedFilters.brandSlug?.includes(brand.slug)
                                                                         ? 'bg-primary border-primary text-primary-foreground'
                                                                         : 'border-muted-foreground'
                                                                         }`}>
-                                                                        {appliedFilters.brandIds?.includes(brand._id) && (
+                                                                        {appliedFilters.brandSlug?.includes(brand.slug) && (
                                                                             <Check className="h-3 w-3" />
                                                                         )}
                                                                     </div>
