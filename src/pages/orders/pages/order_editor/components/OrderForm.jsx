@@ -150,7 +150,7 @@ const OrderForm = ({ initialData }) => {
     mutationFn: async (data) => {
       return await apiService({
         endpoint: `api/orders/${initialData?._id}/add-awb-info`,
-        method: 'POST',
+        method: "POST",
         data: {
           awbNumber: data.awbNumber,
         },
@@ -558,7 +558,9 @@ const OrderForm = ({ initialData }) => {
             <CardContent>
               <Form {...awbForm}>
                 <form
-                  onSubmit={awbForm.handleSubmit((data) => awbMutation.mutate(data))}
+                  onSubmit={awbForm.handleSubmit((data) =>
+                    awbMutation.mutate(data)
+                  )}
                   className="space-y-4"
                 >
                   <FormField
@@ -584,7 +586,9 @@ const OrderForm = ({ initialData }) => {
                     disabled={awbMutation.isPending}
                     className="w-full"
                   >
-                    {awbMutation.isPending ? "Updating..." : "Update AWB Number"}
+                    {awbMutation.isPending
+                      ? "Updating..."
+                      : "Update AWB Number"}
                   </Button>
                 </form>
               </Form>
@@ -700,14 +704,12 @@ const OrderForm = ({ initialData }) => {
                     -{formatPrice(initialData?.discountedAmount || 0)}
                   </span>
                 </div>
-                {initialData?.walletDiscount && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Wallet Discount</span>
-                    <span className="text-green-600">
-                      -{formatPrice(initialData.walletDiscount)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Wallet Discount</span>
+                  <span className="text-green-600">
+                    -{formatPrice(initialData.walletDiscount || 0)}
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">After Discount</span>
                   <span>
@@ -725,10 +727,18 @@ const OrderForm = ({ initialData }) => {
                     </span>
                     <span className="text-muted-foreground">Included</span>
                   </div>
-                  {initialData?.totalAmount > initialData?.discountedAmountAfterCoupon && (
+                  {initialData?.totalAmount >
+                    initialData?.discountedAmountAfterCoupon && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping Cost</span>
-                      <span>{formatPrice(initialData.totalAmount - initialData.discountedAmountAfterCoupon)}</span>
+                      <span className="text-muted-foreground">
+                        Shipping Cost
+                      </span>
+                      <span>
+                        {formatPrice(
+                          initialData.totalAmount -
+                            initialData.discountedAmountAfterCoupon
+                        )}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -751,14 +761,24 @@ const OrderForm = ({ initialData }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="text-sm font-medium text-muted-foreground">Weight Breakdown</div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  Weight Breakdown
+                </div>
                 <div className="space-y-2 border-b pb-3 mb-3">
-                  {initialData.items && initialData.items.map((item) => (
-                    <div key={item._id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{item.productId.title.slice(0, 30) + "..."}</span>
-                      <span>{(item.productId.weight / 1000).toFixed(1)} kg</span>
-                    </div>
-                  ))}
+                  {initialData.items &&
+                    initialData.items.map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex justify-between text-sm"
+                      >
+                        <span className="text-muted-foreground">
+                          {item.productId.title.slice(0, 30) + "..."}
+                        </span>
+                        <span>
+                          {(item.productId.weight / 1000).toFixed(1)} kg
+                        </span>
+                      </div>
+                    ))}
                   <div className="flex justify-between text-sm font-medium pt-2 border-t">
                     <span>Total Weight</span>
                     <span>{initialData?.weight || 0} kg</span>
@@ -804,7 +824,8 @@ const OrderForm = ({ initialData }) => {
                       </Badge>
                       {initialData.transcation?.razorpayPaymentId && (
                         <p className="text-xs text-muted-foreground">
-                          Payment ID: {initialData.transcation.razorpayPaymentId}
+                          Payment ID:{" "}
+                          {initialData.transcation.razorpayPaymentId}
                         </p>
                       )}
                       {initialData.transcation?.amount && (
