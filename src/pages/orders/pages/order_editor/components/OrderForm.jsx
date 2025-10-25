@@ -31,10 +31,10 @@ import {
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { updateOrderStatus } from "../helper/updateOrder";
 import { generateAndSendBill } from "../helper/generateBill";
-import { createShiprocketOrder } from "../helper/createShiprocketOrder";
+import { apiService } from "@/api/api_services";
+// import { createShiprocketOrder } from "../helper/createShiprocketOrder";
 import {
   Package2,
   User,
@@ -64,16 +64,20 @@ const OrderFormSchema = z.object({
   ]),
 });
 
-const ShiprocketSchema = z.object({
-  length: z.number().min(1, "Length must be at least 1"),
-  width: z.number().min(1, "Width must be at least 1"),
-  height: z.number().min(1, "Height must be at least 1"),
+// const ShiprocketSchema = z.object({
+//   length: z.number().min(1, "Length must be at least 1"),
+//   width: z.number().min(1, "Width must be at least 1"),
+//   height: z.number().min(1, "Height must be at least 1"),
+// });
+
+const AWBFormSchema = z.object({
+  awbNumber: z.string().min(1, "AWB Number is required"),
 });
 
 const OrderForm = ({ initialData }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showShiprocketForm, setShowShiprocketForm] = useState(!initialData?.shipRocketOrderId);
+  // const [showShiprocketForm, setShowShiprocketForm] = useState(!initialData?.shipRocketOrderId);
 
   const form = useForm({
     resolver: zodResolver(OrderFormSchema),
@@ -82,14 +86,21 @@ const OrderForm = ({ initialData }) => {
     },
   });
 
-  const shiprocketForm = useForm({
-    resolver: zodResolver(ShiprocketSchema),
+  const awbForm = useForm({
+    resolver: zodResolver(AWBFormSchema),
     defaultValues: {
-      length: 0,
-      width: 0,
-      height: 0,
+      awbNumber: initialData?.awbNumber || "",
     },
   });
+
+  // const shiprocketForm = useForm({
+  //   resolver: zodResolver(ShiprocketSchema),
+  //   defaultValues: {
+  //     length: 0,
+  //     width: 0,
+  //     height: 0,
+  //   },
+  // });
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -135,26 +146,50 @@ const OrderForm = ({ initialData }) => {
     },
   });
 
-  const shiprocketMutation = useMutation({
+  const awbMutation = useMutation({
     mutationFn: async (data) => {
-      return await createShiprocketOrder({
-        orderId: initialData?._id,
-        dimensions: data,
+      return await apiService({
+        endpoint: `api/orders/${initialData?._id}/add-awb-info`,
+        method: 'POST',
+        data: {
+          awbNumber: data.awbNumber,
+        },
       });
     },
     onSuccess: (res) => {
       if (res?.response?.success) {
-        toast.success("Shiprocket order created successfully!");
-        setShowShiprocketForm(false);
+        toast.success("AWB Number updated successfully!");
+        queryClient.invalidateQueries({ queryKey: ["order", initialData._id] });
       } else {
-        toast.error(res?.response?.message || "Failed to create shiprocket order");
+        toast.error(res?.response?.message || "Failed to update AWB Number");
       }
     },
     onError: (error) => {
       console.error(error);
-      toast.error("Failed to create shiprocket order");
+      toast.error("Failed to update AWB Number");
     },
   });
+
+  // const shiprocketMutation = useMutation({
+  //   mutationFn: async (data) => {
+  //     return await createShiprocketOrder({
+  //       orderId: initialData?._id,
+  //       dimensions: data,
+  //     });
+  //   },
+  //   onSuccess: (res) => {
+  //     if (res?.response?.success) {
+  //       toast.success("Shiprocket order created successfully!");
+  //       setShowShiprocketForm(false);
+  //     } else {
+  //       toast.error(res?.response?.message || "Failed to create shiprocket order");
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     console.error(error);
+  //     toast.error("Failed to create shiprocket order");
+  //   },
+  // });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
@@ -306,6 +341,17 @@ const OrderForm = ({ initialData }) => {
                     <p className="flex items-center gap-2">
                       <Tag className="h-4 w-4" />
                       {initialData.couponCode}
+                    </p>
+                  </div>
+                )}
+                {initialData?.cashBackOnOrder && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Cashback on Order
+                    </p>
+                    <p className="flex items-center gap-2 text-green-600 font-medium">
+                      <TrendingUp className="h-4 w-4" />
+                      {formatPrice(initialData.cashBackOnOrder)}
                     </p>
                   </div>
                 )}
@@ -501,8 +547,52 @@ const OrderForm = ({ initialData }) => {
             </CardContent>
           </Card>
 
-          {/* Shiprocket Order Creation */}
-          {showShiprocketForm && (
+          {/* AWB Number Update */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                AWB Number
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...awbForm}>
+                <form
+                  onSubmit={awbForm.handleSubmit((data) => awbMutation.mutate(data))}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={awbForm.control}
+                    name="awbNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>AWB Number</FormLabel>
+                        <FormControl>
+                          <input
+                            type="text"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Enter AWB Number"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={awbMutation.isPending}
+                    className="w-full"
+                  >
+                    {awbMutation.isPending ? "Updating..." : "Update AWB Number"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Shiprocket Order Creation - COMMENTED OUT */}
+          {/* {showShiprocketForm && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -584,7 +674,7 @@ const OrderForm = ({ initialData }) => {
                 </Form>
               </CardContent>
             </Card>
-          )}
+          )} */}
 
           {/* Order Summary */}
           <Card>
@@ -597,7 +687,11 @@ const OrderForm = ({ initialData }) => {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Raw Price</span>
+                  <span className="text-muted-foreground">Total MRP</span>
+                  <span>{formatPrice(initialData?.totalMRP || 0)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Discount On MRP</span>
                   <span>{formatPrice(initialData?.rawPrice || 0)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -606,6 +700,14 @@ const OrderForm = ({ initialData }) => {
                     -{formatPrice(initialData?.discountedAmount || 0)}
                   </span>
                 </div>
+                {initialData?.walletDiscount && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Wallet Discount</span>
+                    <span className="text-green-600">
+                      -{formatPrice(initialData.walletDiscount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">After Discount</span>
                   <span>
