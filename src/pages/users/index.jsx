@@ -6,6 +6,10 @@ import UsersTable from "./components/UserTable";
 import { useDebounce } from "@uidotdev/usehooks";
 import { DateRangePicker } from "@/components/date_filter";
 import ExportUserDialog from "./components/ExportUserDialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import { sendUserPushNotifications } from "./helpers/sendUserPushNotifications";
 
 const Users = () => {
   const navigate = useNavigate();
@@ -19,6 +23,7 @@ const Users = () => {
   const [searchText, setSearchText] = useState("");
   const [params, setParams] = useState(paramInitialState);
   const [openBulkExportDialog, setOpenBulkExportDialog] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const debouncedSearch = useDebounce(searchText, 500);
 
@@ -69,6 +74,33 @@ const Users = () => {
     });
   };
 
+  const selectedCount = selectedUsers.length;
+  const hasSelection = selectedCount > 0;
+
+  const {
+    mutate: triggerPushNotification,
+    isLoading: isSendingPush,
+  } = useMutation({
+    mutationFn: sendUserPushNotifications,
+    onSuccess: () => {
+      toast.success("Push notifications sent successfully.");
+    },
+    onError: (error) => {
+      const message =
+        error?.message || "Failed to send push notifications.";
+      toast.error(message);
+    },
+  });
+
+  const handleSendPushNotifications = () => {
+    if (!hasSelection) {
+      toast.error("Select at least one user to send push notifications.");
+      return;
+    }
+
+    triggerPushNotification({ users: selectedUsers });
+  };
+
   useEffect(() => {
     if (params.search !== debouncedSearch) {
       setParams((prev) => ({
@@ -76,15 +108,30 @@ const Users = () => {
         search: debouncedSearch,
       }));
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, params.search]);
 
-  console.log("Component will load now ");
   return (
     <div className="flex flex-col">
       <NavbarItem
         title="Users"
         breadcrumbs={breadcrumbs}
-        customBox={<DateRangePicker onChange={handleDateRangeChange} />}
+        customBox={
+          <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              onClick={handleSendPushNotifications}
+              disabled={!hasSelection || isSendingPush}
+            >
+              {isSendingPush ? "Sending..." : "Push Notification"}
+            </Button>
+            {hasSelection && (
+              <span className="text-sm text-muted-foreground">
+                {selectedCount} selected
+              </span>
+            )}
+            <DateRangePicker onChange={handleDateRangeChange} />
+          </div>
+        }
       />
 
       <div className="py-1 px-4">
@@ -104,6 +151,7 @@ const Users = () => {
           setUsersLength={setUsersLength}
           params={params}
           setParams={setParams}
+          onSelectedUsersChange={setSelectedUsers}
         />
         <ExportUserDialog
           openDialog={openBulkExportDialog}

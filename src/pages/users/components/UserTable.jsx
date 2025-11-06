@@ -1,17 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import ActionMenu from "@/components/action_menu";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import CustomTable from "@/components/custom_table";
+import { Pencil, Trash2 } from "lucide-react";
+import CustomDataGrid from "@/components/custom_data_grid";
 import Typography from "@/components/typography";
-import { use, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CustomDialog } from "@/components/custom_dialog";
 import { toast } from "sonner";
 import { fetchUsers } from "../helpers/fetchUsers";
 import { deleteUser } from "../helpers/deleteUser";
 import { useNavigate } from "react-router";
-
-const UsersTable = ({ setUsersLength, params, setParams }) => {
+const UsersTable = ({
+  setUsersLength,
+  params,
+  setParams,
+  onSelectedUsersChange,
+}) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -24,11 +28,12 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
     queryFn: () => fetchUsers({ params }),
   });
 
-  const total = usersRes?.total;
-  const users = usersRes?.data;
+  const total = useMemo(() => usersRes?.total ?? 0, [usersRes]);
+  const users = useMemo(() => usersRes?.data ?? [], [usersRes]);
 
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [selectedUsersMap, setSelectedUsersMap] = useState({});
 
   const handleOpenDialog = (admin) => {
     setOpenDelete(true);
@@ -42,8 +47,14 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
 
   const { mutate: deleteAdminMutation, isLoading: isDeleting } = useMutation({
     mutationFn: deleteUser,
-    onSuccess: () => {
+    onSuccess: (_, userId) => {
       toast.success("User deleted successfully.");
+      setSelectedUsersMap((prev) => {
+        if (!prev[userId]) return prev;
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
       queryClient.invalidateQueries(["users"]);
       handleCloseDialog();
     },
@@ -62,14 +73,82 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
   };
 
   useEffect(() => {
-    setUsersLength(users?.length);
+    setUsersLength(users?.length ?? 0);
+  }, [users, setUsersLength]);
+
+  useEffect(() => {
+    if (!users || users.length === 0) {
+      return;
+    }
+
+    setSelectedUsersMap((prev) => {
+      let hasChanges = false;
+      let next = prev;
+
+      users.forEach((user) => {
+        const id = user?._id;
+        if (!id || !prev[id] || prev[id] === user) {
+          return;
+        }
+
+        if (!hasChanges) {
+          next = { ...prev };
+          hasChanges = true;
+        }
+
+        next[id] = user;
+      });
+
+      return hasChanges ? next : prev;
+    });
   }, [users]);
+
+  const selectedRowIds = useMemo(() => {
+    return Object.keys(selectedUsersMap).reduce((acc, id) => {
+      acc[id] = true;
+      return acc;
+    }, {});
+  }, [selectedUsersMap]);
+
+  const selectedUsers = useMemo(
+    () => Object.values(selectedUsersMap),
+    [selectedUsersMap]
+  );
+
+  useEffect(() => {
+    onSelectedUsersChange?.(selectedUsers);
+  }, [selectedUsers, onSelectedUsersChange]);
+
+  const handleSelectedRowIdsChange = useCallback(
+    (nextSelection = {}) => {
+      setSelectedUsersMap((prev) => {
+        const next = { ...prev };
+
+        Object.keys(next).forEach((id) => {
+          if (!nextSelection[id]) {
+            delete next[id];
+          }
+        });
+
+        users.forEach((user) => {
+          const id = user?._id;
+          if (!id) return;
+          if (nextSelection[id]) {
+            next[id] = user;
+          }
+        });
+
+        return next;
+      });
+    },
+    [users]
+  );
 
   const columns = [
     {
       key: "name",
       label: "Name",
-      render: (value, row) => (
+      render: (value) => (
         <div className="flex flex-col gap-1">
           <Typography variant="p" className="font-medium">
             {value || "No Name Provided"}
@@ -132,12 +211,12 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
               icon: Pencil,
               action: () => onEditUser(row),
             },
-            // {
-            //   label: "Delete User",
-            //   icon: Trash2,
-            //   action: () => handleOpenDialog(row),
-            //   className: "text-red-500",
-            // },
+            {
+              label: "Delete User",
+              icon: Trash2,
+              action: () => handleOpenDialog(row),
+              className: "text-red-500",
+            },
           ]}
         />
       ),
@@ -157,7 +236,7 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
 
   return (
     <>
-      <CustomTable
+      <CustomDataGrid
         columns={columns}
         data={users}
         isLoading={isLoading}
@@ -167,6 +246,11 @@ const UsersTable = ({ setUsersLength, params, setParams }) => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        enableRowSelection
+        selectedRowIds={selectedRowIds}
+        onSelectedRowIdsChange={handleSelectedRowIdsChange}
+        showPageSizeSelector={false}
+        // className="py-0 gap-0"
       />
 
       <CustomDialog

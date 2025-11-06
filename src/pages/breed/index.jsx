@@ -79,7 +79,6 @@ const Breed = () => {
     }
   }, [debouncedSearch]);
 
-  console.log("Component will load now ");
   return (
     <div className="flex flex-col">
       <NavbarItem
