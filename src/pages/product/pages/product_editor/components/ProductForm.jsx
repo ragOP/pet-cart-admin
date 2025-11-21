@@ -96,6 +96,7 @@ const ProductFormSchema = z.object({
   // hsnCodeId: z.string().min(1, "Please select a HSN code"),
   isBestSeller: z.boolean().default(false),
   isVeg: z.boolean().default(false),
+  isSpecialOffer: z.boolean().default(false),
   lifeStage: z.enum(["Puppy", "Adult", "Starter", "Kitten"]).default("Adult"),
   breedSize: z.enum(["Mini", "Medium", "Large", "Giant"]).default("Medium"),
   productType: z
@@ -137,6 +138,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
         // hsnCodeId: "",
         isBestSeller: false,
         isVeg: false,
+        isSpecialOffer: false,
         lifeStage: "Adult",
         breedSize: "Medium",
         productType: "Dry Food",
@@ -164,6 +166,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       // hsnCodeId: initialData.hsnCode?._id || "",
       isBestSeller: initialData.isBestSeller || false,
       isVeg: initialData.isVeg || false,
+      isSpecialOffer: initialData?.isSpecialOffer || false,
       lifeStage: initialData.lifeStage || "Adult",
       breedSize: initialData.breedSize || "Medium",
       productType: initialData.productType || "Dry Food",
@@ -772,6 +775,7 @@ const ProductForm = ({ isEdit = false, initialData }) => {
       // payload.append("hsnCode", data.hsnCodeId);
       payload.append("isBestSeller", String(data.isBestSeller));
       payload.append("isVeg", String(data.isVeg));
+      payload.append("isSpecialOffer", String(data.isSpecialOffer));
       payload.append("lifeStage", data.lifeStage);
       payload.append("breedSize", data.breedSize);
       payload.append("productType", data.productType);
@@ -1023,6 +1027,25 @@ const ProductForm = ({ isEdit = false, initialData }) => {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Vegetarian</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* isSpecialOffer */}
+              <FormField
+                control={form.control}
+                name="isSpecialOffer"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-1 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Special Offer</FormLabel>
                     </div>
                   </FormItem>
                 )}
