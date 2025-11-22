@@ -8,8 +8,8 @@ import { DateRangePicker } from "@/components/date_filter";
 import ExportUserDialog from "./components/ExportUserDialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
-import { sendUserPushNotifications } from "./helpers/sendUserPushNotifications";
+import SendCustomMessageDialog from "@/components/send_custom_message_dialog";
+import { sendCustomMessage } from "./helpers/sendCustomMessage";
 
 const Users = () => {
   const navigate = useNavigate();
@@ -24,6 +24,8 @@ const Users = () => {
   const [params, setParams] = useState(paramInitialState);
   const [openBulkExportDialog, setOpenBulkExportDialog] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [openCustomMessageDialog, setOpenCustomMessageDialog] = useState(false);
+  const [isSendingCustomMessage, setIsSendingCustomMessage] = useState(false);
 
   const debouncedSearch = useDebounce(searchText, 500);
 
@@ -77,28 +79,36 @@ const Users = () => {
   const selectedCount = selectedUsers.length;
   const hasSelection = selectedCount > 0;
 
-  const {
-    mutate: triggerPushNotification,
-    isLoading: isSendingPush,
-  } = useMutation({
-    mutationFn: sendUserPushNotifications,
-    onSuccess: () => {
-      toast.success("Push notifications sent successfully.");
-    },
-    onError: (error) => {
-      const message =
-        error?.message || "Failed to send push notifications.";
-      toast.error(message);
-    },
-  });
-
-  const handleSendPushNotifications = () => {
+  const handleOpenCustomMessageDialog = () => {
     if (!hasSelection) {
-      toast.error("Select at least one user to send push notifications.");
+      toast.error("Select at least one user to send a message.");
       return;
     }
+    setOpenCustomMessageDialog(true);
+  };
 
-    triggerPushNotification({ users: selectedUsers });
+  const handleSendCustomMessage = async (data) => {
+    setIsSendingCustomMessage(true);
+    try {
+      await sendCustomMessage({
+        channel: data.channel,
+        title: data.title,
+        body: data.body,
+        users: selectedUsers,
+      });
+      
+      toast.success(
+        `Custom ${data.channel.name} sent successfully to ${selectedUsers.length} ${selectedUsers.length === 1 ? 'user' : 'users'}.`
+      );
+      setSelectedUsers([]);
+      setOpenCustomMessageDialog(false);
+    } catch (error) {
+      const message = error?.message || "Failed to send custom message.";
+      toast.error(message);
+      console.error(error);
+    } finally {
+      setIsSendingCustomMessage(false);
+    }
   };
 
   useEffect(() => {
@@ -119,10 +129,10 @@ const Users = () => {
           <div className="flex items-center gap-3">
             <Button
               size="sm"
-              onClick={handleSendPushNotifications}
-              disabled={!hasSelection || isSendingPush}
+              onClick={handleOpenCustomMessageDialog}
+              disabled={!hasSelection || isSendingCustomMessage}
             >
-              {isSendingPush ? "Sending..." : "Push Notification"}
+              Send Message
             </Button>
             {hasSelection && (
               <span className="text-sm text-muted-foreground">
@@ -157,6 +167,13 @@ const Users = () => {
           openDialog={openBulkExportDialog}
           onClose={onCloseBulkExportDialog}
           params={params}
+        />
+        <SendCustomMessageDialog
+          open={openCustomMessageDialog}
+          onClose={() => setOpenCustomMessageDialog(false)}
+          users={selectedUsers}
+          onSend={handleSendCustomMessage}
+          isSending={isSendingCustomMessage}
         />
       </div>
     </div>
