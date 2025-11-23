@@ -97,7 +97,7 @@ const ReminderHistoryTable = ({ setHistoryLength, params, setParams }) => {
         const total = row.totalCount || 0;
         const successful = row.successCount || 0;
         const failed = row.failureCount || 0;
-        const rate = row.successRate || (total > 0 ? ((successful / total) * 100).toFixed(0) : 0);
+        const rate = row.successRate.toFixed(2) || (total > 0 ? ((successful / total) * 100).toFixed(2) : 0);
         
         return (
           <div className="space-y-1">
