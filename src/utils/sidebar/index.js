@@ -195,13 +195,6 @@ import {
         roles: ["admin"],
       },
       {
-        title: "HSN Codes",
-        name: "HSN Codes",
-        url: "/dashboard/hsn_codes",
-        icon: BadgeCent,
-        roles: ["admin"],
-      },
-      {
         title: "Coupons",
         name: "Coupons",
         url: "/dashboard/coupons",

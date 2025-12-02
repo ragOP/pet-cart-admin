@@ -37,9 +37,12 @@ export function NavMain({
         </SidebarMenu> */}
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = location.pathname === item.url || 
-                           (item.url === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.url));
-            
+            const isActive =
+              item.url === "/dashboard"
+                ? location.pathname === "/dashboard"
+                : location.pathname === item.url ||
+                  location.pathname.startsWith(`${item.url}/`);
+
             return (
               <SidebarMenuItem key={item.title}>
                 <Link to={item.url}>
