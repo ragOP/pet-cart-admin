@@ -60,11 +60,21 @@ const OrdersTable = ({ setOrdersLength, params, setParams }) => {
       label: "Products",
       render: (value, row) => (
         <div className="flex flex-col gap-1">
-          {row.items.map((item, index) => (
-            <Typography key={index} className="text-sm text-gray-800">
-              • {item.productId.title.length > 20 ? item.productId.title.slice(0, 20) + "..." : item.productId.title} ({item.quantity}×)
-            </Typography>
-          ))}
+          {(row?.items || []).map((item, index) => {
+            const rawTitle = item?.productId?.title;
+            const safeTitle =
+              typeof rawTitle === "string" && rawTitle.length > 0
+                ? rawTitle.length > 20
+                  ? rawTitle.slice(0, 20) + "..."
+                  : rawTitle
+                : "Unnamed product";
+
+            return (
+              <Typography key={index} className="text-sm text-gray-800">
+                • {safeTitle} ({item?.quantity ?? 0}×)
+              </Typography>
+            );
+          })}
         </div>
       ),
     },

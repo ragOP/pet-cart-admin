@@ -765,20 +765,33 @@ const OrderForm = ({ initialData }) => {
                   Weight Breakdown
                 </div>
                 <div className="space-y-2 border-b pb-3 mb-3">
-                  {initialData.items &&
-                    initialData.items.map((item) => (
+                  {(initialData?.items || []).map((item) => {
+                    const rawTitle = item?.productId?.title;
+                    const safeTitle =
+                      typeof rawTitle === "string" && rawTitle.length > 0
+                        ? rawTitle.length > 30
+                          ? rawTitle.slice(0, 30) + "..."
+                          : rawTitle
+                        : "Unnamed product";
+
+                    const rawWeight = item?.productId?.weight;
+                    const weightInKg =
+                      typeof rawWeight === "number"
+                        ? (rawWeight / 1000).toFixed(1) + " kg"
+                        : "N/A";
+
+                    return (
                       <div
-                        key={item._id}
+                        key={item?._id || safeTitle}
                         className="flex justify-between text-sm"
                       >
                         <span className="text-muted-foreground">
-                          {item.productId.title.slice(0, 30) + "..."}
+                          {safeTitle}
                         </span>
-                        <span>
-                          {(item.productId.weight / 1000).toFixed(1)} kg
-                        </span>
+                        <span>{weightInKg}</span>
                       </div>
-                    ))}
+                    );
+                  })}
                   <div className="flex justify-between text-sm font-medium pt-2 border-t">
                     <span>Total Weight</span>
                     <span>{initialData?.weight || 0} kg</span>
